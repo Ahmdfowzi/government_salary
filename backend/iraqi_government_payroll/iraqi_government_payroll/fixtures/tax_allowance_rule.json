@@ -1,0 +1,47 @@
+[
+ {
+  "doctype": "Tax Allowance Rule",
+  "name": "TAR-IRAQ-2015-Single",
+  "rule_set": "IRAQ-2015",
+  "status": "Draft",
+  "taxpayer_status": "Single",
+  "basis": "Fixed",
+  "annual_amount": null,
+  "confirmed": 0,
+  "source_reference": "Law 113/1982 Art. 12 (PC-7: amount pending)"
+ },
+ {
+  "doctype": "Tax Allowance Rule",
+  "name": "TAR-IRAQ-2015-Married",
+  "rule_set": "IRAQ-2015",
+  "status": "Draft",
+  "taxpayer_status": "Married",
+  "basis": "Fixed",
+  "annual_amount": null,
+  "confirmed": 0,
+  "source_reference": "Law 113/1982 Art. 12 (PC-7: amount pending)"
+ },
+ {
+  "doctype": "Tax Allowance Rule",
+  "name": "TAR-IRAQ-2015-PerChild",
+  "rule_set": "IRAQ-2015",
+  "status": "Draft",
+  "taxpayer_status": "Per Child",
+  "basis": "Per Dependent",
+  "annual_amount": null,
+  "confirmed": 0,
+  "source_reference": "Law 113/1982 Art. 12 (PC-7: amount pending)"
+ },
+ {
+  "doctype": "Tax Allowance Rule",
+  "name": "TAR-IRAQ-2015-LifeInsurance",
+  "rule_set": "IRAQ-2015",
+  "status": "Draft",
+  "taxpayer_status": "Life Insurance",
+  "basis": "Fixed",
+  "annual_amount": null,
+  "max_annual_cap": null,
+  "confirmed": 0,
+  "source_reference": "Law 113/1982 Art. 12 (PC-8: 250k/500k caps pending)"
+ }
+]

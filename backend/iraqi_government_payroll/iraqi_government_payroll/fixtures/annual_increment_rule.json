@@ -1,0 +1,12 @@
+[
+ {
+  "doctype": "Annual Increment Rule",
+  "name": "IRAQ-2015",
+  "rule_set": "IRAQ-2015",
+  "status": "Active",
+  "eligibility_months": 12,
+  "increment_basis": "From Salary Scale",
+  "description": "One stage up within the same grade after 12 months of service.",
+  "source_reference": "D1 tables 3,5"
+ }
+]

@@ -1,0 +1,11 @@
+[
+ {
+  "doctype": "Government Payroll Settings",
+  "name": "Government Payroll Settings",
+  "default_currency": "IQD",
+  "engine_version": "0.0.1",
+  "default_payroll_day": 1,
+  "enable_cap_enforcement": 1,
+  "block_submit_on_violation": 1
+ }
+]

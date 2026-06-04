@@ -1,0 +1,17 @@
+[
+ {
+  "doctype": "Pension Rule",
+  "name": "IRAQ-2015",
+  "rule_set": "IRAQ-2015",
+  "status": "Active",
+  "law_article": "21",
+  "accrual_rate": 2.5,
+  "averaging_months": 36,
+  "cap_pct_of_last_salary": 100,
+  "eos_min_service_years": 30,
+  "default_minimum_pension": null,
+  "cost_of_living_method": "",
+  "cost_of_living_value": null,
+  "source_reference": "Pension Law (BookID=30802) Art. 21"
+ }
+]

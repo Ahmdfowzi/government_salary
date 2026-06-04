@@ -35,7 +35,7 @@
    "fieldname": "qualification_level",
    "fieldtype": "Select",
    "label": "Qualification Level",
-   "options": "Primary\nSecondary\nDiploma\nBachelor\nHigher Diploma\nMaster\nDoctorate\nTrade / Craft",
+   "options": "None\nPrimary\nIntermediate\nSecondary\nDiploma\nHigher Diploma\nBachelor\nMaster\nDoctorate\nTrade / Craft",
    "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1

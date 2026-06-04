@@ -1,0 +1,70 @@
+[
+ {
+  "doctype": "Promotion Rule",
+  "name": "IRAQ-2015",
+  "rule_set": "IRAQ-2015",
+  "status": "Active",
+  "new_stage_policy": "Equal or Next Higher Stage",
+  "requires_vacancy": 1,
+  "requires_manager_recommendation": 1,
+  "requires_committee": 1,
+  "requires_higher_approval": 1,
+  "source_reference": "D1 table 9 + D2 table 5",
+  "durations": [
+   {
+    "doctype": "Promotion Grade Duration",
+    "from_grade": "10",
+    "to_grade": "9",
+    "years": 4
+   },
+   {
+    "doctype": "Promotion Grade Duration",
+    "from_grade": "9",
+    "to_grade": "8",
+    "years": 4
+   },
+   {
+    "doctype": "Promotion Grade Duration",
+    "from_grade": "8",
+    "to_grade": "7",
+    "years": 4
+   },
+   {
+    "doctype": "Promotion Grade Duration",
+    "from_grade": "7",
+    "to_grade": "6",
+    "years": 4
+   },
+   {
+    "doctype": "Promotion Grade Duration",
+    "from_grade": "6",
+    "to_grade": "5",
+    "years": 4
+   },
+   {
+    "doctype": "Promotion Grade Duration",
+    "from_grade": "5",
+    "to_grade": "4",
+    "years": 5
+   },
+   {
+    "doctype": "Promotion Grade Duration",
+    "from_grade": "4",
+    "to_grade": "3",
+    "years": 5
+   },
+   {
+    "doctype": "Promotion Grade Duration",
+    "from_grade": "3",
+    "to_grade": "2",
+    "years": 5
+   },
+   {
+    "doctype": "Promotion Grade Duration",
+    "from_grade": "2",
+    "to_grade": "1",
+    "years": 5
+   }
+  ]
+ }
+]

@@ -1,0 +1,49 @@
+[
+ {
+  "doctype": "Income Tax Bracket",
+  "name": "ITB-IRAQ-2015-1",
+  "rule_set": "IRAQ-2015",
+  "status": "Active",
+  "seq": 1,
+  "from_amount": 0,
+  "rate": 3.0,
+  "period": "Annual",
+  "source_reference": "Law 113/1982 Art. 13",
+  "to_amount": 250000
+ },
+ {
+  "doctype": "Income Tax Bracket",
+  "name": "ITB-IRAQ-2015-2",
+  "rule_set": "IRAQ-2015",
+  "status": "Active",
+  "seq": 2,
+  "from_amount": 250000,
+  "rate": 5.0,
+  "period": "Annual",
+  "source_reference": "Law 113/1982 Art. 13",
+  "to_amount": 500000
+ },
+ {
+  "doctype": "Income Tax Bracket",
+  "name": "ITB-IRAQ-2015-3",
+  "rule_set": "IRAQ-2015",
+  "status": "Active",
+  "seq": 3,
+  "from_amount": 500000,
+  "rate": 10.0,
+  "period": "Annual",
+  "source_reference": "Law 113/1982 Art. 13",
+  "to_amount": 1000000
+ },
+ {
+  "doctype": "Income Tax Bracket",
+  "name": "ITB-IRAQ-2015-4",
+  "rule_set": "IRAQ-2015",
+  "status": "Active",
+  "seq": 4,
+  "from_amount": 1000000,
+  "rate": 15.0,
+  "period": "Annual",
+  "source_reference": "Law 113/1982 Art. 13"
+ }
+]

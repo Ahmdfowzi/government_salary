@@ -1,0 +1,74 @@
+[
+ {
+  "doctype": "Government Rule Set",
+  "name": "IRAQ-2015",
+  "rule_set_code": "IRAQ-2015",
+  "rule_set_name": "سلم رواتب 2015 / Iraq Payroll Rules 2015",
+  "year": 2015,
+  "effective_from": "2015-01-01",
+  "effective_to": null,
+  "status": "Active",
+  "source_reference": "جريدة الوقائع العراقية - سلم 2015 (D1)",
+  "notes": "Active legal package for 2015 salary scale and related rules.",
+  "parameters": [
+   {
+    "doctype": "Rule Set Parameter",
+    "parameter_key": "pension_contribution_rate",
+    "parameter_label": "Pension Contribution Rate",
+    "value_type": "Percentage",
+    "value": "",
+    "confirmed": 0,
+    "notes": "PC-6: active-salary pension deduction rate"
+   },
+   {
+    "doctype": "Rule Set Parameter",
+    "parameter_key": "geographic_in_cap",
+    "parameter_label": "Geographic Allowance In 200% Cap",
+    "value_type": "Select",
+    "value": "Undecided",
+    "confirmed": 0,
+    "notes": "PC-5: whether geographic counts toward cap"
+   },
+   {
+    "doctype": "Rule Set Parameter",
+    "parameter_key": "cost_of_living_method",
+    "parameter_label": "Pension Cost-of-Living Method",
+    "value_type": "Select",
+    "value": "",
+    "confirmed": 0,
+    "notes": "PC-9: official method not yet decided"
+   },
+   {
+    "doctype": "Rule Set Parameter",
+    "parameter_key": "overtime_hourly_formula",
+    "parameter_label": "Overtime Hourly Formula",
+    "value_type": "Text",
+    "value": "",
+    "confirmed": 0,
+    "notes": "PC-10: hourly wage formula (max 3h/day)"
+   },
+   {
+    "doctype": "Rule Set Parameter",
+    "parameter_key": "extra_study_years_cap",
+    "parameter_label": "Extra Study Years Cap",
+    "value_type": "Int",
+    "value": "",
+    "confirmed": 0,
+    "notes": "PC-12: recognition authority + cap"
+   }
+  ]
+ },
+ {
+  "doctype": "Government Rule Set",
+  "name": "IRAQ-2008",
+  "rule_set_code": "IRAQ-2008",
+  "rule_set_name": "سلم رواتب 2008 / Iraq Payroll Rules 2008",
+  "year": 2008,
+  "effective_from": "2008-01-01",
+  "effective_to": "2014-12-31",
+  "status": "Archived",
+  "source_reference": "مذكور في D2",
+  "notes": "PC-1: full 2008 scale table not provided.",
+  "parameters": []
+ }
+]

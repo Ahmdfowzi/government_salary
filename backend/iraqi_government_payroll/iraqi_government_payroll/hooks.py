@@ -13,7 +13,9 @@ app_license = "MIT"
 
 # Fixtures
 # ------------------
-# Roles are shipped as a fixture so RBAC is reproducible across sites.
+# Roles + the versioned legal rule set are shipped as fixtures so RBAC and the
+# IRAQ-2015 rule package are reproducible across sites. Order matters on import:
+# Government Rule Set must load before the rule members that link to it.
 fixtures = [
 	{"dt": "Role", "filters": [["role_name", "in", [
 		"Payroll Administrator",
@@ -23,6 +25,17 @@ fixtures = [
 		"Finance User",
 		"Auditor",
 	]]]},
+	"Government Rule Set",
+	"Government Salary Scale",
+	"Qualification Appointment Rule",
+	"Allowance Rule",
+	"Income Tax Bracket",
+	"Tax Allowance Rule",
+	"Pension Rule",
+	"Promotion Rule",
+	"Annual Increment Rule",
+	"Geographic Area",
+	"Government Payroll Settings",
 ]
 
 # Document Events (Phase 2)

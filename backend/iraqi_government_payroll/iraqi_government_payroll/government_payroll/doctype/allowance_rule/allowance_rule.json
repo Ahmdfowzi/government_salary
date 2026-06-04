@@ -66,8 +66,8 @@
    "fieldname": "match_key",
    "fieldtype": "Select",
    "label": "Match Key",
-   "options": "\nQualification\nPosition\nJob Category\nGlobal",
-   "description": "Dimension this component is keyed on (e.g. certificate by Qualification)"
+   "options": "\nQualification\nPosition Allowance Category\nRisk Category\nFamily\nOvertime\nDeduction\nPension Certificate",
+   "description": "Standardized dimension this component is keyed on"
   },
   {
    "fieldname": "match_value",
