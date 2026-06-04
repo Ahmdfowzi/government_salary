@@ -108,6 +108,7 @@ export interface GovernmentEmployeePayrollProfile {
   government_position?: string;
   employment_type?: "Permanent" | "Contract" | "Daily Wage" | "Temporary";
   bank_account?: string;
+  grade_code?: string;
   current_grade: number;
   current_stage: number;
   basic_salary?: number;

@@ -19,7 +19,9 @@ from iraqi_government_payroll.services.payroll_engine.engine import (  # noqa: E
 	DataContext, EmployeeInput, calculate_active_salary,
 )
 from iraqi_government_payroll.services.payroll_engine.rule_resolver import resolve_rule_set  # noqa: E402
-from iraqi_government_payroll.services.payroll_engine.scale_resolver import get_basic_salary  # noqa: E402
+from iraqi_government_payroll.services.payroll_engine.scale_resolver import (  # noqa: E402
+	get_basic_salary, resolve_grade_code,
+)
 from iraqi_government_payroll.services.payroll_engine.types import (  # noqa: E402
 	PayrollError, AllowanceLine, ENGINE_VERSION,
 )
@@ -103,7 +105,8 @@ class TestCertificateNoMatch(unittest.TestCase):
 
 
 class TestCap(unittest.TestCase):
-	def test_cap_applies_when_exceeded(self):
+	def test_cap_limits_capped_allowances_to_200pct_of_basic(self):
+		# 200% cap: total CAPPED allowances may not exceed 200% of basic (2 x basic).
 		basic = 100000
 		lines = [
 			AllowanceLine("A", "A", "Earning", "Qualification", 150000, basic, 150, capped=True),
@@ -111,7 +114,7 @@ class TestCap(unittest.TestCase):
 			AllowanceLine("F", "F", "Earning", "Family", 50000, 0, None, capped=False),
 		]
 		allowed, non_capped, excluded, warns = apply_200_cap(lines, basic)
-		self.assertEqual(allowed, 200000)        # 200% of 100000
+		self.assertEqual(allowed, 200000)        # 200% of 100000 (= 2 x basic)
 		self.assertEqual(non_capped, 50000)
 		self.assertEqual(excluded, 70000)        # 270000 - 200000
 		self.assertTrue(warns)
@@ -184,6 +187,36 @@ class TestSnapshotPayload(unittest.TestCase):
 		self.assertTrue(all("component_code" in ln and "amount" in ln for ln in p["lines"]))
 		json.loads(p["input_snapshot"])                   # valid JSON
 		json.loads(p["output_snapshot"])
+
+
+class TestGradeCodeResolution(unittest.TestCase):
+	def test_regular_grade_uses_grade_code(self):
+		# grade_code is authoritative even if current_grade differs
+		self.assertEqual(resolve_grade_code("7", 5), "7")
+		self.assertEqual(resolve_grade_code("10", 2), "10")
+
+	def test_senior_grade_code(self):
+		self.assertEqual(resolve_grade_code("SPECIAL_A", None), "SPECIAL_A")
+		self.assertEqual(resolve_grade_code("SPECIAL_C", 0), "SPECIAL_C")
+
+	def test_fallback_to_current_grade_only_when_missing(self):
+		self.assertEqual(resolve_grade_code("", 7), "7")
+		self.assertEqual(resolve_grade_code(None, 10), "10")
+
+	def test_no_grade_at_all_raises(self):
+		with self.assertRaises(PayrollError):
+			resolve_grade_code("", None)
+
+
+class TestSeniorGradeEngine(unittest.TestCase):
+	def test_special_a_grade_engine(self):
+		# Senior grade resolved via grade_code SPECIAL_A; no qualification -> cert 0
+		gc = resolve_grade_code("SPECIAL_A", None)
+		emp = EmployeeInput(grade_code=gc, stage=1, period_date="2020-06-01")
+		r = calculate_active_salary(ctx(), emp)
+		self.assertEqual(r.grade_code, "SPECIAL_A")
+		self.assertEqual(r.basic_salary, 2413000)
+		self.assertEqual(r.gross_salary, 2413000)
 
 
 if __name__ == "__main__":

@@ -20,7 +20,15 @@ Certificate no-match -> allowance 0 + note (no error).
 from ..payroll_engine.types import AllowanceLine
 
 ACTIVE_CTX = ("Active", "Both")
-CAP_MULTIPLIER = 2.0  # 200% of basic salary — legal cap (D1/D2; rules.allowance_cap = 2.0)
+
+# 200% cap (D1/D2 legal source: "مجموع المخصصات الخاضعة للسقف لا يجوز أن يتجاوز
+# 200% من الراتب الاسمي" — the sum of CAPPED allowances may not exceed 200% of
+# basic salary). Therefore:
+#   * cap base               = basic salary
+#   * max total CAPPED allowances allowed = 200% of basic salary = 2 x basic
+#   * basic salary itself is NOT subject to the cap
+# Implementation is intentionally kept at 2 x basic (CAP_MULTIPLIER = 2.0).
+CAP_MULTIPLIER = 2.0
 
 
 def _value_of(rule):
@@ -155,7 +163,12 @@ def resolve_active_allowances(rules, emp, basic):
 
 
 def apply_200_cap(lines, basic):
-	"""Apply the 200%-of-basic cap to capped lines.
+	"""Apply the 200%-of-basic cap to capped allowance lines.
+
+	200% cap interpretation (implemented): the sum of capped allowances may not
+	exceed 200% of basic salary (max = 2 x basic). Basic salary is the cap base
+	and is not itself capped. When the cap binds, the allowed capped total is
+	clamped to 2 x basic and the remainder is reported as ``excluded_amount``.
 
 	Returns (allowed_capped_total, non_capped_total, excluded_amount, warnings).
 	Marks cap_applied=True on capped lines when the cap binds.

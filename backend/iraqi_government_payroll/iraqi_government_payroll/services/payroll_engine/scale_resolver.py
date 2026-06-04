@@ -9,6 +9,20 @@ grade_code is the canonical key:
 from .types import PayrollError
 
 
+def resolve_grade_code(grade_code, current_grade=None):
+	"""Return the canonical grade_code, falling back to current_grade only if empty.
+
+	grade_code (Select on the profile) is authoritative and supports senior grades
+	(SPECIAL_A/B/C). current_grade (legacy Int) is used only when grade_code is
+	empty, and only represents regular grades.
+	"""
+	if grade_code not in (None, ""):
+		return str(grade_code)
+	if current_grade in (None, ""):
+		raise PayrollError("Employee has neither grade_code nor current_grade set")
+	return str(current_grade)
+
+
 def get_active_scale(scales, rule_set_code):
 	"""Return the active salary scale for a rule set (falls back to the only scale)."""
 	cands = [s for s in scales if s.get("rule_set") == rule_set_code and s.get("is_active")]

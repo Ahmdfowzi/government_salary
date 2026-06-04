@@ -20,6 +20,7 @@
   "employment_type",
   "bank_account",
   "section_break_grade",
+  "grade_code",
   "current_grade",
   "current_stage",
   "basic_salary",
@@ -134,11 +135,20 @@
    "label": "Current Grade & Stage"
   },
   {
+   "fieldname": "grade_code",
+   "fieldtype": "Select",
+   "label": "Grade Code",
+   "options": "\n10\n9\n8\n7\n6\n5\n4\n3\n2\n1\nSPECIAL_A\nSPECIAL_B\nSPECIAL_C",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Canonical grade key used by the engine. Falls back to current_grade for regular grades if empty."
+  },
+  {
    "fieldname": "current_grade",
    "fieldtype": "Int",
-   "label": "Current Grade",
+   "label": "Current Grade (legacy)",
    "reqd": 1,
-   "in_list_view": 1
+   "description": "Legacy/display value for regular grades; the engine uses grade_code."
   },
   {
    "fieldname": "current_stage",

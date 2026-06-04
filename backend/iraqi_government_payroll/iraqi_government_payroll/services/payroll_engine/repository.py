@@ -8,6 +8,7 @@ bench.
 """
 
 from .engine import DataContext, EmployeeInput, calculate_active_salary
+from .scale_resolver import resolve_grade_code
 
 
 def load_context() -> "DataContext":
@@ -40,14 +41,14 @@ def load_context() -> "DataContext":
 def calculate_for_profile(profile_name, period_date):
 	"""Convenience entry point: compute active salary for an employee profile.
 
-	NOTE: grade_code is derived as str(current_grade) for regular grades; senior
-	grades require a grade_code on the profile (Phase 2 follow-up).
+	Uses profile.grade_code as the canonical key (supports senior grades), and
+	falls back to str(current_grade) only when grade_code is empty.
 	"""
 	import frappe
 
 	p = frappe.get_doc("Government Employee Payroll Profile", profile_name)
 	emp = EmployeeInput(
-		grade_code=str(p.current_grade),
+		grade_code=resolve_grade_code(p.get("grade_code"), p.get("current_grade")),
 		stage=p.current_stage,
 		period_date=period_date,
 		qualification=p.qualification,
