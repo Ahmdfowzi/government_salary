@@ -21,6 +21,7 @@
   "column_break_version",
   "salary_slip",
   "payroll_period",
+  "source_request",
   "section_break_context",
   "grade",
   "grade_code",
@@ -125,6 +126,12 @@
    "fieldtype": "Link",
    "label": "Payroll Period Reference",
    "options": "Payroll Period"
+  },
+  {
+   "fieldname": "source_request",
+   "fieldtype": "Data",
+   "label": "Source Request",
+   "description": "Originating request (e.g. increment/promotion) — used for idempotency"
   },
   {
    "fieldname": "section_break_context",

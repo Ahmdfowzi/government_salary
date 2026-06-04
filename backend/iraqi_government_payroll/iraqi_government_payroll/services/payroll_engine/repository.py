@@ -129,8 +129,14 @@ def compute_salary_slip(slip):
 
 
 def write_salary_slip_snapshot(slip):
-	"""Compute the slip again and persist an immutable Salary Slip snapshot."""
+	"""Compute the slip again and persist an immutable Salary Slip snapshot (once)."""
+	import frappe
 	from ..audit.audit_service import build_net_salary_snapshot_payload, write_payload
+
+	# Idempotency guard: one Salary Slip snapshot per slip.
+	if frappe.db.exists("Payroll Calculation Snapshot",
+						{"salary_slip": slip.name, "calculation_type": "Salary Slip"}):
+		return None
 
 	res = compute_salary_slip(slip)
 	payload = build_net_salary_snapshot_payload(res, employee_profile=slip.employee_profile,
@@ -143,6 +149,11 @@ def apply_increment(request):
 	import frappe
 	from ..increment.increment_service import compute_increment
 	from ..audit.audit_service import build_increment_snapshot_payload, write_payload
+
+	# Idempotency guard: do not apply the same request twice.
+	if frappe.db.exists("Payroll Calculation Snapshot",
+						{"calculation_type": "Annual Increment", "source_request": request.name}):
+		frappe.throw("This increment request has already been applied.")
 
 	profile = frappe.get_doc("Government Employee Payroll Profile", request.employee_profile)
 	rule = (frappe.get_doc("Annual Increment Rule", profile.rule_set).as_dict()
@@ -174,6 +185,11 @@ def apply_promotion(request):
 	import frappe
 	from ..promotion.promotion_service import compute_promotion
 	from ..audit.audit_service import build_promotion_snapshot_payload, write_payload
+
+	# Idempotency guard: do not apply the same request twice.
+	if frappe.db.exists("Payroll Calculation Snapshot",
+						{"calculation_type": "Promotion", "source_request": request.name}):
+		frappe.throw("This promotion request has already been applied.")
 
 	profile = frappe.get_doc("Government Employee Payroll Profile", request.employee_profile)
 	promotion_rule = frappe.get_doc("Promotion Rule", profile.rule_set).as_dict()

@@ -48,10 +48,27 @@ def build_snapshot_payload(result, employee_input=None, employee_profile=None,
 	}
 
 
+def snapshot_is_duplicate(existing, *, calculation_type, salary_slip=None, source_request=None):
+	"""Pure dedup predicate: True if a matching snapshot already exists.
+
+	`existing` is an iterable of snapshot-like dicts. Mirrors the frappe.db.exists
+	guard used in the repository so the rule is unit-testable without a bench.
+	"""
+	for s in existing or []:
+		if s.get("calculation_type") != calculation_type:
+			continue
+		if salary_slip is not None and s.get("salary_slip") == salary_slip:
+			return True
+		if source_request is not None and s.get("source_request") == source_request:
+			return True
+	return False
+
+
 def build_generic_snapshot_payload(calculation_type, *, rule_set, engine_version,
 								   period_date=None, gross_amount=0, total_deductions=0,
 								   net_amount=0, lines=None, input_obj=None, output_obj=None,
-								   employee_profile=None, grade_code="", stage=0):
+								   employee_profile=None, grade_code="", stage=0,
+								   source_request=None):
 	"""Build a snapshot payload for non-active-salary calculations.
 
 	Supports calculation_type "Tax", "Pension Deduction" and "Retirement Pension".
@@ -85,6 +102,7 @@ def build_generic_snapshot_payload(calculation_type, *, rule_set, engine_version
 		"gross_amount": gross_amount,
 		"total_deductions": total_deductions,
 		"net_amount": net_amount,
+		"source_request": source_request,
 		"input_snapshot": json.dumps(input_obj or {}, ensure_ascii=False, default=str),
 		"output_snapshot": json.dumps(output_obj or {}, ensure_ascii=False, default=str),
 		"lines": snapshot_lines,
@@ -178,6 +196,7 @@ def build_profile_change_snapshot_payload(calculation_type, result, employee_pro
 		employee_profile=employee_profile,
 		grade_code=result.new_state.get("grade_code", ""),
 		stage=result.new_state.get("current_stage", 0),
+		source_request=source_request,
 	)
 
 
