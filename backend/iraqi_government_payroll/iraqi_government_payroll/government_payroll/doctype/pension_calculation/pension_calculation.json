@@ -13,6 +13,8 @@
   "column_break_header",
   "calculation_date",
   "status",
+  "rule_set",
+  "period_date",
   "amended_from",
   "section_break_service",
   "service_years",
@@ -21,6 +23,7 @@
   "column_break_service",
   "accrual_rate",
   "last_functional_salary",
+  "last_full_salary",
   "section_break_result",
   "initial_pension",
   "approved_pension",
@@ -28,7 +31,11 @@
   "cost_of_living",
   "column_break_result",
   "gross_pension",
+  "taxable_income",
+  "legal_allowances",
+  "annual_tax",
   "monthly_tax",
+  "other_deductions",
   "net_pension",
   "end_of_service_bonus",
   "section_break_remarks",
@@ -80,6 +87,19 @@
    "in_standard_filter": 1
   },
   {
+   "fieldname": "rule_set",
+   "fieldtype": "Link",
+   "label": "Rule Set",
+   "options": "Government Rule Set",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "period_date",
+   "fieldtype": "Date",
+   "label": "Period Date",
+   "description": "Date used to resolve the applicable rule set"
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -126,7 +146,15 @@
    "fieldname": "last_functional_salary",
    "fieldtype": "Currency",
    "label": "Last Functional Salary",
-   "options": "IQD"
+   "options": "IQD",
+   "description": "Last salary WITHOUT allowances (100% pension cap base)"
+  },
+  {
+   "fieldname": "last_full_salary",
+   "fieldtype": "Currency",
+   "label": "Last Full Salary",
+   "options": "IQD",
+   "description": "Last salary WITH allowances (end-of-service bonus base)"
   },
   {
    "fieldname": "section_break_result",
@@ -173,11 +201,38 @@
    "read_only": 1
   },
   {
+   "fieldname": "taxable_income",
+   "fieldtype": "Currency",
+   "label": "Taxable Income (Annual)",
+   "options": "IQD",
+   "read_only": 1
+  },
+  {
+   "fieldname": "legal_allowances",
+   "fieldtype": "Currency",
+   "label": "Legal Allowances (Annual)",
+   "options": "IQD",
+   "read_only": 1
+  },
+  {
+   "fieldname": "annual_tax",
+   "fieldtype": "Currency",
+   "label": "Annual Tax",
+   "options": "IQD",
+   "read_only": 1
+  },
+  {
    "fieldname": "monthly_tax",
    "fieldtype": "Currency",
    "label": "Monthly Tax",
    "options": "IQD",
    "read_only": 1
+  },
+  {
+   "fieldname": "other_deductions",
+   "fieldtype": "Currency",
+   "label": "Other Deductions",
+   "options": "IQD"
   },
   {
    "fieldname": "net_pension",

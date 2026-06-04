@@ -59,3 +59,22 @@ def calculate_for_profile(profile_name, period_date):
 		children_count=p.eligible_children_count or 0,
 	)
 	return calculate_active_salary(load_context(), emp)
+
+
+def load_pension_rule_data(rule_set_code):
+	"""Load (pension_rule, certificate_rules, tax_brackets) for a rule set from Frappe."""
+	import frappe
+
+	pension_rule = frappe.get_doc("Pension Rule", rule_set_code).as_dict()
+	certificate_rules = frappe.get_all(
+		"Allowance Rule",
+		filters={"rule_set": rule_set_code, "match_key": "Pension Certificate"},
+		fields=["component_code", "match_key", "match_value", "percentage", "confirmed"],
+	)
+	tax_brackets = frappe.get_all(
+		"Income Tax Bracket",
+		filters={"rule_set": rule_set_code},
+		fields=["seq", "from_amount", "to_amount", "rate"],
+	)
+	return pension_rule, certificate_rules, tax_brackets
+
