@@ -8,7 +8,7 @@ bench.
 """
 
 from .engine import DataContext, EmployeeInput, calculate_active_salary
-from .scale_resolver import resolve_grade_code
+from .scale_resolver import resolve_grade_code, get_active_scale
 from .net_salary import compute_net_salary
 
 
@@ -136,6 +136,71 @@ def write_salary_slip_snapshot(slip):
 	payload = build_net_salary_snapshot_payload(res, employee_profile=slip.employee_profile,
 											   salary_slip=slip.name)
 	return write_payload(payload)
+
+
+def apply_increment(request):
+	"""Apply an Annual Increment Request to its employee profile + write snapshot."""
+	import frappe
+	from ..increment.increment_service import compute_increment
+	from ..audit.audit_service import build_increment_snapshot_payload, write_payload
+
+	profile = frappe.get_doc("Government Employee Payroll Profile", request.employee_profile)
+	rule = (frappe.get_doc("Annual Increment Rule", profile.rule_set).as_dict()
+			if frappe.db.exists("Annual Increment Rule", profile.rule_set) else {})
+	effective_date = request.get("due_date") or frappe.utils.today()
+	gc = resolve_grade_code(profile.get("grade_code"), profile.get("current_grade"))
+
+	res = compute_increment(
+		{"grade_code": gc, "current_stage": profile.current_stage,
+		 "current_stage_date": str(profile.current_stage_date) if profile.current_stage_date else None},
+		rule, str(effective_date), rule_set=profile.rule_set)
+
+	if not res.applied:
+		frappe.throw("; ".join(res.warnings) or "Increment not applicable.")
+
+	for k, v in res.profile_mutation.items():
+		profile.set(k, v)
+	profile.save()
+
+	request.current_stage = res.old_state["current_stage"]
+	request.new_stage = res.new_state["current_stage"]
+	write_payload(build_increment_snapshot_payload(res, employee_profile=profile.name,
+												  source_request=request.name))
+	return res
+
+
+def apply_promotion(request):
+	"""Apply a Promotion Request to its employee profile + write snapshot."""
+	import frappe
+	from ..promotion.promotion_service import compute_promotion
+	from ..audit.audit_service import build_promotion_snapshot_payload, write_payload
+
+	profile = frappe.get_doc("Government Employee Payroll Profile", request.employee_profile)
+	promotion_rule = frappe.get_doc("Promotion Rule", profile.rule_set).as_dict()
+	effective_date = request.get("due_date") or frappe.utils.today()
+	gc = resolve_grade_code(profile.get("grade_code"), profile.get("current_grade"))
+
+	scale = get_active_scale(load_context().scales, profile.rule_set)
+	res = compute_promotion(
+		{"grade_code": gc, "current_stage": profile.current_stage,
+		 "current_grade_date": str(profile.current_grade_date) if profile.current_grade_date else None},
+		promotion_rule, scale.get("details", []), str(effective_date), rule_set=profile.rule_set)
+
+	if not res.applied:
+		frappe.throw("; ".join(res.warnings) or "Promotion not applicable.")
+
+	for k, v in res.profile_mutation.items():
+		profile.set(k, v)
+	profile.save()
+
+	request.from_grade = res.old_state["grade_code"] if str(res.old_state["grade_code"]).isdigit() else 0
+	request.to_grade = int(res.to_grade) if str(res.to_grade).isdigit() else 0
+	request.proposed_stage = res.new_stage
+	request.old_salary = res.old_salary
+	request.new_salary = res.new_salary
+	write_payload(build_promotion_snapshot_payload(res, employee_profile=profile.name,
+												  source_request=request.name))
+	return res
 
 
 def load_pension_rule_data(rule_set_code):

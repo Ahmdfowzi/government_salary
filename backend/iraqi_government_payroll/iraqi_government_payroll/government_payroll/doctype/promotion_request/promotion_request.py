@@ -28,6 +28,8 @@ V4. on_submit -> apply to profile + write Payroll Calculation Snapshot.
 
 from frappe.model.document import Document
 
+from iraqi_government_payroll.services.payroll_engine import repository
+
 
 class PromotionRequest(Document):
 	def validate(self):
@@ -35,5 +37,5 @@ class PromotionRequest(Document):
 		pass
 
 	def on_submit(self):
-		# TODO(Phase 2): apply promotion to the profile + write audit log (V4).
-		pass
+		# M6: apply the promotion to the employee profile + write an immutable snapshot.
+		repository.apply_promotion(self)

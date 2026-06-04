@@ -27,6 +27,8 @@ V4. on_submit -> apply to profile + write Payroll Calculation Snapshot; no doubl
 
 from frappe.model.document import Document
 
+from iraqi_government_payroll.services.payroll_engine import repository
+
 
 class AnnualIncrementRequest(Document):
 	def validate(self):
@@ -34,5 +36,5 @@ class AnnualIncrementRequest(Document):
 		pass
 
 	def on_submit(self):
-		# TODO(Phase 2): apply increment to the profile + write audit log (V4).
-		pass
+		# M6: apply the increment to the employee profile + write an immutable snapshot.
+		repository.apply_increment(self)

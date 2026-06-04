@@ -155,6 +155,42 @@ def build_net_salary_snapshot_payload(result, employee_profile=None, salary_slip
 	return payload
 
 
+def build_profile_change_snapshot_payload(calculation_type, result, employee_profile=None,
+										  source_request=None):
+	"""Snapshot for a profile-mutating calculation (Annual Increment / Promotion).
+
+	Captures old + new profile state, rule_set, engine_version, effective_date and
+	the source request. No monetary totals (these change inputs, not pay).
+	"""
+	return build_generic_snapshot_payload(
+		calculation_type,
+		rule_set=result.rule_set,
+		engine_version=result.engine_version,
+		period_date=result.effective_date,
+		gross_amount=0,
+		total_deductions=0,
+		net_amount=0,
+		lines=[],
+		input_obj={"old_state": result.old_state, "source_request": source_request,
+				   "effective_date": result.effective_date},
+		output_obj={"new_state": result.new_state, "applied": result.applied,
+					"warnings": result.warnings, **result.to_dict()},
+		employee_profile=employee_profile,
+		grade_code=result.new_state.get("grade_code", ""),
+		stage=result.new_state.get("current_stage", 0),
+	)
+
+
+def build_increment_snapshot_payload(result, employee_profile=None, source_request=None):
+	return build_profile_change_snapshot_payload("Annual Increment", result,
+												employee_profile, source_request)
+
+
+def build_promotion_snapshot_payload(result, employee_profile=None, source_request=None):
+	return build_profile_change_snapshot_payload("Promotion", result,
+												employee_profile, source_request)
+
+
 def write_payload(payload):
 	"""Generic immutable-snapshot insert path (Active Salary / Tax / Pension Deduction /
 	Retirement Pension / Salary Slip). Returns the snapshot name."""
