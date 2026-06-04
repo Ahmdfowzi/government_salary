@@ -53,8 +53,8 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Open\nCalculating\nReview\nApproved\nLocked",
-   "default": "Open",
+   "options": "Draft\nOpen\nClosed",
+   "default": "Draft",
    "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1

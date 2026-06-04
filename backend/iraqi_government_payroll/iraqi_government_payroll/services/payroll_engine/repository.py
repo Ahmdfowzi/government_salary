@@ -203,6 +203,76 @@ def apply_promotion(request):
 	return res
 
 
+class FrappeSlipStore:
+	"""Slip store backed by Frappe — upserts DRAFT Salary Slips idempotently.
+
+	The Salary Slip recomputes its own fields on save (M5 controller); this store
+	only ensures one draft slip per (period, employee) and never submits.
+	"""
+
+	def upsert(self, period, run, employee, rule_set, result):
+		import frappe
+
+		existing = frappe.db.get_value(
+			"Salary Slip",
+			{"employee_profile": employee, "payroll_period": period, "docstatus": 0},
+			"name")
+		if existing:
+			doc = frappe.get_doc("Salary Slip", existing)
+			doc.payroll_run = run
+			doc.save()                         # validate() recomputes fields
+			return doc.name, False
+		doc = frappe.new_doc("Salary Slip")
+		doc.employee_profile = employee
+		doc.payroll_period = period
+		doc.payroll_run = run
+		doc.insert()                           # validate() computes fields; not submitted
+		return doc.name, True
+
+
+def run_payroll(run):
+	"""Execute a Payroll Run: build draft slips for eligible profiles + tally results."""
+	import frappe
+	from .payroll_run import run_payroll_batch, STATUS_PROCESSING
+
+	run.run_status = STATUS_PROCESSING
+	run.started_at = frappe.utils.now()
+	run.save()
+
+	rule_set = run.rule_set
+	filters = {"status": "Active"}
+	if run.scope == "Employee" and run.scope_reference:
+		filters["name"] = run.scope_reference
+	elif run.scope == "Government Entity" and run.scope_reference:
+		filters["government_entity"] = run.scope_reference
+	if rule_set:
+		filters["rule_set"] = rule_set
+
+	profiles = frappe.get_all(
+		"Government Employee Payroll Profile", filters=filters,
+		fields=["name", "grade_code", "current_grade", "current_stage", "qualification",
+				"risk_allowance_applicable", "risk_category", "marital_status",
+				"eligible_children_count", "rule_set"])
+
+	period_date = frappe.db.get_value("Payroll Period", run.payroll_period, "start_date") \
+		or frappe.utils.today()
+
+	res = run_payroll_batch(run.payroll_period, run.name, rule_set, profiles,
+							load_context(), FrappeSlipStore(), str(period_date))
+
+	run.run_status = res.status
+	run.total_employees = res.total_employees
+	run.processed_count = res.processed_count
+	run.success_count = res.success_count
+	run.warning_count = res.warning_count
+	run.error_count = res.error_count
+	run.finished_at = frappe.utils.now()
+	run.error_log = "\n".join(res.error_log)
+	run.run_date = frappe.utils.now()
+	run.save()
+	return res
+
+
 def load_pension_rule_data(rule_set_code):
 	"""Load (pension_rule, certificate_rules, tax_brackets) for a rule set from Frappe."""
 	import frappe

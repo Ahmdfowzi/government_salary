@@ -13,7 +13,18 @@
   "scope",
   "scope_reference",
   "run_status",
-  "run_date"
+  "run_date",
+  "section_break_results",
+  "total_employees",
+  "processed_count",
+  "success_count",
+  "column_break_results",
+  "warning_count",
+  "error_count",
+  "section_break_timing",
+  "started_at",
+  "finished_at",
+  "error_log"
  ],
  "fields": [
   {
@@ -62,7 +73,7 @@
    "fieldname": "run_status",
    "fieldtype": "Select",
    "label": "Run Status",
-   "options": "Draft\nQueued\nCompleted\nFailed",
+   "options": "Draft\nProcessing\nCompleted\nCompleted With Warnings\nFailed",
    "default": "Draft",
    "in_list_view": 1,
    "in_standard_filter": 1
@@ -71,6 +82,69 @@
    "fieldname": "run_date",
    "fieldtype": "Datetime",
    "label": "Run Date"
+  },
+  {
+   "fieldname": "section_break_results",
+   "fieldtype": "Section Break",
+   "label": "Results"
+  },
+  {
+   "fieldname": "total_employees",
+   "fieldtype": "Int",
+   "label": "Total Employees",
+   "read_only": 1
+  },
+  {
+   "fieldname": "processed_count",
+   "fieldtype": "Int",
+   "label": "Processed Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "success_count",
+   "fieldtype": "Int",
+   "label": "Success Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_results",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "warning_count",
+   "fieldtype": "Int",
+   "label": "Warning Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_count",
+   "fieldtype": "Int",
+   "label": "Error Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_timing",
+   "fieldtype": "Section Break",
+   "label": "Timing & Log"
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finished_at",
+   "fieldtype": "Datetime",
+   "label": "Finished At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_log",
+   "fieldtype": "Code",
+   "label": "Error Log",
+   "options": "Text",
+   "read_only": 1
   }
  ],
  "links": [],
