@@ -1,0 +1,16 @@
+[project]
+name = "iraqi_government_payroll"
+version = "0.0.1"
+description = "Production payroll system for Iraqi government employees."
+authors = [{ name = "Iraqi Government Payroll" }]
+requires-python = ">=3.10"
+readme = "README.md"
+license = "MIT"
+dependencies = []
+
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.module]
+name = "iraqi_government_payroll"

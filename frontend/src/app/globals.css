@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f7f8fa;
+  --foreground: #0f172a;
+}
+
+html {
+  /* RTL document; Arabic UI. */
+  direction: rtl;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-cairo), system-ui, sans-serif;
+}
+
+/* Always render digits as Western/English numerals, even inside Arabic text. */
+.num,
+input,
+table {
+  font-feature-settings: "lnum" 1;
+  -moz-font-feature-settings: "lnum";
+}
+
+/* Numbers read left-to-right even within an RTL block. */
+.num {
+  direction: ltr;
+  unicode-bidi: embed;
+  display: inline-block;
+}

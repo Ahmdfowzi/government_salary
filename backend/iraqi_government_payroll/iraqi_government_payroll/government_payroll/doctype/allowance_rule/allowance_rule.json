@@ -1,0 +1,184 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:component_code",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "component_code",
+  "component_name",
+  "allowance_type",
+  "context",
+  "column_break_calc",
+  "calculation_type",
+  "basis",
+  "percentage",
+  "fixed_amount",
+  "section_break_cap",
+  "capped_under_200",
+  "requires_decision",
+  "min_value",
+  "max_value",
+  "section_break_validity",
+  "effective_from",
+  "effective_to",
+  "column_break_validity",
+  "source_reference",
+  "confirmed",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "component_code",
+   "fieldtype": "Data",
+   "label": "Component Code",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "component_name",
+   "fieldtype": "Data",
+   "label": "Component Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "allowance_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Earning\nDeduction",
+   "default": "Earning",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "context",
+   "fieldtype": "Select",
+   "label": "Context",
+   "options": "Active\nPension\nBoth",
+   "default": "Active",
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "description": "Certificate allowance differs between active salary and pension"
+  },
+  {
+   "fieldname": "column_break_calc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "calculation_type",
+   "fieldtype": "Select",
+   "label": "Calculation Type",
+   "options": "Percentage\nFixed",
+   "default": "Percentage",
+   "reqd": 1
+  },
+  {
+   "fieldname": "basis",
+   "fieldtype": "Select",
+   "label": "Basis",
+   "options": "Basic\nPension Base\nNone",
+   "default": "Basic",
+   "description": "All percentages are computed on Basic salary only, never on gross"
+  },
+  {
+   "fieldname": "percentage",
+   "fieldtype": "Percent",
+   "label": "Percentage",
+   "depends_on": "eval:doc.calculation_type=='Percentage'"
+  },
+  {
+   "fieldname": "fixed_amount",
+   "fieldtype": "Currency",
+   "label": "Fixed Amount",
+   "options": "IQD",
+   "depends_on": "eval:doc.calculation_type=='Fixed'"
+  },
+  {
+   "fieldname": "section_break_cap",
+   "fieldtype": "Section Break",
+   "label": "Cap & Constraints"
+  },
+  {
+   "fieldname": "capped_under_200",
+   "fieldtype": "Select",
+   "label": "Subject to 200% Cap",
+   "options": "Yes\nNo\nUndecided",
+   "default": "Undecided"
+  },
+  {
+   "fieldname": "requires_decision",
+   "fieldtype": "Check",
+   "label": "Requires Administrative Decision",
+   "default": "0"
+  },
+  {
+   "fieldname": "min_value",
+   "fieldtype": "Percent",
+   "label": "Min Value"
+  },
+  {
+   "fieldname": "max_value",
+   "fieldtype": "Percent",
+   "label": "Max Value"
+  },
+  {
+   "fieldname": "section_break_validity",
+   "fieldtype": "Section Break",
+   "label": "Validity & Source"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From"
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "label": "Effective To"
+  },
+  {
+   "fieldname": "column_break_validity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source_reference",
+   "fieldtype": "Data",
+   "label": "Source Reference"
+  },
+  {
+   "fieldname": "confirmed",
+   "fieldtype": "Check",
+   "label": "Legally Confirmed",
+   "default": "0",
+   "description": "Unchecked = value is provisional / pending official figure"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "default": "1"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Allowance Rule",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "HR User", "read": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

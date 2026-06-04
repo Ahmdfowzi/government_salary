@@ -1,0 +1,234 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:employee_number",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee_number",
+  "employee_name",
+  "status",
+  "column_break_identity",
+  "salary_law",
+  "qualification",
+  "specialization",
+  "section_break_grade",
+  "current_grade",
+  "current_stage",
+  "basic_salary",
+  "column_break_grade",
+  "appointment_grade",
+  "appointment_stage",
+  "appointment_date",
+  "section_break_dates",
+  "last_increment_date",
+  "next_increment_date",
+  "column_break_dates",
+  "last_promotion_date",
+  "next_promotion_eligible_date",
+  "section_break_family",
+  "marital_status",
+  "eligible_children_count",
+  "column_break_family",
+  "geographic_area",
+  "risk_allowance_applicable",
+  "risk_category",
+  "section_break_protection",
+  "protected_salary_difference"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee_number",
+   "fieldtype": "Data",
+   "label": "Employee Number",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nSuspended\nRetired\nTransferred",
+   "default": "Active",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "salary_law",
+   "fieldtype": "Link",
+   "label": "Salary Law",
+   "options": "Government Salary Law",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "qualification",
+   "fieldtype": "Select",
+   "label": "Qualification",
+   "options": "Primary\nSecondary\nDiploma\nBachelor\nHigher Diploma\nMaster\nDoctorate\nTrade / Craft"
+  },
+  {
+   "fieldname": "specialization",
+   "fieldtype": "Data",
+   "label": "Specialization"
+  },
+  {
+   "fieldname": "section_break_grade",
+   "fieldtype": "Section Break",
+   "label": "Current Grade & Stage"
+  },
+  {
+   "fieldname": "current_grade",
+   "fieldtype": "Int",
+   "label": "Current Grade",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "current_stage",
+   "fieldtype": "Int",
+   "label": "Current Stage",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "basic_salary",
+   "fieldtype": "Currency",
+   "label": "Basic Salary",
+   "options": "IQD",
+   "read_only": 1,
+   "description": "Resolved by the engine from the salary scale (read-only)"
+  },
+  {
+   "fieldname": "column_break_grade",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "appointment_grade",
+   "fieldtype": "Int",
+   "label": "Appointment Grade"
+  },
+  {
+   "fieldname": "appointment_stage",
+   "fieldtype": "Int",
+   "label": "Appointment Stage"
+  },
+  {
+   "fieldname": "appointment_date",
+   "fieldtype": "Date",
+   "label": "Appointment Date"
+  },
+  {
+   "fieldname": "section_break_dates",
+   "fieldtype": "Section Break",
+   "label": "Increment & Promotion Dates"
+  },
+  {
+   "fieldname": "last_increment_date",
+   "fieldtype": "Date",
+   "label": "Last Increment Date"
+  },
+  {
+   "fieldname": "next_increment_date",
+   "fieldtype": "Date",
+   "label": "Next Increment Date"
+  },
+  {
+   "fieldname": "column_break_dates",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_promotion_date",
+   "fieldtype": "Date",
+   "label": "Last Promotion Date"
+  },
+  {
+   "fieldname": "next_promotion_eligible_date",
+   "fieldtype": "Date",
+   "label": "Next Promotion Eligible Date"
+  },
+  {
+   "fieldname": "section_break_family",
+   "fieldtype": "Section Break",
+   "label": "Family & Location"
+  },
+  {
+   "fieldname": "marital_status",
+   "fieldtype": "Select",
+   "label": "Marital Status",
+   "options": "Single\nMarried\nDivorced\nWidowed"
+  },
+  {
+   "fieldname": "eligible_children_count",
+   "fieldtype": "Int",
+   "label": "Eligible Children Count",
+   "default": "0"
+  },
+  {
+   "fieldname": "column_break_family",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "geographic_area",
+   "fieldtype": "Data",
+   "label": "Geographic Area"
+  },
+  {
+   "fieldname": "risk_allowance_applicable",
+   "fieldtype": "Check",
+   "label": "Risk Allowance Applicable",
+   "default": "0"
+  },
+  {
+   "fieldname": "risk_category",
+   "fieldtype": "Data",
+   "label": "Risk Category",
+   "depends_on": "risk_allowance_applicable"
+  },
+  {
+   "fieldname": "section_break_protection",
+   "fieldtype": "Section Break",
+   "label": "Salary Protection"
+  },
+  {
+   "fieldname": "protected_salary_difference",
+   "fieldtype": "Currency",
+   "label": "Protected Salary Difference",
+   "options": "IQD",
+   "default": "0",
+   "description": "Preserved difference when transitioning between salary laws"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Government Employee Payroll Profile",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "HR User", "read": 1, "write": 1, "create": 1, "report": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,8 @@
+[
+ {"doctype": "Role", "role_name": "Payroll Administrator", "desk_access": 1, "is_custom": 1},
+ {"doctype": "Role", "role_name": "Payroll Manager", "desk_access": 1, "is_custom": 1},
+ {"doctype": "Role", "role_name": "Payroll Officer", "desk_access": 1, "is_custom": 1},
+ {"doctype": "Role", "role_name": "HR User", "desk_access": 1, "is_custom": 1},
+ {"doctype": "Role", "role_name": "Finance User", "desk_access": 1, "is_custom": 1},
+ {"doctype": "Role", "role_name": "Auditor", "desk_access": 1, "is_custom": 1}
+]

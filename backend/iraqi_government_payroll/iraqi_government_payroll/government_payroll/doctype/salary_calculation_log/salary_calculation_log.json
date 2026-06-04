@@ -1,0 +1,196 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "allow_import": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee_profile",
+  "employee_name",
+  "column_break_header",
+  "calculation_type",
+  "calc_timestamp",
+  "engine_version",
+  "section_break_context",
+  "law_version",
+  "grade",
+  "stage",
+  "column_break_context",
+  "qualification",
+  "specialization",
+  "decision_reference",
+  "section_break_totals",
+  "gross_amount",
+  "total_deductions",
+  "net_amount",
+  "section_break_lines",
+  "lines",
+  "section_break_snapshots",
+  "input_snapshot",
+  "output_snapshot"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "SCL-.YYYY.-",
+   "default": "SCL-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_profile",
+   "fieldtype": "Link",
+   "label": "Employee Profile",
+   "options": "Government Employee Payroll Profile",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_header",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "calculation_type",
+   "fieldtype": "Select",
+   "label": "Calculation Type",
+   "options": "Active Salary\nIncrement\nPromotion\nPension\nTax",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "calc_timestamp",
+   "fieldtype": "Datetime",
+   "label": "Calculation Timestamp",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "engine_version",
+   "fieldtype": "Data",
+   "label": "Engine Version"
+  },
+  {
+   "fieldname": "section_break_context",
+   "fieldtype": "Section Break",
+   "label": "Legal Context"
+  },
+  {
+   "fieldname": "law_version",
+   "fieldtype": "Data",
+   "label": "Law Version"
+  },
+  {
+   "fieldname": "grade",
+   "fieldtype": "Int",
+   "label": "Grade"
+  },
+  {
+   "fieldname": "stage",
+   "fieldtype": "Int",
+   "label": "Stage"
+  },
+  {
+   "fieldname": "column_break_context",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "qualification",
+   "fieldtype": "Data",
+   "label": "Qualification"
+  },
+  {
+   "fieldname": "specialization",
+   "fieldtype": "Data",
+   "label": "Specialization"
+  },
+  {
+   "fieldname": "decision_reference",
+   "fieldtype": "Data",
+   "label": "Decision Reference"
+  },
+  {
+   "fieldname": "section_break_totals",
+   "fieldtype": "Section Break",
+   "label": "Totals"
+  },
+  {
+   "fieldname": "gross_amount",
+   "fieldtype": "Currency",
+   "label": "Gross Amount",
+   "options": "IQD"
+  },
+  {
+   "fieldname": "total_deductions",
+   "fieldtype": "Currency",
+   "label": "Total Deductions",
+   "options": "IQD"
+  },
+  {
+   "fieldname": "net_amount",
+   "fieldtype": "Currency",
+   "label": "Net Amount",
+   "options": "IQD",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_break_lines",
+   "fieldtype": "Section Break",
+   "label": "Component Breakdown"
+  },
+  {
+   "fieldname": "lines",
+   "fieldtype": "Table",
+   "label": "Lines",
+   "options": "Salary Calculation Log Line",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_snapshots",
+   "fieldtype": "Section Break",
+   "label": "Immutable Snapshots",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "input_snapshot",
+   "fieldtype": "Code",
+   "label": "Input Snapshot (JSON)",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "output_snapshot",
+   "fieldtype": "Code",
+   "label": "Output Snapshot (JSON)",
+   "options": "JSON",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Salary Calculation Log",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "create": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "create": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "report": 1, "print": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "HR User", "read": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "export": 1, "print": 1}
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

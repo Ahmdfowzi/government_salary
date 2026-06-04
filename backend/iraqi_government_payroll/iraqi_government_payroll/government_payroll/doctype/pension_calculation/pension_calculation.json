@@ -1,0 +1,226 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "is_submittable": 1,
+ "field_order": [
+  "naming_series",
+  "employee_profile",
+  "employee_name",
+  "column_break_header",
+  "calculation_date",
+  "status",
+  "amended_from",
+  "section_break_service",
+  "service_years",
+  "extra_months",
+  "average_36_months",
+  "column_break_service",
+  "accrual_rate",
+  "last_functional_salary",
+  "section_break_result",
+  "initial_pension",
+  "approved_pension",
+  "certificate_allowance",
+  "cost_of_living",
+  "column_break_result",
+  "gross_pension",
+  "monthly_tax",
+  "net_pension",
+  "end_of_service_bonus",
+  "section_break_remarks",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "PEN-.YYYY.-",
+   "default": "PEN-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_profile",
+   "fieldtype": "Link",
+   "label": "Employee Profile",
+   "options": "Government Employee Payroll Profile",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "fetch_from": "employee_profile.employee_name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_header",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "calculation_date",
+   "fieldtype": "Date",
+   "label": "Calculation Date",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nCalculated\nApproved",
+   "default": "Draft",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Pension Calculation",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "section_break_service",
+   "fieldtype": "Section Break",
+   "label": "Service & Base"
+  },
+  {
+   "fieldname": "service_years",
+   "fieldtype": "Int",
+   "label": "Service Years"
+  },
+  {
+   "fieldname": "extra_months",
+   "fieldtype": "Int",
+   "label": "Extra Months",
+   "default": "0"
+  },
+  {
+   "fieldname": "average_36_months",
+   "fieldtype": "Currency",
+   "label": "Average of Last 36 Months",
+   "options": "IQD",
+   "description": "Average functional salary (without allowances) over last 36 months"
+  },
+  {
+   "fieldname": "column_break_service",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "accrual_rate",
+   "fieldtype": "Percent",
+   "label": "Accrual Rate",
+   "read_only": 1,
+   "description": "Loaded from pension rule (Phase 2); e.g. 2.5% per year"
+  },
+  {
+   "fieldname": "last_functional_salary",
+   "fieldtype": "Currency",
+   "label": "Last Functional Salary",
+   "options": "IQD"
+  },
+  {
+   "fieldname": "section_break_result",
+   "fieldtype": "Section Break",
+   "label": "Computed Result"
+  },
+  {
+   "fieldname": "initial_pension",
+   "fieldtype": "Currency",
+   "label": "Initial Pension",
+   "options": "IQD",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_pension",
+   "fieldtype": "Currency",
+   "label": "Approved Pension (capped)",
+   "options": "IQD",
+   "read_only": 1
+  },
+  {
+   "fieldname": "certificate_allowance",
+   "fieldtype": "Currency",
+   "label": "Certificate Allowance",
+   "options": "IQD",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost_of_living",
+   "fieldtype": "Currency",
+   "label": "Cost of Living",
+   "options": "IQD",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_result",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gross_pension",
+   "fieldtype": "Currency",
+   "label": "Gross Pension",
+   "options": "IQD",
+   "read_only": 1
+  },
+  {
+   "fieldname": "monthly_tax",
+   "fieldtype": "Currency",
+   "label": "Monthly Tax",
+   "options": "IQD",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_pension",
+   "fieldtype": "Currency",
+   "label": "Net Pension",
+   "options": "IQD",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "end_of_service_bonus",
+   "fieldtype": "Currency",
+   "label": "End of Service Bonus",
+   "options": "IQD",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_remarks",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Pension Calculation",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "submit": 1, "cancel": 1, "amend": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "submit": 1, "cancel": 1, "amend": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1, "report": 1, "print": 1},
+  {"role": "Payroll Officer", "read": 1, "write": 1, "create": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "submit": 1, "report": 1},
+  {"role": "HR User", "read": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

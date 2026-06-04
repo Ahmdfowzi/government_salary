@@ -1,0 +1,80 @@
+{
+ "actions": [],
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "istable": 1,
+ "editable_grid": 1,
+ "field_order": [
+  "grade_type",
+  "grade",
+  "stage",
+  "column_break_amounts",
+  "basic_salary",
+  "annual_increment",
+  "promotion_years",
+  "senior_title"
+ ],
+ "fields": [
+  {
+   "fieldname": "grade_type",
+   "fieldtype": "Select",
+   "label": "Grade Type",
+   "options": "Regular\nSenior",
+   "default": "Regular",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "grade",
+   "fieldtype": "Int",
+   "label": "Grade",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "stage",
+   "fieldtype": "Int",
+   "label": "Stage",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_amounts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "basic_salary",
+   "fieldtype": "Currency",
+   "label": "Basic Salary",
+   "options": "IQD",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "annual_increment",
+   "fieldtype": "Currency",
+   "label": "Annual Increment",
+   "options": "IQD"
+  },
+  {
+   "fieldname": "promotion_years",
+   "fieldtype": "Int",
+   "label": "Promotion Years"
+  },
+  {
+   "fieldname": "senior_title",
+   "fieldtype": "Data",
+   "label": "Senior Title"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Government Salary Scale Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": []
+}

@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:QAR-{salary_law}-{qualification_level}",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "salary_law",
+  "qualification_level",
+  "specialization",
+  "column_break_appointment",
+  "study_years_after_secondary",
+  "starting_grade",
+  "starting_stage",
+  "section_break_allowance",
+  "certificate_allowance_percentage",
+  "reference_salary",
+  "column_break_validity",
+  "effective_from",
+  "is_active",
+  "source_reference"
+ ],
+ "fields": [
+  {
+   "fieldname": "salary_law",
+   "fieldtype": "Link",
+   "label": "Salary Law",
+   "options": "Government Salary Law",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "qualification_level",
+   "fieldtype": "Select",
+   "label": "Qualification Level",
+   "options": "Primary\nSecondary\nDiploma\nBachelor\nHigher Diploma\nMaster\nDoctorate\nTrade / Craft",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "specialization",
+   "fieldtype": "Data",
+   "label": "Specialization"
+  },
+  {
+   "fieldname": "column_break_appointment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "study_years_after_secondary",
+   "fieldtype": "Int",
+   "label": "Study Years After Secondary"
+  },
+  {
+   "fieldname": "starting_grade",
+   "fieldtype": "Int",
+   "label": "Starting Grade",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "starting_stage",
+   "fieldtype": "Int",
+   "label": "Starting Stage",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_break_allowance",
+   "fieldtype": "Section Break",
+   "label": "Certificate Allowance"
+  },
+  {
+   "fieldname": "certificate_allowance_percentage",
+   "fieldtype": "Percent",
+   "label": "Certificate Allowance Percentage",
+   "description": "Active-salary certificate allowance % (legal value loaded in Phase 2)"
+  },
+  {
+   "fieldname": "reference_salary",
+   "fieldtype": "Currency",
+   "label": "Reference Salary",
+   "options": "IQD"
+  },
+  {
+   "fieldname": "column_break_validity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "default": "1"
+  },
+  {
+   "fieldname": "source_reference",
+   "fieldtype": "Data",
+   "label": "Source Reference"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Qualification Appointment Rule",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "HR User", "read": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

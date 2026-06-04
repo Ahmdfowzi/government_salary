@@ -1,0 +1,84 @@
+{
+ "actions": [],
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "istable": 1,
+ "editable_grid": 0,
+ "field_order": [
+  "component_code",
+  "component_name",
+  "line_type",
+  "amount",
+  "basis_amount",
+  "rate",
+  "cap_applied",
+  "source_rule",
+  "reason_text"
+ ],
+ "fields": [
+  {
+   "fieldname": "component_code",
+   "fieldtype": "Data",
+   "label": "Component Code",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "component_name",
+   "fieldtype": "Data",
+   "label": "Component Name",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "line_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Earning\nDeduction",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "options": "IQD",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "basis_amount",
+   "fieldtype": "Currency",
+   "label": "Basis Amount",
+   "options": "IQD"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Percent",
+   "label": "Rate"
+  },
+  {
+   "fieldname": "cap_applied",
+   "fieldtype": "Check",
+   "label": "Cap Applied",
+   "default": "0"
+  },
+  {
+   "fieldname": "source_rule",
+   "fieldtype": "Data",
+   "label": "Source Rule",
+   "description": "Law/grade/stage/qualification/decision the amount derives from"
+  },
+  {
+   "fieldname": "reason_text",
+   "fieldtype": "Small Text",
+   "label": "Reason"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Salary Calculation Log Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": []
+}
