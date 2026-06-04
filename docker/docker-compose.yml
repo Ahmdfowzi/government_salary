@@ -1,0 +1,64 @@
+# Isolated Frappe bench for the Iraqi Government Payroll app (development flow).
+#
+# Brings up MariaDB + Redis + a frappe/bench container with THIS app bind-mounted
+# at /mnt/iraqi_government_payroll. Nothing is installed on the macOS host.
+#
+# Usage (after starting Docker Desktop): see docker/README.md
+#   docker compose -f docker/docker-compose.yml up -d
+#   docker compose -f docker/docker-compose.yml exec frappe bash   # then run the runbook
+
+services:
+  mariadb:
+    image: mariadb:10.6
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: "123"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis-cache:
+    image: redis:6.2-alpine
+    volumes:
+      - redis-cache-data:/data
+
+  redis-queue:
+    image: redis:6.2-alpine
+    volumes:
+      - redis-queue-data:/data
+
+  frappe:
+    image: frappe/bench:latest
+    command: sleep infinity
+    working_dir: /home/frappe
+    environment:
+      SHELL: /bin/bash
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+      redis-queue:
+        condition: service_started
+    volumes:
+      - bench-data:/home/frappe
+      # This local app (read-write so `bench get-app` can copy it in):
+      - ../backend/iraqi_government_payroll:/mnt/iraqi_government_payroll:cached
+      # Helper scripts (install + smoke test):
+      - ../docker:/mnt/scripts:cached
+    ports:
+      - "8000:8000"
+
+volumes:
+  mariadb-data:
+  redis-cache-data:
+  redis-queue-data:
+  bench-data:
