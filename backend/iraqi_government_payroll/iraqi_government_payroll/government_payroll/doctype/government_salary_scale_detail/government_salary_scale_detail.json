@@ -7,6 +7,7 @@
  "editable_grid": 1,
  "field_order": [
   "grade_type",
+  "grade_code",
   "grade",
   "stage",
   "column_break_amounts",
@@ -24,6 +25,13 @@
    "default": "Regular",
    "reqd": 1,
    "in_list_view": 1
+  },
+  {
+   "fieldname": "grade_code",
+   "fieldtype": "Data",
+   "label": "Grade Code",
+   "in_list_view": 1,
+   "description": "Stable key for the grade (e.g. 10..1 or DEPUTY_MINISTER for senior grades)"
   },
   {
    "fieldname": "grade",

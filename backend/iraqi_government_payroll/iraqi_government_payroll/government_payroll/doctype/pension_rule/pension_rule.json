@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:rule_set",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_set",
+  "status",
+  "law_article",
+  "section_break_core",
+  "accrual_rate",
+  "averaging_months",
+  "cap_pct_of_last_salary",
+  "column_break_core",
+  "eos_min_service_years",
+  "default_minimum_pension",
+  "section_break_col",
+  "cost_of_living_method",
+  "cost_of_living_value",
+  "source_reference"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_set",
+   "fieldtype": "Link",
+   "label": "Rule Set",
+   "options": "Government Rule Set",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nActive\nArchived",
+   "default": "Draft",
+   "in_standard_filter": 1,
+   "description": "Effectivity is governed by the linked Rule Set"
+  },
+  {
+   "fieldname": "law_article",
+   "fieldtype": "Data",
+   "label": "Law Article",
+   "default": "21"
+  },
+  {
+   "fieldname": "section_break_core",
+   "fieldtype": "Section Break",
+   "label": "Core Constants"
+  },
+  {
+   "fieldname": "accrual_rate",
+   "fieldtype": "Percent",
+   "label": "Accrual Rate",
+   "description": "Per-year accrual, e.g. 2.5%"
+  },
+  {
+   "fieldname": "averaging_months",
+   "fieldtype": "Int",
+   "label": "Averaging Months",
+   "description": "e.g. 36"
+  },
+  {
+   "fieldname": "cap_pct_of_last_salary",
+   "fieldtype": "Percent",
+   "label": "Cap % of Last Salary",
+   "description": "e.g. 100%"
+  },
+  {
+   "fieldname": "column_break_core",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "eos_min_service_years",
+   "fieldtype": "Int",
+   "label": "End-of-Service Min Years",
+   "description": "e.g. 30 (PC-11 for exceptions)"
+  },
+  {
+   "fieldname": "default_minimum_pension",
+   "fieldtype": "Currency",
+   "label": "Default Minimum Pension",
+   "options": "IQD"
+  },
+  {
+   "fieldname": "section_break_col",
+   "fieldtype": "Section Break",
+   "label": "Cost of Living (PC-9)"
+  },
+  {
+   "fieldname": "cost_of_living_method",
+   "fieldtype": "Select",
+   "label": "Cost of Living Method",
+   "options": "\nFixed Percentage\nPer Year Percentage\nMinimum Top-up\nManual"
+  },
+  {
+   "fieldname": "cost_of_living_value",
+   "fieldtype": "Percent",
+   "label": "Cost of Living Value"
+  },
+  {
+   "fieldname": "source_reference",
+   "fieldtype": "Data",
+   "label": "Source Reference",
+   "default": "Pension Law (BookID=30802) Art. 21"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Pension Rule",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,5 +1,5 @@
 # Copyright (c) 2026, Iraqi Government Payroll
-"""Audit service — write immutable Salary Calculation Log entries.
+"""Audit service — write immutable Payroll Calculation Snapshot entries.
 
 Every calculation (active salary, increment, promotion, pension, tax) produces
 one write-once log with totals, an explained line breakdown and full
@@ -9,5 +9,5 @@ Phase 1: signatures only.
 
 
 def write_calculation_log(calculation_type, profile, context, lines, totals, snapshots):
-	"""Create one immutable Salary Calculation Log + its lines."""
+	"""Create one immutable Payroll Calculation Snapshot + its lines."""
 	raise NotImplementedError("Phase 2: implement audit log writing.")

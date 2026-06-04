@@ -10,12 +10,12 @@ certificate allowance percentage that qualification grants on the active salary.
 
 Relationships
 -------------
-- many -> 1 :class:`Government Salary Law` (field ``salary_law``)
+- many -> 1 :class:`Government Rule Set` (field ``rule_set``)
 - consumed by the appointment / employee-profile setup flow
 
 Validation rules (Phase 2)
 --------------------------
-V1. (salary_law, qualification_level, specialization) must be unique.
+V1. (rule_set, qualification_level, specialization) must be unique.
 V2. starting_grade / starting_stage must exist in the law's active scale.
 V3. certificate_allowance_percentage in [0, 100].
 

@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:GEO-{rule_set}-{area_code}",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_set",
+  "status",
+  "area_code",
+  "area_name_ar",
+  "area_name_en",
+  "column_break_main",
+  "fixed_amount",
+  "capped_under_200",
+  "confirmed",
+  "source_reference"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_set",
+   "fieldtype": "Link",
+   "label": "Rule Set",
+   "options": "Government Rule Set",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nActive\nArchived",
+   "default": "Draft",
+   "in_standard_filter": 1,
+   "description": "Effectivity is governed by the linked Rule Set"
+  },
+  {
+   "fieldname": "area_code",
+   "fieldtype": "Data",
+   "label": "Area Code",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "area_name_ar",
+   "fieldtype": "Data",
+   "label": "Area Name (Arabic)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "area_name_en",
+   "fieldtype": "Data",
+   "label": "Area Name (English)"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fixed_amount",
+   "fieldtype": "Currency",
+   "label": "Fixed Amount",
+   "options": "IQD",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "capped_under_200",
+   "fieldtype": "Select",
+   "label": "Subject to 200% Cap",
+   "options": "Yes\nNo\nUndecided",
+   "default": "Undecided",
+   "description": "PC-5: whether geographic allowance counts toward the cap"
+  },
+  {
+   "fieldname": "confirmed",
+   "fieldtype": "Check",
+   "label": "Confirmed",
+   "default": "0",
+   "description": "PC-2: area amounts pending official table"
+  },
+  {
+   "fieldname": "source_reference",
+   "fieldtype": "Data",
+   "label": "Source Reference"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Geographic Area",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

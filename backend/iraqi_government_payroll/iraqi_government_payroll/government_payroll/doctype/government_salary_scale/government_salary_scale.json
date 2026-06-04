@@ -7,7 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "scale_name",
-  "salary_law",
+  "rule_set",
   "column_break_meta",
   "currency",
   "amount_unit",
@@ -25,10 +25,10 @@
    "in_list_view": 1
   },
   {
-   "fieldname": "salary_law",
+   "fieldname": "rule_set",
    "fieldtype": "Link",
-   "label": "Salary Law",
-   "options": "Government Salary Law",
+   "label": "Rule Set",
+   "options": "Government Rule Set",
    "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1

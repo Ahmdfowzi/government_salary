@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:rule_set",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_set",
+  "status",
+  "column_break_main",
+  "eligibility_months",
+  "increment_basis",
+  "section_break_notes",
+  "description",
+  "source_reference"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_set",
+   "fieldtype": "Link",
+   "label": "Rule Set",
+   "options": "Government Rule Set",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nActive\nArchived",
+   "default": "Draft",
+   "in_standard_filter": 1,
+   "description": "Effectivity is governed by the linked Rule Set"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "eligibility_months",
+   "fieldtype": "Int",
+   "label": "Eligibility Months",
+   "default": "12",
+   "description": "Service months required before the next annual increment"
+  },
+  {
+   "fieldname": "increment_basis",
+   "fieldtype": "Select",
+   "label": "Increment Basis",
+   "options": "From Salary Scale",
+   "default": "From Salary Scale",
+   "description": "Increment amount is read from the salary scale (per-grade annual increment)"
+  },
+  {
+   "fieldname": "section_break_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "source_reference",
+   "fieldtype": "Data",
+   "label": "Source Reference",
+   "default": "D1 tables 3,5"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Annual Increment Rule",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

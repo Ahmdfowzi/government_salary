@@ -63,8 +63,7 @@
   {
    "fieldname": "source_rule",
    "fieldtype": "Data",
-   "label": "Source Rule",
-   "description": "Law/grade/stage/qualification/decision the amount derives from"
+   "label": "Source Rule"
   },
   {
    "fieldname": "reason_text",
@@ -75,7 +74,7 @@
  "links": [],
  "modified": "2026-06-04 00:00:00",
  "module": "Government Payroll",
- "name": "Salary Calculation Log Line",
+ "name": "Salary Slip Line",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "idx",

@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:entity_code",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "is_tree": 1,
+ "nsm_parent_field": "parent_government_entity",
+ "field_order": [
+  "entity_code",
+  "entity_name_ar",
+  "entity_name_en",
+  "column_break_main",
+  "entity_type",
+  "parent_government_entity",
+  "is_group",
+  "is_active",
+  "section_break_nsm",
+  "lft",
+  "rgt",
+  "old_parent"
+ ],
+ "fields": [
+  {
+   "fieldname": "entity_code",
+   "fieldtype": "Data",
+   "label": "Entity Code",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "entity_name_ar",
+   "fieldtype": "Data",
+   "label": "Entity Name (Arabic)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "entity_name_en",
+   "fieldtype": "Data",
+   "label": "Entity Name (English)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "entity_type",
+   "fieldtype": "Select",
+   "label": "Entity Type",
+   "options": "Ministry\nAuthority\nGovernorate\nDirectorate\nDepartment\nDivision\nUnit",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "parent_government_entity",
+   "fieldtype": "Link",
+   "label": "Parent Government Entity",
+   "options": "Government Entity",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Is Group",
+   "default": "0",
+   "description": "A non-leaf node that can have children"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "default": "1"
+  },
+  {
+   "fieldname": "section_break_nsm",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "label": "lft",
+   "hidden": 1,
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "label": "rgt",
+   "hidden": 1,
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Data",
+   "label": "Old Parent",
+   "hidden": 1,
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Government Entity",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "HR User", "read": 1, "report": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

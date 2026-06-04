@@ -1,36 +1,74 @@
 // Typed API surface for the Government Payroll module.
 // Maps UI sections to Frappe DocTypes / whitelisted methods.
-// Phase 1: declares the contract. Pages stay placeholders until Phase 2 wiring.
+// Phase 2 M1: declares the data contract (read-only lists). Calculation
+// endpoints remain backend-only placeholders — no math in the frontend.
 
 import { getList, getDoc, callMethod } from "./frappeClient";
 import type {
-  GovernmentSalaryLaw,
+  GovernmentRuleSet,
   GovernmentSalaryScale,
+  GovernmentEntity,
+  GovernmentPosition,
   GovernmentEmployeePayrollProfile,
+  QualificationAppointmentRule,
   AllowanceRule,
+  IncomeTaxBracket,
+  TaxAllowanceRule,
+  PensionRule,
+  PromotionRule,
+  AnnualIncrementRule,
+  GeographicArea,
   AnnualIncrementRequest,
   PromotionRequest,
   PensionCalculation,
-  SalaryCalculationLog,
+  PayrollPeriod,
+  PayrollRun,
+  SalarySlip,
+  EmployeeMonthlySalary,
+  PayrollCalculationSnapshot,
 } from "../types";
 
 const API = "iraqi_government_payroll.iraqi_government_payroll.api.payroll_api";
 
 export const payrollApi = {
-  salaryLaws: () => getList<GovernmentSalaryLaw>("Government Salary Law"),
+  // Versioning spine + rule members
+  ruleSets: () => getList<GovernmentRuleSet>("Government Rule Set"),
   salaryScales: () => getList<GovernmentSalaryScale>("Government Salary Scale"),
+  qualificationRules: () =>
+    getList<QualificationAppointmentRule>("Qualification Appointment Rule"),
+  allowances: () => getList<AllowanceRule>("Allowance Rule"),
+  incomeTaxBrackets: () => getList<IncomeTaxBracket>("Income Tax Bracket"),
+  taxAllowanceRules: () => getList<TaxAllowanceRule>("Tax Allowance Rule"),
+  pensionRules: () => getList<PensionRule>("Pension Rule"),
+  promotionRules: () => getList<PromotionRule>("Promotion Rule"),
+  annualIncrementRules: () => getList<AnnualIncrementRule>("Annual Increment Rule"),
+  geographicAreas: () => getList<GeographicArea>("Geographic Area"),
+
+  // Organization
+  entities: () => getList<GovernmentEntity>("Government Entity"),
+  positions: () => getList<GovernmentPosition>("Government Position"),
+
+  // Employee
   employees: () =>
     getList<GovernmentEmployeePayrollProfile>("Government Employee Payroll Profile"),
-  allowances: () => getList<AllowanceRule>("Allowance Rule"),
+  getEmployee: (name: string) =>
+    getDoc<GovernmentEmployeePayrollProfile>("Government Employee Payroll Profile", name),
+  monthlySalaries: () => getList<EmployeeMonthlySalary>("Employee Monthly Salary"),
+
+  // Transactions
   increments: () => getList<AnnualIncrementRequest>("Annual Increment Request"),
   promotions: () => getList<PromotionRequest>("Promotion Request"),
   pensions: () => getList<PensionCalculation>("Pension Calculation"),
-  calculationLogs: () => getList<SalaryCalculationLog>("Salary Calculation Log"),
 
-  getEmployee: (name: string) =>
-    getDoc<GovernmentEmployeePayrollProfile>("Government Employee Payroll Profile", name),
+  // Operational
+  payrollPeriods: () => getList<PayrollPeriod>("Payroll Period"),
+  payrollRuns: () => getList<PayrollRun>("Payroll Run"),
+  salarySlips: () => getList<SalarySlip>("Salary Slip"),
 
-  // Calculation triggers — these run on the backend only (Phase 2).
+  // Audit / reproducibility
+  snapshots: () => getList<PayrollCalculationSnapshot>("Payroll Calculation Snapshot"),
+
+  // Calculation triggers — backend only (implemented in later milestones).
   calculateActiveSalary: (profile: string, period_date: string) =>
     callMethod(`${API}.calculate_active_salary`, { profile, period_date }),
   evaluateIncrement: (profile: string) =>

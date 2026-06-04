@@ -10,7 +10,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/government-payroll", label: "الرئيسية" },
-  { href: "/government-payroll/salary-laws", label: "قوانين الرواتب" },
+  { href: "/government-payroll/rule-sets", label: "مجموعات القواعد" },
   { href: "/government-payroll/salary-scale", label: "سلم الرواتب" },
   { href: "/government-payroll/employees", label: "الموظفون" },
   { href: "/government-payroll/allowances", label: "المخصصات" },

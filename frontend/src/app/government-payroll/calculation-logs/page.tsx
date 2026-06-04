@@ -5,7 +5,7 @@ import { EmptyState } from "@shared/components/EmptyState";
 export default function CalculationLogsPage() {
   return (
     <div>
-      <PageHeader title="سجلات الاحتساب" subtitle="سجل التدقيق غير القابل للتعديل (Salary Calculation Log)" />
+      <PageHeader title="سجلات الاحتساب" subtitle="سجل تدقيق غير قابل للتعديل وقابل لإعادة الإنتاج (Payroll Calculation Snapshot)" />
       <EmptyState message="هذه الصفحة جاهزة كهيكل في المرحلة الأولى." />
     </div>
   );

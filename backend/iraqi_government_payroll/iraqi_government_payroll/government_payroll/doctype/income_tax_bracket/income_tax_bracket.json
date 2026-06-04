@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:ITB-{rule_set}-{seq}",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_set",
+  "status",
+  "seq",
+  "column_break_main",
+  "from_amount",
+  "to_amount",
+  "rate",
+  "period",
+  "source_reference"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_set",
+   "fieldtype": "Link",
+   "label": "Rule Set",
+   "options": "Government Rule Set",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nActive\nArchived",
+   "default": "Draft",
+   "in_standard_filter": 1,
+   "description": "Effectivity is governed by the linked Rule Set"
+  },
+  {
+   "fieldname": "seq",
+   "fieldtype": "Int",
+   "label": "Sequence",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_amount",
+   "fieldtype": "Currency",
+   "label": "From Amount",
+   "options": "IQD",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "to_amount",
+   "fieldtype": "Currency",
+   "label": "To Amount",
+   "options": "IQD",
+   "in_list_view": 1,
+   "description": "Leave empty for the open-ended top bracket"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Percent",
+   "label": "Rate",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "period",
+   "fieldtype": "Select",
+   "label": "Period",
+   "options": "Annual\nMonthly",
+   "default": "Annual"
+  },
+  {
+   "fieldname": "source_reference",
+   "fieldtype": "Data",
+   "label": "Source Reference",
+   "default": "Law 113/1982 Art. 13"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Income Tax Bracket",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

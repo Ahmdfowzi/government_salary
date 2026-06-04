@@ -1,0 +1,74 @@
+{
+ "actions": [],
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "issingle": 1,
+ "field_order": [
+  "default_currency",
+  "engine_version",
+  "column_break_main",
+  "default_payroll_day",
+  "section_break_behaviour",
+  "enable_cap_enforcement",
+  "block_submit_on_violation"
+ ],
+ "fields": [
+  {
+   "fieldname": "default_currency",
+   "fieldtype": "Link",
+   "label": "Default Currency",
+   "options": "Currency",
+   "default": "IQD"
+  },
+  {
+   "fieldname": "engine_version",
+   "fieldtype": "Data",
+   "label": "Engine Version",
+   "read_only": 1,
+   "description": "Current payroll engine code version (stamped into snapshots)"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_payroll_day",
+   "fieldtype": "Int",
+   "label": "Default Payroll Day",
+   "default": "1"
+  },
+  {
+   "fieldname": "section_break_behaviour",
+   "fieldtype": "Section Break",
+   "label": "Engine Behaviour"
+  },
+  {
+   "fieldname": "enable_cap_enforcement",
+   "fieldtype": "Check",
+   "label": "Enable 200% Cap Enforcement",
+   "default": "1"
+  },
+  {
+   "fieldname": "block_submit_on_violation",
+   "fieldtype": "Check",
+   "label": "Block Submit on Validation Violation",
+   "default": "1"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Government Payroll Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1},
+  {"role": "Auditor", "read": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

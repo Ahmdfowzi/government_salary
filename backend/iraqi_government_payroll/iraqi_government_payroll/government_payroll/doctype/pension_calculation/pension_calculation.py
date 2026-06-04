@@ -18,7 +18,7 @@ Validation rules (Phase 2)
 V1. approved_pension = min(initial_pension, last_functional_salary)  [100% cap].
 V2. average_36_months must be backed by 36 months of functional-salary data.
 V3. accrual_rate / cap / averaging months pulled from the pension rule, not typed.
-V4. on_submit -> write immutable Salary Calculation Log entry.
+V4. on_submit -> write immutable Payroll Calculation Snapshot entry.
 """
 
 from frappe.model.document import Document

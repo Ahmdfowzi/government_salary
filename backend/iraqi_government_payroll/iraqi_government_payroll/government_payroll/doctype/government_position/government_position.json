@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:position_code",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "position_code",
+  "position_name_ar",
+  "position_name_en",
+  "column_break_main",
+  "government_entity",
+  "grade_band",
+  "is_managerial",
+  "section_break_allowance",
+  "position_allowance_category",
+  "risk_category",
+  "column_break_allowance",
+  "head_count",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "position_code",
+   "fieldtype": "Data",
+   "label": "Position Code",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "position_name_ar",
+   "fieldtype": "Data",
+   "label": "Position Name (Arabic)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "position_name_en",
+   "fieldtype": "Data",
+   "label": "Position Name (English)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "government_entity",
+   "fieldtype": "Link",
+   "label": "Government Entity",
+   "options": "Government Entity",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "grade_band",
+   "fieldtype": "Data",
+   "label": "Grade Band",
+   "description": "Eligible grade range for this position (e.g. 5-3)"
+  },
+  {
+   "fieldname": "is_managerial",
+   "fieldtype": "Check",
+   "label": "Is Managerial",
+   "default": "0"
+  },
+  {
+   "fieldname": "section_break_allowance",
+   "fieldtype": "Section Break",
+   "label": "Allowance & Risk Mapping"
+  },
+  {
+   "fieldname": "position_allowance_category",
+   "fieldtype": "Data",
+   "label": "Position Allowance Category",
+   "description": "Key matched against an Allowance Rule (match_key = Position)"
+  },
+  {
+   "fieldname": "risk_category",
+   "fieldtype": "Data",
+   "label": "Risk Category",
+   "description": "Key matched against an Allowance Rule (match_key = Job Category)"
+  },
+  {
+   "fieldname": "column_break_allowance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "head_count",
+   "fieldtype": "Int",
+   "label": "Head Count",
+   "default": "0",
+   "description": "Authorized number of holders (used by promotion vacancy checks)"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "default": "1"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Government Position",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "HR User", "read": 1, "write": 1, "create": 1, "report": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

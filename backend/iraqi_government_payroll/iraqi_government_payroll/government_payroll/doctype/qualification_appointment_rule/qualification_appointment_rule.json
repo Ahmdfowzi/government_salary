@@ -1,12 +1,12 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:QAR-{salary_law}-{qualification_level}",
+ "autoname": "format:QAR-{rule_set}-{qualification_level}",
  "creation": "2026-06-04 00:00:00",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "salary_law",
+  "rule_set",
   "qualification_level",
   "specialization",
   "column_break_appointment",
@@ -17,16 +17,16 @@
   "certificate_allowance_percentage",
   "reference_salary",
   "column_break_validity",
-  "effective_from",
+  "status",
   "is_active",
   "source_reference"
  ],
  "fields": [
   {
-   "fieldname": "salary_law",
+   "fieldname": "rule_set",
    "fieldtype": "Link",
-   "label": "Salary Law",
-   "options": "Government Salary Law",
+   "label": "Rule Set",
+   "options": "Government Rule Set",
    "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1
@@ -90,9 +90,13 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "effective_from",
-   "fieldtype": "Date",
-   "label": "Effective From"
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nActive\nArchived",
+   "default": "Draft",
+   "in_standard_filter": 1,
+   "description": "Effectivity is governed by the linked Rule Set"
   },
   {
    "fieldname": "is_active",

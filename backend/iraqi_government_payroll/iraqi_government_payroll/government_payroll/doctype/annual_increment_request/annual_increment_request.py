@@ -22,7 +22,7 @@ Validation rules (Phase 2)
 V1. Employee must be due (next_increment_date <= due_date).
 V2. new_stage = current_stage + 1, bounded by the scale's top stage.
 V3. Computed fields are server-set; reject client tampering.
-V4. on_submit -> apply to profile + write Salary Calculation Log; no double-apply.
+V4. on_submit -> apply to profile + write Payroll Calculation Snapshot; no double-apply.
 """
 
 from frappe.model.document import Document

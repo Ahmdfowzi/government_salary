@@ -23,7 +23,7 @@ Validation rules (Phase 2)
 V1. years_in_grade must meet the law's minimum promotion duration.
 V2. vacancy_available and manager recommendation required before Committee.
 V3. proposed_stage chosen so new_salary >= old_salary (protected difference).
-V4. on_submit -> apply to profile + write Salary Calculation Log.
+V4. on_submit -> apply to profile + write Payroll Calculation Snapshot.
 """
 
 from frappe.model.document import Document

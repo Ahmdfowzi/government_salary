@@ -1,0 +1,45 @@
+{
+ "actions": [],
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "istable": 1,
+ "editable_grid": 1,
+ "field_order": [
+  "from_grade",
+  "to_grade",
+  "years"
+ ],
+ "fields": [
+  {
+   "fieldname": "from_grade",
+   "fieldtype": "Data",
+   "label": "From Grade",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "to_grade",
+   "fieldtype": "Data",
+   "label": "To Grade",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "years",
+   "fieldtype": "Int",
+   "label": "Years",
+   "reqd": 1,
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Promotion Grade Duration",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": []
+}

@@ -8,8 +8,12 @@
  "field_order": [
   "component_code",
   "component_name",
+  "rule_set",
+  "status",
   "allowance_type",
   "context",
+  "match_key",
+  "match_value",
   "column_break_calc",
   "calculation_type",
   "basis",
@@ -21,9 +25,6 @@
   "min_value",
   "max_value",
   "section_break_validity",
-  "effective_from",
-  "effective_to",
-  "column_break_validity",
   "source_reference",
   "confirmed",
   "is_active"
@@ -43,6 +44,36 @@
    "label": "Component Name",
    "reqd": 1,
    "in_list_view": 1
+  },
+  {
+   "fieldname": "rule_set",
+   "fieldtype": "Link",
+   "label": "Rule Set",
+   "options": "Government Rule Set",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nActive\nArchived",
+   "default": "Draft",
+   "in_standard_filter": 1,
+   "description": "Effectivity is governed by the linked Rule Set"
+  },
+  {
+   "fieldname": "match_key",
+   "fieldtype": "Select",
+   "label": "Match Key",
+   "options": "\nQualification\nPosition\nJob Category\nGlobal",
+   "description": "Dimension this component is keyed on (e.g. certificate by Qualification)"
+  },
+  {
+   "fieldname": "match_value",
+   "fieldtype": "Data",
+   "label": "Match Value",
+   "description": "Value within the match key, e.g. a specific qualification or position"
   },
   {
    "fieldname": "allowance_type",
@@ -128,20 +159,6 @@
    "fieldname": "section_break_validity",
    "fieldtype": "Section Break",
    "label": "Validity & Source"
-  },
-  {
-   "fieldname": "effective_from",
-   "fieldtype": "Date",
-   "label": "Effective From"
-  },
-  {
-   "fieldname": "effective_to",
-   "fieldtype": "Date",
-   "label": "Effective To"
-  },
-  {
-   "fieldname": "column_break_validity",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "source_reference",

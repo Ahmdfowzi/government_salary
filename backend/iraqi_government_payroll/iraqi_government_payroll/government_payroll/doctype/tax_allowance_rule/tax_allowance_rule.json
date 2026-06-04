@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:TAR-{rule_set}-{taxpayer_status}",
+ "creation": "2026-06-04 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_set",
+  "status",
+  "taxpayer_status",
+  "column_break_main",
+  "basis",
+  "annual_amount",
+  "max_annual_cap",
+  "confirmed",
+  "source_reference"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_set",
+   "fieldtype": "Link",
+   "label": "Rule Set",
+   "options": "Government Rule Set",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nActive\nArchived",
+   "default": "Draft",
+   "in_standard_filter": 1,
+   "description": "Effectivity is governed by the linked Rule Set"
+  },
+  {
+   "fieldname": "taxpayer_status",
+   "fieldtype": "Select",
+   "label": "Taxpayer Status",
+   "options": "Single\nMarried\nPer Child\nLife Insurance\nOther",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "basis",
+   "fieldtype": "Select",
+   "label": "Basis",
+   "options": "Fixed\nPer Dependent",
+   "default": "Fixed"
+  },
+  {
+   "fieldname": "annual_amount",
+   "fieldtype": "Currency",
+   "label": "Annual Amount",
+   "options": "IQD",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "max_annual_cap",
+   "fieldtype": "Currency",
+   "label": "Max Annual Cap",
+   "options": "IQD",
+   "description": "Upper limit, e.g. life-insurance premium cap"
+  },
+  {
+   "fieldname": "confirmed",
+   "fieldtype": "Check",
+   "label": "Legally Confirmed",
+   "default": "0",
+   "description": "Unchecked = provisional (PC-7 / PC-8 pending)"
+  },
+  {
+   "fieldname": "source_reference",
+   "fieldtype": "Data",
+   "label": "Source Reference",
+   "default": "Law 113/1982 Art. 12"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 00:00:00",
+ "module": "Government Payroll",
+ "name": "Tax Allowance Rule",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -10,9 +10,15 @@
   "employee_name",
   "status",
   "column_break_identity",
-  "salary_law",
+  "rule_set",
   "qualification",
   "specialization",
+  "section_break_org",
+  "government_entity",
+  "government_position",
+  "column_break_org",
+  "employment_type",
+  "bank_account",
   "section_break_grade",
   "current_grade",
   "current_stage",
@@ -24,9 +30,12 @@
   "section_break_dates",
   "last_increment_date",
   "next_increment_date",
+  "current_stage_date",
   "column_break_dates",
   "last_promotion_date",
   "next_promotion_eligible_date",
+  "current_grade_date",
+  "retirement_service_start_date",
   "section_break_family",
   "marital_status",
   "eligible_children_count",
@@ -67,10 +76,10 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "salary_law",
+   "fieldname": "rule_set",
    "fieldtype": "Link",
-   "label": "Salary Law",
-   "options": "Government Salary Law",
+   "label": "Rule Set",
+   "options": "Government Rule Set",
    "reqd": 1,
    "in_standard_filter": 1
   },
@@ -84,6 +93,40 @@
    "fieldname": "specialization",
    "fieldtype": "Data",
    "label": "Specialization"
+  },
+  {
+   "fieldname": "section_break_org",
+   "fieldtype": "Section Break",
+   "label": "Organization & Employment"
+  },
+  {
+   "fieldname": "government_entity",
+   "fieldtype": "Link",
+   "label": "Government Entity",
+   "options": "Government Entity",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "government_position",
+   "fieldtype": "Link",
+   "label": "Government Position",
+   "options": "Government Position",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_org",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employment_type",
+   "fieldtype": "Select",
+   "label": "Employment Type",
+   "options": "Permanent\nContract\nDaily Wage\nTemporary"
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Data",
+   "label": "Bank Account"
   },
   {
    "fieldname": "section_break_grade",
@@ -159,6 +202,24 @@
    "fieldname": "next_promotion_eligible_date",
    "fieldtype": "Date",
    "label": "Next Promotion Eligible Date"
+  },
+  {
+   "fieldname": "current_stage_date",
+   "fieldtype": "Date",
+   "label": "Current Stage Date",
+   "description": "Date the employee entered the current stage (drives increment timing)"
+  },
+  {
+   "fieldname": "current_grade_date",
+   "fieldtype": "Date",
+   "label": "Current Grade Date",
+   "description": "Date the employee entered the current grade (drives promotion eligibility)"
+  },
+  {
+   "fieldname": "retirement_service_start_date",
+   "fieldtype": "Date",
+   "label": "Retirement Service Start Date",
+   "description": "Start of pensionable service (drives 36-month averaging and EOS)"
   },
   {
    "fieldname": "section_break_family",

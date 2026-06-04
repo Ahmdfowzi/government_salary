@@ -10,14 +10,14 @@ the payroll engine reads ``basic_salary`` from for a given (grade, stage).
 
 Relationships
 -------------
-- many -> 1 :class:`Government Salary Law` (field ``salary_law``)
+- many -> 1 :class:`Government Rule Set` (field ``rule_set``)
 - 1 -> many :class:`Government Salary Scale Detail` (child table ``details``)
 
 Validation rules (Phase 2)
 --------------------------
 V1. Only one scale may be ``is_active`` per linked law.
 V2. No duplicate (grade, stage) rows inside ``details``.
-V3. ``salary_law`` must be in status Active or Archived (not Draft) to activate.
+V3. ``rule_set`` must be in status Active or Archived (not Draft) to activate.
 """
 
 from frappe.model.document import Document

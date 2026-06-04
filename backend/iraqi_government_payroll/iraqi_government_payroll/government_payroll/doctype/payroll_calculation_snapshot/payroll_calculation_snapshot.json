@@ -13,10 +13,17 @@
   "column_break_header",
   "calculation_type",
   "calc_timestamp",
+  "period_date",
+  "section_break_version",
+  "rule_set",
+  "rule_set_version",
   "engine_version",
+  "column_break_version",
+  "salary_slip",
+  "payroll_period",
   "section_break_context",
-  "law_version",
   "grade",
+  "grade_code",
   "stage",
   "column_break_context",
   "qualification",
@@ -37,8 +44,8 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "SCL-.YYYY.-",
-   "default": "SCL-.YYYY.-",
+   "options": "PCS-.YYYY.-",
+   "default": "PCS-.YYYY.-",
    "reqd": 1
   },
   {
@@ -74,9 +81,50 @@
    "in_list_view": 1
   },
   {
+   "fieldname": "period_date",
+   "fieldtype": "Date",
+   "label": "Period Date",
+   "description": "Date used to resolve the applicable rule set"
+  },
+  {
+   "fieldname": "section_break_version",
+   "fieldtype": "Section Break",
+   "label": "Reproducibility"
+  },
+  {
+   "fieldname": "rule_set",
+   "fieldtype": "Link",
+   "label": "Rule Set",
+   "options": "Government Rule Set",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "rule_set_version",
+   "fieldtype": "Data",
+   "label": "Rule Set Version",
+   "description": "Resolved rule set code/version at calculation time"
+  },
+  {
    "fieldname": "engine_version",
    "fieldtype": "Data",
-   "label": "Engine Version"
+   "label": "Engine Version",
+   "description": "Engine code version pinned for reproducibility"
+  },
+  {
+   "fieldname": "column_break_version",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "salary_slip",
+   "fieldtype": "Link",
+   "label": "Salary Slip Reference",
+   "options": "Salary Slip"
+  },
+  {
+   "fieldname": "payroll_period",
+   "fieldtype": "Link",
+   "label": "Payroll Period Reference",
+   "options": "Payroll Period"
   },
   {
    "fieldname": "section_break_context",
@@ -84,14 +132,14 @@
    "label": "Legal Context"
   },
   {
-   "fieldname": "law_version",
-   "fieldtype": "Data",
-   "label": "Law Version"
-  },
-  {
    "fieldname": "grade",
    "fieldtype": "Int",
    "label": "Grade"
+  },
+  {
+   "fieldname": "grade_code",
+   "fieldtype": "Data",
+   "label": "Grade Code"
   },
   {
    "fieldname": "stage",
@@ -150,7 +198,7 @@
    "fieldname": "lines",
    "fieldtype": "Table",
    "label": "Lines",
-   "options": "Salary Calculation Log Line",
+   "options": "Payroll Calculation Snapshot Line",
    "read_only": 1
   },
   {
@@ -177,7 +225,7 @@
  "links": [],
  "modified": "2026-06-04 00:00:00",
  "module": "Government Payroll",
- "name": "Salary Calculation Log",
+ "name": "Payroll Calculation Snapshot",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [

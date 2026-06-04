@@ -11,18 +11,18 @@ increment, promotion and pension engines read from.
 
 Relationships
 -------------
-- many -> 1 :class:`Government Salary Law` (field ``salary_law``)
+- many -> 1 :class:`Government Rule Set` (field ``rule_set``)
 - 1 -> many :class:`Annual Increment Request`
 - 1 -> many :class:`Promotion Request`
 - 1 -> many :class:`Pension Calculation`
-- referenced by :class:`Salary Calculation Log`
+- referenced by :class:`Payroll Calculation Snapshot`
 
 (Phase 2 may link ``employee_number`` to an HRMS ``Employee`` master.)
 
 Validation rules (Phase 2)
 --------------------------
 V1. employee_number unique (enforced by autoname).
-V2. (current_grade, current_stage) must exist in the active scale of salary_law.
+V2. (current_grade, current_stage) must exist in the active scale of rule_set.
 V3. eligible_children_count clamped to the legal max (loaded as data, e.g. 4).
 V4. basic_salary is system-resolved and must not be hand-edited.
 V5. next_increment_date / next_promotion_eligible_date derived, not free-typed.
