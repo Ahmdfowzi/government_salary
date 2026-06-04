@@ -9,6 +9,7 @@ bench.
 
 from .engine import DataContext, EmployeeInput, calculate_active_salary
 from .scale_resolver import resolve_grade_code
+from .net_salary import compute_net_salary
 
 
 def load_context() -> "DataContext":
@@ -35,7 +36,19 @@ def load_context() -> "DataContext":
 				"context", "match_key", "match_value", "calculation_type", "basis",
 				"percentage", "fixed_amount", "capped_under_200", "confirmed", "is_active"],
 	)
-	return DataContext(rule_sets=rule_sets, scales=scales, allowance_rules=allowance_rules)
+	income_tax_brackets = frappe.get_all(
+		"Income Tax Bracket",
+		fields=["name", "rule_set", "seq", "from_amount", "to_amount", "rate"],
+	)
+	tax_allowance_rules = frappe.get_all(
+		"Tax Allowance Rule",
+		fields=["name", "rule_set", "taxpayer_status", "basis", "annual_amount",
+				"max_annual_cap", "confirmed"],
+	)
+	return DataContext(
+		rule_sets=rule_sets, scales=scales, allowance_rules=allowance_rules,
+		income_tax_brackets=income_tax_brackets, tax_allowance_rules=tax_allowance_rules,
+	)
 
 
 def calculate_for_profile(profile_name, period_date):
@@ -59,6 +72,70 @@ def calculate_for_profile(profile_name, period_date):
 		children_count=p.eligible_children_count or 0,
 	)
 	return calculate_active_salary(load_context(), emp)
+
+
+def _employee_input_from_profile(profile, period_date):
+	return EmployeeInput(
+		grade_code=resolve_grade_code(profile.get("grade_code"), profile.get("current_grade")),
+		stage=profile.get("current_stage"),
+		period_date=str(period_date),
+		qualification=profile.get("qualification"),
+		position_allowance_category=None,
+		risk_applicable=bool(profile.get("risk_allowance_applicable")),
+		risk_category=profile.get("risk_category"),
+		spouse_eligible=(profile.get("marital_status") == "Married"),
+		children_count=profile.get("eligible_children_count") or 0,
+	)
+
+
+def compute_salary_slip(slip):
+	"""Compute and populate a Salary Slip document from the engines. Returns the result."""
+	import frappe
+
+	profile = frappe.get_doc("Government Employee Payroll Profile", slip.employee_profile)
+	period_date = None
+	if slip.payroll_period:
+		period_date = frappe.db.get_value("Payroll Period", slip.payroll_period, "start_date")
+	period_date = period_date or frappe.utils.today()
+
+	emp = _employee_input_from_profile(profile, period_date)
+	res = compute_net_salary(load_context(), emp, other_deductions=0)
+
+	slip.rule_set = res.rule_set
+	slip.grade_code = res.grade_code
+	slip.grade = int(res.grade_code) if str(res.grade_code).isdigit() else 0
+	slip.stage = res.stage
+	slip.basic_salary = res.basic_salary
+	slip.total_capped_allowances = res.capped_allowance_total
+	slip.total_non_capped_allowances = res.non_capped_allowance_total
+	slip.total_earnings = res.gross_salary
+	slip.total_deductions = res.total_deductions
+	slip.net_salary = res.net_salary
+
+	lines = []
+	for l in res.allowance_lines:
+		lines.append({"component_code": l.component_code, "component_name": l.component_name,
+					  "line_type": l.line_type, "amount": l.amount, "basis_amount": l.basis_amount,
+					  "rate": l.rate, "cap_applied": 1 if l.cap_applied else 0,
+					  "source_rule": l.source_rule, "reason_text": l.reason_text})
+	if res.pension_deduction:
+		lines.append({"component_code": "DED_PENSION", "component_name": "Pension Contribution",
+					  "line_type": "Deduction", "amount": res.pension_deduction})
+	if res.tax:
+		lines.append({"component_code": "INCOME_TAX", "component_name": "Income Tax",
+					  "line_type": "Deduction", "amount": res.tax})
+	slip.set("lines", lines)
+	return res
+
+
+def write_salary_slip_snapshot(slip):
+	"""Compute the slip again and persist an immutable Salary Slip snapshot."""
+	from ..audit.audit_service import build_net_salary_snapshot_payload, write_payload
+
+	res = compute_salary_slip(slip)
+	payload = build_net_salary_snapshot_payload(res, employee_profile=slip.employee_profile,
+											   salary_slip=slip.name)
+	return write_payload(payload)
 
 
 def load_pension_rule_data(rule_set_code):

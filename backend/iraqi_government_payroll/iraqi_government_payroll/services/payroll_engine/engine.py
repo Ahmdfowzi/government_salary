@@ -15,7 +15,7 @@ NOT in M3: income tax, pension deduction, retirement pension, increment,
 promotion, payroll run, salary slip.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 from .types import CalculationResult, ENGINE_VERSION
@@ -42,6 +42,8 @@ class DataContext:
 	rule_sets: List[dict]
 	scales: List[dict]
 	allowance_rules: List[dict]
+	income_tax_brackets: List[dict] = field(default_factory=list)
+	tax_allowance_rules: List[dict] = field(default_factory=list)
 
 
 def calculate_active_salary(ctx: "DataContext", emp: "EmployeeInput") -> CalculationResult:

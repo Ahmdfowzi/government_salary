@@ -118,6 +118,55 @@ def build_retirement_pension_snapshot_payload(result, pension_input=None, employ
 	)
 
 
+def build_net_salary_snapshot_payload(result, employee_profile=None, salary_slip=None):
+	"""Build a 'Salary Slip' snapshot payload from a NetSalaryResult."""
+	lines = []
+	for l in result.allowance_lines:
+		lines.append({
+			"component_code": l.component_code, "component_name": l.component_name,
+			"line_type": l.line_type, "amount": l.amount, "basis_amount": l.basis_amount,
+			"rate": l.rate, "cap_applied": 1 if l.cap_applied else 0,
+			"source_rule": l.source_rule, "reason_text": l.reason_text,
+		})
+	if result.pension_deduction:
+		lines.append({"component_code": "DED_PENSION", "component_name": "Pension Contribution",
+					  "line_type": "Deduction", "amount": result.pension_deduction})
+	if result.tax:
+		lines.append({"component_code": "INCOME_TAX", "component_name": "Income Tax",
+					  "line_type": "Deduction", "amount": result.tax})
+
+	payload = build_generic_snapshot_payload(
+		"Salary Slip",
+		rule_set=result.rule_set,
+		engine_version=json.dumps(result.engine_versions, ensure_ascii=False),
+		period_date=result.period_date,
+		gross_amount=result.gross_salary,
+		total_deductions=result.total_deductions,
+		net_amount=result.net_salary,
+		lines=lines,
+		input_obj={"grade_code": result.grade_code, "stage": result.stage},
+		output_obj=result.to_dict(),
+		employee_profile=employee_profile,
+		grade_code=result.grade_code,
+		stage=result.stage,
+	)
+	if salary_slip:
+		payload["salary_slip"] = salary_slip
+	return payload
+
+
+def write_payload(payload):
+	"""Generic immutable-snapshot insert path (Active Salary / Tax / Pension Deduction /
+	Retirement Pension / Salary Slip). Returns the snapshot name."""
+	import frappe
+
+	if not payload.get("calc_timestamp"):
+		payload["calc_timestamp"] = frappe.utils.now()
+	doc = frappe.get_doc(payload)
+	doc.insert()
+	return doc.name
+
+
 def write_snapshot(result, employee_input=None, employee_profile=None,
 				   calculation_type="Active Salary"):
 	"""Insert an immutable Payroll Calculation Snapshot. Returns its name."""
