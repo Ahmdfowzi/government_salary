@@ -1,0 +1,53 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-06-06 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "transfer_date",
+  "column_break_main",
+  "from_entity",
+  "to_entity",
+  "section_break_pos",
+  "from_position",
+  "to_position",
+  "section_break_reason",
+  "reason"
+ ],
+ "fields": [
+  {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "ETR-.YYYY.-", "default": "ETR-.YYYY.-", "reqd": 1},
+  {"fieldname": "employee", "fieldtype": "Link", "label": "Employee", "options": "Government Employee Payroll Profile", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
+  {"fieldname": "transfer_date", "fieldtype": "Date", "label": "Transfer Date", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "column_break_main", "fieldtype": "Column Break"},
+  {"fieldname": "from_entity", "fieldtype": "Link", "label": "From Entity", "options": "Government Entity"},
+  {"fieldname": "to_entity", "fieldtype": "Link", "label": "To Entity", "options": "Government Entity", "in_list_view": 1},
+  {"fieldname": "section_break_pos", "fieldtype": "Section Break", "label": "Position"},
+  {"fieldname": "from_position", "fieldtype": "Link", "label": "From Position", "options": "Government Position"},
+  {"fieldname": "to_position", "fieldtype": "Link", "label": "To Position", "options": "Government Position"},
+  {"fieldname": "section_break_reason", "fieldtype": "Section Break"},
+  {"fieldname": "reason", "fieldtype": "Small Text", "label": "Reason"}
+ ],
+ "links": [],
+ "modified": "2026-06-06 00:00:00",
+ "module": "Government Payroll",
+ "name": "Employee Transfer",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "HR User", "read": 1, "write": 1, "create": 1, "report": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

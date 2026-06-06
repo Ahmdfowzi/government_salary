@@ -19,6 +19,13 @@
   "column_break_org",
   "employment_type",
   "bank_account",
+  "section_break_lifecycle",
+  "employment_status",
+  "current_entity",
+  "current_position",
+  "column_break_lifecycle",
+  "last_lifecycle_event",
+  "last_lifecycle_event_date",
   "section_break_grade",
   "grade_code",
   "current_grade",
@@ -128,6 +135,52 @@
    "fieldname": "bank_account",
    "fieldtype": "Data",
    "label": "Bank Account"
+  },
+  {
+   "fieldname": "section_break_lifecycle",
+   "fieldtype": "Section Break",
+   "label": "Employment Lifecycle"
+  },
+  {
+   "fieldname": "employment_status",
+   "fieldtype": "Select",
+   "label": "Employment Status",
+   "options": "Active\nOn Leave Without Salary\nRetired\nTerminated",
+   "default": "Active",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Maintained by the lifecycle service; only Active employees join payroll"
+  },
+  {
+   "fieldname": "current_entity",
+   "fieldtype": "Link",
+   "label": "Current Entity",
+   "options": "Government Entity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_position",
+   "fieldtype": "Link",
+   "label": "Current Position",
+   "options": "Government Position",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lifecycle",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_lifecycle_event",
+   "fieldtype": "Data",
+   "label": "Last Lifecycle Event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_lifecycle_event_date",
+   "fieldtype": "Date",
+   "label": "Last Lifecycle Event Date",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_grade",

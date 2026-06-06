@@ -256,7 +256,9 @@ def run_payroll(run):
 	run.save()
 
 	rule_set = run.rule_set
-	filters = {"status": "Active"}
+	# Lifecycle integration: only Active employees participate in payroll
+	# (retired / terminated / on-leave-without-salary are excluded).
+	filters = {"employment_status": "Active"}
 	if run.scope == "Employee" and run.scope_reference:
 		filters["name"] = run.scope_reference
 	elif run.scope == "Government Entity" and run.scope_reference:
