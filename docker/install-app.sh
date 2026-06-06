@@ -43,9 +43,34 @@ if [ ! -e "apps/$APP_NAME" ]; then
     cp -a "$APP_SRC" "apps/$APP_NAME"        # fallback if layout differs
   fi
 fi
-# register the app with the bench (idempotent)
+# register the app in sites/apps.txt — newline-safe and self-repairing.
+# A bare `echo >>` onto a file whose last line has no trailing newline produces
+# "frappe<app>" on one line, which Frappe then tries to import as a single module
+# (ModuleNotFoundError: No module named 'frappeiraqi_government_payroll').
 touch sites/apps.txt
-grep -qxF "$APP_NAME" sites/apps.txt || echo "$APP_NAME" >> sites/apps.txt
+python3 - "$APP_NAME" <<'PY'
+import os, sys
+app = sys.argv[1]
+path = "sites/apps.txt"
+tokens = open(path).read().split() if os.path.exists(path) else []   # tolerant of missing newlines
+repaired = []
+for t in tokens:
+    # split a concatenated "frappe<app>" token back into two apps
+    if t != "frappe" and t.startswith("frappe") and t.endswith(app):
+        repaired += ["frappe", app]
+    else:
+        repaired.append(t)
+if "frappe" not in repaired:
+    repaired.insert(0, "frappe")
+if app not in repaired:
+    repaired.append(app)
+seen, out = set(), []
+for t in repaired:
+    if t not in seen:
+        seen.add(t); out.append(t)
+open(path, "w").write("\n".join(out) + "\n")
+print("apps.txt ->", out)
+PY
 # editable install into the bench python env (equivalent of get-app's pip step)
 bench pip install -e "apps/$APP_NAME" || ./env/bin/python -m pip install -e "apps/$APP_NAME"
 # ensure app python requirements are present (required step; non-fatal)
