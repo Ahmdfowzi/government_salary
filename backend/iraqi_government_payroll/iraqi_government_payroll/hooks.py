@@ -38,11 +38,16 @@ fixtures = [
 	"Government Payroll Settings",
 ]
 
-# Document Events (Phase 2)
+# Document Events
 # -------------------------
-# Calculation side-effects (apply increment/promotion, write audit log) will be
-# wired through controller methods / doc_events once the engines are implemented.
-# doc_events = {}
+# Historical integrity (Phase 3 M3): reject lifecycle/transaction events dated
+# inside a LOCKED payroll period for the employee (retroactive protection).
+_GUARD = "iraqi_government_payroll.services.historical.history_service.guard_retroactive_change"
+doc_events = {
+	"Promotion Request": {"validate": _GUARD},
+	"Employee Transfer": {"validate": _GUARD},
+	"Employee Retirement": {"validate": _GUARD},
+}
 
 # Scheduled Tasks (Phase 2)
 # -------------------------

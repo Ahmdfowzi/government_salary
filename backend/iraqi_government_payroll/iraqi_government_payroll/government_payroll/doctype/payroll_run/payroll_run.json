@@ -35,7 +35,11 @@
   "approved_by",
   "approved_on",
   "submitted_by",
-  "submitted_on"
+  "submitted_on",
+  "locked_by",
+  "locked_on",
+  "unlocked_by",
+  "unlocked_on"
  ],
  "fields": [
   {
@@ -84,7 +88,7 @@
    "fieldname": "workflow_state",
    "fieldtype": "Select",
    "label": "Workflow State",
-   "options": "Draft\nCalculated\nUnder Review\nApproved\nSubmitted\nCancelled",
+   "options": "Draft\nCalculated\nUnder Review\nApproved\nSubmitted\nLocked\nCancelled",
    "default": "Draft",
    "read_only": 1,
    "in_list_view": 1,
@@ -228,6 +232,32 @@
    "fieldname": "submitted_on",
    "fieldtype": "Datetime",
    "label": "Submitted On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "locked_by",
+   "fieldtype": "Link",
+   "label": "Locked By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "locked_on",
+   "fieldtype": "Datetime",
+   "label": "Locked On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unlocked_by",
+   "fieldtype": "Link",
+   "label": "Unlocked By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unlocked_on",
+   "fieldtype": "Datetime",
+   "label": "Unlocked On",
    "read_only": 1
   }
  ],

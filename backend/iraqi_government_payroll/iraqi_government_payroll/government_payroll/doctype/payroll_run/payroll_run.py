@@ -72,3 +72,35 @@ class PayrollRun(Document):
 		self.workflow_state = governance.next_state("cancel", self.workflow_state)
 		self.save()
 		return self.workflow_state
+
+	# --- Locking & historical integrity (Phase 3 M3) --- #
+
+	@frappe.whitelist()
+	def lock_run(self):
+		"""Lock a Submitted run -> immutable historical record."""
+		self.workflow_state = governance.ensure_can_lock(self.workflow_state)
+		self.locked_by = frappe.session.user
+		self.locked_on = frappe.utils.now()
+		self.save()
+		return self.workflow_state
+
+	@frappe.whitelist()
+	def unlock_run(self):
+		"""Unlock a Locked run back to Submitted — Payroll Administrator only, audited."""
+		roles = set(frappe.get_roles(frappe.session.user))
+		if not ({"Payroll Administrator", "System Manager"} & roles):
+			frappe.throw("Only a Payroll Administrator may unlock a payroll run.")
+		self.workflow_state = governance.ensure_can_unlock(self.workflow_state)
+		self.unlocked_by = frappe.session.user
+		self.unlocked_on = frappe.utils.now()
+		self.save()
+		return self.workflow_state
+
+	# --- Reporting helpers --- #
+
+	def is_locked(self):
+		return governance.is_locked(self.workflow_state)
+
+	def is_historical_period(self):
+		"""A locked run is a finalized, immutable historical period."""
+		return self.is_locked()
