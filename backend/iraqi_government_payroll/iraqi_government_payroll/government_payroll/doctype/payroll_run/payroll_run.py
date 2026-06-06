@@ -1,20 +1,74 @@
 # Copyright (c) 2026, Iraqi Government Payroll
 # For license information, please see license.txt
-"""Payroll Run — batch that builds draft Salary Slips for a period.
+"""Payroll Run — batch executor + governance/approval workflow.
 
-M7: the batch engine lives in services. Call `run_batch()` to execute (e.g. from
-bench console or a future button). M7 does not auto-run on save, does not submit
-slips, and adds no approval workflow.
+The calculation batch lives in services; this controller adds a server-side
+approval lifecycle on top of it (no engine changes):
+
+    Draft -> Calculated -> Under Review -> Approved -> Submitted
+                      \-> Cancelled (any pre-submit state)
+
+Protection rules (server-enforced):
+  * cannot recalculate once Approved / Submitted / Cancelled
+  * cannot approve while the run has blocking errors (error_count > 0)
+  * cannot delete a Submitted run
+  * Payroll Calculation Snapshots remain immutable (enforced in that DocType)
+
+Audit fields (calculated/reviewed/approved/submitted _by/_on) are stamped by the
+server only. Re-invoking a transition from a state it is not allowed from raises,
+so the methods are safe against accidental double-calls.
 """
 
 import frappe
 from frappe.model.document import Document
 
-from iraqi_government_payroll.services.payroll_engine import repository
+from iraqi_government_payroll.services.payroll_engine import repository, governance
 
 
 class PayrollRun(Document):
+	def on_trash(self):
+		governance.ensure_can_delete(self.workflow_state)
+
+	# --- Governance workflow (server-side only) --- #
+
 	@frappe.whitelist()
-	def run_batch(self):
-		"""Process eligible employees into draft Salary Slips and tally results."""
-		return repository.run_payroll(self)
+	def calculate_run(self):
+		"""Run the batch (build draft slips) and move to Calculated."""
+		target = governance.ensure_can_calculate(self.workflow_state)
+		repository.run_payroll(self)            # sets run_status + counts (+saves)
+		self.workflow_state = target
+		self.calculated_by = frappe.session.user
+		self.calculated_on = frappe.utils.now()
+		self.save()
+		return self.workflow_state
+
+	@frappe.whitelist()
+	def submit_for_review(self):
+		self.workflow_state = governance.next_state("submit_for_review", self.workflow_state)
+		self.reviewed_by = frappe.session.user
+		self.reviewed_on = frappe.utils.now()
+		self.save()
+		return self.workflow_state
+
+	@frappe.whitelist()
+	def approve_run(self):
+		governance.ensure_can_approve(self.workflow_state, self.error_count)
+		self.workflow_state = governance.APPROVED
+		self.approved_by = frappe.session.user
+		self.approved_on = frappe.utils.now()
+		self.save()
+		return self.workflow_state
+
+	@frappe.whitelist()
+	def submit_run(self):
+		self.workflow_state = governance.next_state("submit", self.workflow_state)
+		self.submitted_by = frappe.session.user
+		self.submitted_on = frappe.utils.now()
+		self.save()
+		return self.workflow_state
+
+	@frappe.whitelist()
+	def cancel_run(self):
+		self.workflow_state = governance.next_state("cancel", self.workflow_state)
+		self.save()
+		return self.workflow_state

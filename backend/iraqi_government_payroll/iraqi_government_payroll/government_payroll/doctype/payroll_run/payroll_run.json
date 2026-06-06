@@ -12,6 +12,7 @@
   "column_break_main",
   "scope",
   "scope_reference",
+  "workflow_state",
   "run_status",
   "run_date",
   "section_break_results",
@@ -24,7 +25,17 @@
   "section_break_timing",
   "started_at",
   "finished_at",
-  "error_log"
+  "error_log",
+  "section_break_audit",
+  "calculated_by",
+  "calculated_on",
+  "reviewed_by",
+  "reviewed_on",
+  "column_break_audit",
+  "approved_by",
+  "approved_on",
+  "submitted_by",
+  "submitted_on"
  ],
  "fields": [
   {
@@ -70,11 +81,23 @@
    "description": "Target employee/entity when scope is not All"
   },
   {
+   "fieldname": "workflow_state",
+   "fieldtype": "Select",
+   "label": "Workflow State",
+   "options": "Draft\nCalculated\nUnder Review\nApproved\nSubmitted\nCancelled",
+   "default": "Draft",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Governance lifecycle; advanced only via the server-side workflow methods"
+  },
+  {
    "fieldname": "run_status",
    "fieldtype": "Select",
    "label": "Run Status",
    "options": "Draft\nProcessing\nCompleted\nCompleted With Warnings\nFailed",
    "default": "Draft",
+   "read_only": 1,
    "in_list_view": 1,
    "in_standard_filter": 1
   },
@@ -144,6 +167,67 @@
    "fieldtype": "Code",
    "label": "Error Log",
    "options": "Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_audit",
+   "fieldtype": "Section Break",
+   "label": "Governance Audit"
+  },
+  {
+   "fieldname": "calculated_by",
+   "fieldtype": "Link",
+   "label": "Calculated By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculated_on",
+   "fieldtype": "Datetime",
+   "label": "Calculated On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reviewed_by",
+   "fieldtype": "Link",
+   "label": "Reviewed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reviewed_on",
+   "fieldtype": "Datetime",
+   "label": "Reviewed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_audit",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "label": "Submitted By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_on",
+   "fieldtype": "Datetime",
+   "label": "Submitted On",
    "read_only": 1
   }
  ],
