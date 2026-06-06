@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Run INSIDE the frappe container:
-#   docker compose -f docker/docker-compose.yml exec frappe bash
-#   bash /mnt/iraqi_government_payroll/../.. ? -> simplest: copy/paste the steps below,
-#   or: docker compose -f docker/docker-compose.yml exec frappe bash /mnt/install-helper
+# Run INSIDE the frappe container (from the project root on the host):
+#   docker compose -f docker/docker-compose.yml exec frappe bash /mnt/scripts/install-app.sh
 #
-# This script initializes a bench, creates a site, installs THIS app from the
-# bind-mounted path, migrates, and prints fixture counts. Idempotent-ish: it
-# skips bench init / site creation if they already exist.
+# Initializes a bench, creates a site, installs THIS app from the bind-mounted
+# path via an EDITABLE install (not `bench get-app`, which treats a local path
+# like a git remote and fails), migrates, and prints fixture counts. Idempotent:
+# skips bench init, site creation, app linking and apps.txt registration if
+# already present.
 set -euo pipefail
 
 BENCH_DIR="$HOME/frappe-bench"
@@ -32,10 +32,24 @@ if [ ! -d "sites/$SITE" ]; then
 fi
 bench --site "$SITE" set-config developer_mode 1
 
-echo ">> get-app from bind mount"
-if [ ! -d "apps/iraqi_government_payroll" ]; then
-  bench get-app "$APP_SRC"
+APP_NAME="iraqi_government_payroll"
+echo ">> install local app from bind mount (editable; not 'bench get-app')"
+# bench get-app treats a local path like a git remote, so instead link the
+# bind-mounted app into apps/ and install it editable.
+if [ ! -e "apps/$APP_NAME" ]; then
+  if [ -f "$APP_SRC/pyproject.toml" ] || [ -f "$APP_SRC/setup.py" ]; then
+    ln -s "$APP_SRC" "apps/$APP_NAME"        # bind mount is read-write; live edits reflected
+  else
+    cp -a "$APP_SRC" "apps/$APP_NAME"        # fallback if layout differs
+  fi
 fi
+# register the app with the bench (idempotent)
+touch sites/apps.txt
+grep -qxF "$APP_NAME" sites/apps.txt || echo "$APP_NAME" >> sites/apps.txt
+# editable install into the bench python env (equivalent of get-app's pip step)
+bench pip install -e "apps/$APP_NAME" || ./env/bin/python -m pip install -e "apps/$APP_NAME"
+# ensure app python requirements are present (required step; non-fatal)
+bench setup requirements --python || true
 
 echo ">> install-app + migrate"
 bench --site "$SITE" install-app iraqi_government_payroll || true
