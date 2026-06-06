@@ -27,7 +27,13 @@ from iraqi_government_payroll.services.payroll_engine import repository, governa
 
 class PayrollRun(Document):
 	def on_trash(self):
-		governance.ensure_can_delete(self.workflow_state)
+		# Block deletion of finalized runs. Explicit check (Locked / Submitted /
+		# submitted docstatus) plus the governance guard, raising a ValidationError
+		# so the delete is always aborted.
+		state = self.workflow_state or governance.DRAFT
+		if state in (governance.SUBMITTED, governance.LOCKED) or int(self.docstatus or 0) == 1:
+			frappe.throw(f"Cannot delete a payroll run in '{state}' state.")
+		governance.ensure_can_delete(state)
 
 	# --- Governance workflow (server-side only) --- #
 

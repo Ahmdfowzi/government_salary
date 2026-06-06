@@ -6,6 +6,7 @@ Run:  python3 -m unittest test_locking -v
 
 import os
 import sys
+import types
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -101,6 +102,72 @@ class TestHistoricalReconstruction(unittest.TestCase):
 		jan = hist.reconstruct_state(self.snapshots, self.events, "2026-01-15")
 		self.assertEqual(jan["payroll"]["net_amount"], 371487)
 		self.assertEqual(jan["entity"], "E1")
+
+
+def _raise(msg):
+	raise RuntimeError(msg)
+
+
+class TestPayrollRunDeleteGuard(unittest.TestCase):
+	"""Exercise the real Payroll Run controller on_trash with a fake frappe."""
+
+	def _load_controller(self):
+		frappe = types.ModuleType("frappe")
+		frappe.throw = lambda msg, *a, **k: _raise(msg)
+		frappe._ = lambda s, *a, **k: s
+		frappe.session = types.SimpleNamespace(user="Administrator")
+		frappe.utils = types.SimpleNamespace(now=lambda: "2026-01-01 00:00:00")
+		frappe.get_roles = lambda *a, **k: ["System Manager"]
+
+		def whitelist(*a, **k):
+			def deco(f):
+				return f
+			return deco if not (a and callable(a[0])) else a[0]
+		frappe.whitelist = whitelist
+		model = types.ModuleType("frappe.model")
+		document = types.ModuleType("frappe.model.document")
+
+		class _Doc:
+			docstatus = 0
+
+			def get_doc_before_save(self):
+				return None
+
+		document.Document = _Doc
+		model.document = document
+		frappe.model = model
+		sys.modules["frappe"] = frappe
+		sys.modules["frappe.model"] = model
+		sys.modules["frappe.model.document"] = document
+		import importlib
+		mod = importlib.import_module(
+			"iraqi_government_payroll.government_payroll.doctype.payroll_run.payroll_run")
+		importlib.reload(mod)
+		return mod.PayrollRun
+
+	def test_delete_blocked_for_locked_and_submitted(self):
+		cls = self._load_controller()
+		for state in ("Locked", "Submitted"):
+			inst = cls()
+			inst.workflow_state = state
+			inst.docstatus = 0
+			with self.assertRaises(Exception):
+				inst.on_trash()
+
+	def test_delete_blocked_for_submitted_docstatus(self):
+		cls = self._load_controller()
+		inst = cls()
+		inst.workflow_state = "Approved"
+		inst.docstatus = 1
+		with self.assertRaises(Exception):
+			inst.on_trash()
+
+	def test_delete_allowed_for_draft(self):
+		cls = self._load_controller()
+		inst = cls()
+		inst.workflow_state = "Draft"
+		inst.docstatus = 0
+		inst.on_trash()   # no raise
 
 
 if __name__ == "__main__":
