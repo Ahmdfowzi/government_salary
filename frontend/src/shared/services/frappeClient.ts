@@ -70,3 +70,9 @@ export function callMethod<T>(method: string, body?: unknown): Promise<T> {
     body: JSON.stringify(body ?? {}),
   });
 }
+
+/** Full URL to a whitelisted GET method — used for binary file downloads
+ *  (the browser handles the Content-Disposition response). */
+export function methodUrl(method: string, query?: Query): string {
+  return buildUrl(`/api/method/${method}`, query);
+}

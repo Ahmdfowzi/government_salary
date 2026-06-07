@@ -3,7 +3,7 @@
 // Phase 2 M1: declares the data contract (read-only lists). Calculation
 // endpoints remain backend-only placeholders — no math in the frontend.
 
-import { getList, getDoc, callMethod } from "./frappeClient";
+import { getList, getDoc, callMethod, methodUrl } from "./frappeClient";
 import type {
   GovernmentRuleSet,
   GovernmentSalaryScale,
@@ -116,6 +116,11 @@ export const payrollApi = {
     }),
   reportBankTransfer: (run: string) =>
     callMethod<BankTransferReport>(`${REPORTS}.bank_transfer`, { run }),
+  // URL for the Excel (.xlsx) download — the browser fetches it directly.
+  exportReportUrl: (
+    report: string,
+    params: { run?: string; from_date?: string; to_date?: string; status?: string },
+  ) => methodUrl(`${REPORTS}.export_report`, { report, fmt: "xlsx", ...params }),
 
   // Calculation triggers — backend only (implemented in later milestones).
   calculateActiveSalary: (profile: string, period_date: string) =>

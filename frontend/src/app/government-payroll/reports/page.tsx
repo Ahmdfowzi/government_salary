@@ -33,6 +33,17 @@ type RunReportKey = Exclude<ReportKey, "pension">;
 
 const PENSION_STATUSES = ["", "Draft", "Calculated", "Approved"];
 
+// Frontend report key -> backend report name (for the Excel export endpoint).
+const EXPORT_NAME: Record<ReportKey, string> = {
+  summary: "run_summary",
+  employee: "employee_register",
+  allowances: "allowances_register",
+  deductions: "deductions_register",
+  tax: "tax_register",
+  bank: "bank_transfer",
+  pension: "pension_register",
+};
+
 const rows = (r: unknown) => r as Record<string, unknown>[];
 
 async function loadRunReport(type: RunReportKey, run: string): Promise<Renderable> {
@@ -282,6 +293,25 @@ export default function ReportsPage() {
           className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           تنزيل CSV
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            window.open(
+              payrollApi.exportReportUrl(
+                EXPORT_NAME[type],
+                isPension
+                  ? { from_date: fromDate, to_date: toDate, status }
+                  : { run },
+              ),
+              "_blank",
+            )
+          }
+          disabled={!report || report.rows.length === 0}
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          تنزيل Excel
         </button>
       </div>
 

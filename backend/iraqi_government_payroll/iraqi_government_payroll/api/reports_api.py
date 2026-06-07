@@ -14,6 +14,8 @@ import json
 import frappe
 
 from iraqi_government_payroll.services.reports import report_service as rs
+from iraqi_government_payroll.services.reports import report_columns as rc
+from iraqi_government_payroll.services.reports import xlsx_export
 from iraqi_government_payroll.services.payroll_engine import governance
 
 _LINE_FIELDS = ["line_type", "component_code", "component_name", "amount", "basis_amount", "rate"]
@@ -267,3 +269,48 @@ def pension_register(from_date=None, to_date=None, status=None):
 
 	return {"from_date": from_date, "to_date": to_date, "status": status,
 			**rs.pension_register(rows)}
+
+
+# --------------------------- Excel export (M13) --------------------------- #
+# Reuses the existing aggregator endpoints — NO re-aggregation — and serializes
+# their output to .xlsx via the shared column spec. Read-only.
+
+
+def _report_data(report, run, from_date, to_date, status):
+	"""Dispatch to the existing report aggregator (which selects Slip vs Snapshot)."""
+	if report == "run_summary":
+		return run_summary(run)
+	if report == "employee_register":
+		return employee_register(run)
+	if report == "allowances_register":
+		return allowances_register(run)
+	if report == "deductions_register":
+		return deductions_register(run)
+	if report == "tax_register":
+		return tax_register(run)
+	if report == "bank_transfer":
+		return bank_transfer(run)
+	if report == "pension_register":
+		return pension_register(from_date, to_date, status)
+	frappe.throw(f"Unknown report: {report}")
+
+
+def render_report_xlsx(report, run=None, from_date=None, to_date=None, status=None):
+	"""Return .xlsx bytes for a report. Testable core of export_report()."""
+	if report not in rc.REPORT_SPECS:
+		frappe.throw(f"Unknown report: {report}")
+	spec = rc.REPORT_SPECS[report]
+	data = _report_data(report, run, from_date, to_date, status)
+	return xlsx_export.build_workbook(
+		spec["title"], spec["columns"], spec["rows"](data), spec["totals"](data))
+
+
+@frappe.whitelist()
+def export_report(report, fmt="xlsx", run=None, from_date=None, to_date=None, status=None):
+	"""Download a report as a file. Only xlsx is supported in M13."""
+	if fmt != "xlsx":
+		frappe.throw(f"Unsupported export format: {fmt}")
+	content = render_report_xlsx(report, run, from_date, to_date, status)
+	frappe.response["filename"] = f"{report}.xlsx"
+	frappe.response["filecontent"] = content
+	frappe.response["type"] = "binary"

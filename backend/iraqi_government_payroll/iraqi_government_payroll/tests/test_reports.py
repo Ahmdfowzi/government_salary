@@ -393,5 +393,102 @@ class TestBankTransferApi(unittest.TestCase):
 		self.assertEqual(res["rows"][0]["net"], 999999)  # immutable snapshot net
 
 
+class TestColumnSpecs(unittest.TestCase):
+	def test_all_seven_reports_have_specs(self):
+		from iraqi_government_payroll.services.reports import report_columns as rc
+		expected = {"run_summary", "employee_register", "allowances_register",
+					"deductions_register", "tax_register", "pension_register",
+					"bank_transfer"}
+		self.assertEqual(set(rc.REPORT_SPECS), expected)
+		for spec in rc.REPORT_SPECS.values():
+			self.assertTrue(spec["columns"])               # non-empty
+			self.assertTrue(callable(spec["rows"]))
+			self.assertTrue(callable(spec["totals"]))
+
+
+class TestXlsxExport(unittest.TestCase):
+	"""Build a workbook then REOPEN it and assert structure + cells."""
+
+	def _reopen(self, content):
+		import io
+		from openpyxl import load_workbook
+		return load_workbook(io.BytesIO(content))
+
+	def test_headers_rows_totals_and_rtl(self):
+		from iraqi_government_payroll.services.reports import xlsx_export
+		columns = [("employee_name", "الاسم"), ("net", "الصافي")]
+		rows = [{"employee_name": "Ali", "net": 371487}, {"employee_name": "Sara", "net": 200000}]
+		content = xlsx_export.build_workbook("كشف", columns, rows, totals={"net": 571487})
+		self.assertTrue(content[:2] == b"PK")              # xlsx is a zip
+		ws = self._reopen(content).active
+		self.assertTrue(ws.sheet_view.rightToLeft)         # RTL sheet view
+		self.assertEqual([c.value for c in ws[1]], ["الاسم", "الصافي"])  # header
+		self.assertEqual(ws.cell(row=2, column=1).value, "Ali")
+		self.assertEqual(ws.cell(row=2, column=2).value, 371487)        # numeric cell
+		self.assertEqual(ws.max_row, 4)                    # header + 2 rows + totals
+		self.assertEqual(ws.cell(row=4, column=1).value, "الإجمالي")    # totals label
+		self.assertEqual(ws.cell(row=4, column=2).value, 571487)
+		self.assertTrue(ws.cell(row=1, column=1).font.bold)            # bold header
+
+	def test_bool_and_list_cells(self):
+		from iraqi_government_payroll.services.reports import xlsx_export
+		columns = [("bank_complete", "مكتمل"), ("missing", "النواقص")]
+		rows = [{"bank_complete": True, "missing": []},
+				{"bank_complete": False, "missing": ["bank_account", "net"]}]
+		ws = self._reopen(xlsx_export.build_workbook("بنك", columns, rows)).active
+		self.assertEqual(ws.cell(row=2, column=1).value, "نعم")
+		self.assertEqual(ws.cell(row=3, column=1).value, "لا")
+		self.assertEqual(ws.cell(row=3, column=2).value, "bank_account، net")
+
+
+class TestExportDispatch(unittest.TestCase):
+	"""render_report_xlsx through the real aggregator + serializer (fake frappe)."""
+
+	def _load_api(self, *, workflow_state="Calculated"):
+		frappe = types.ModuleType("frappe")
+		frappe.throw = lambda msg, *a, **k: _raise(msg)
+		frappe._ = lambda s, *a, **k: s
+		frappe.db = types.SimpleNamespace(get_value=lambda dt, name, field: workflow_state)
+
+		def get_all(dt, filters=None, fields=None, **k):
+			if dt == "Salary Slip" and fields and "basic_salary" in fields:
+				return [{"name": "S1", "employee_profile": "E1", "employee_name": "Ali",
+						 "grade_code": "7", "stage": 1, "basic_salary": 296000,
+						 "total_earnings": 429200, "total_deductions": 57713, "net_salary": 371487}]
+			if dt == "Salary Slip Line":
+				return []
+			return []
+		frappe.get_all = get_all
+
+		def whitelist(*a, **k):
+			def deco(f):
+				return f
+			return deco if not (a and callable(a[0])) else a[0]
+		frappe.whitelist = whitelist
+		sys.modules["frappe"] = frappe
+		import importlib
+		mod = importlib.import_module("iraqi_government_payroll.api.reports_api")
+		importlib.reload(mod)
+		return mod
+
+	def test_employee_register_xlsx(self):
+		import io
+		from openpyxl import load_workbook
+		api = self._load_api()
+		content = api.render_report_xlsx("employee_register", run="R1")
+		ws = load_workbook(io.BytesIO(content)).active
+		self.assertEqual(ws.cell(row=1, column=1).value, "الموظف")   # header
+		self.assertEqual(ws.cell(row=2, column=2).value, "Ali")
+		# last row is the bold totals row with net total
+		self.assertEqual(ws.cell(row=ws.max_row, column=1).value, "الإجمالي")
+
+	def test_unknown_report_and_format_rejected(self):
+		api = self._load_api()
+		with self.assertRaises(Exception):
+			api.render_report_xlsx("nope", run="R1")
+		with self.assertRaises(Exception):
+			api.export_report("employee_register", fmt="pdf", run="R1")
+
+
 if __name__ == "__main__":
 	unittest.main()

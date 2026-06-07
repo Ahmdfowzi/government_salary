@@ -10,6 +10,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.reports
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.pension_report
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.bank_transfer
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.excel_export
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
 so the first failed assertion raises, aborts the run with a non-zero exit code,
@@ -423,3 +424,56 @@ def bank_transfer():
 
 	frappe.db.rollback()                        # discard the run; re-runnable
 	print("\nBANK TRANSFER SMOKE TEST PASSED")
+
+
+def excel_export():
+	"""Phase 4 M13 — Excel export renders a valid workbook for every report by
+	reusing the report aggregators. Builds a run + a pension record, renders each
+	of the 7 reports to xlsx, reopens one and checks the header, then rolls back.
+	"""
+	import io
+	from openpyxl import load_workbook
+	from iraqi_government_payroll.api import reports_api as rep
+
+	EMP = "XLS1"
+	if not frappe.db.exists("Government Employee Payroll Profile", EMP):
+		frappe.get_doc({
+			"doctype": "Government Employee Payroll Profile",
+			"employee_number": EMP, "employee_name": "Excel Test",
+			"rule_set": "IRAQ-2015", "grade_code": "7", "current_grade": 7,
+			"current_stage": 1, "qualification": "Bachelor", "status": "Active",
+			"employment_status": "Active", "bank_account": "55667788",
+		}).insert()
+		frappe.db.commit()
+	if not frappe.db.exists("Payroll Period", {"year": 2016, "month": 6}):
+		frappe.get_doc({"doctype": "Payroll Period", "year": 2016, "month": 6,
+						"start_date": "2016-06-01", "end_date": "2016-06-30",
+						"status": "Open"}).insert()
+		frappe.db.commit()
+	period = frappe.get_value("Payroll Period", {"year": 2016, "month": 6}, "name")
+
+	run = frappe.get_doc({"doctype": "Payroll Run", "payroll_period": period,
+						  "rule_set": "IRAQ-2015", "scope": "Employee",
+						  "scope_reference": EMP}).insert()
+	run.calculate_run(); run.reload()
+
+	run_reports = ["run_summary", "employee_register", "allowances_register",
+				   "deductions_register", "tax_register", "bank_transfer"]
+	for report in run_reports:
+		content = rep.render_report_xlsx(report, run=run.name)
+		assert content[:2] == b"PK", f"{report}: not an xlsx"
+		assert len(content) > 200, f"{report}: workbook too small"
+	# pension uses date/status params
+	pen = rep.render_report_xlsx("pension_register", from_date="2016-01-01", to_date="2016-12-31")
+	assert pen[:2] == b"PK", "pension: not an xlsx"
+	print("rendered            : 7 reports -> valid xlsx")
+
+	# reopen the employee register and check the Arabic header + a totals row
+	ws = load_workbook(io.BytesIO(rep.render_report_xlsx("employee_register", run=run.name))).active
+	assert ws.cell(row=1, column=1).value == "الموظف", ws.cell(row=1, column=1).value
+	assert ws.sheet_view.rightToLeft, "sheet not RTL"
+	assert ws.cell(row=ws.max_row, column=1).value == "الإجمالي", "no totals row"
+	print("reopened            : header الموظف, RTL, totals row present")
+
+	frappe.db.rollback()                        # discard the run; re-runnable
+	print("\nEXCEL EXPORT SMOKE TEST PASSED")
