@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "allow_import": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-06-07 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "payroll_run",
+  "action",
+  "column_break_main",
+  "from_state",
+  "to_state",
+  "section_break_actor",
+  "actor",
+  "event_timestamp",
+  "section_break_note",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "PRGE-.YYYY.-",
+   "default": "PRGE-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payroll_run",
+   "fieldtype": "Link",
+   "label": "Payroll Run",
+   "options": "Payroll Run",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "label": "Action",
+   "options": "calculate\nsubmit_for_review\napprove\nsubmit\ncancel\nlock\nunlock",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_state",
+   "fieldtype": "Select",
+   "label": "From State",
+   "options": "Draft\nCalculated\nUnder Review\nApproved\nSubmitted\nLocked\nCancelled",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "to_state",
+   "fieldtype": "Select",
+   "label": "To State",
+   "options": "Draft\nCalculated\nUnder Review\nApproved\nSubmitted\nLocked\nCancelled",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_break_actor",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "label": "Actor",
+   "options": "User",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "event_timestamp",
+   "fieldtype": "Datetime",
+   "label": "Event Timestamp",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_break_note",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-07 00:00:00",
+ "module": "Government Payroll",
+ "name": "Payroll Run Governance Event",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "create": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "create": 1, "report": 1, "export": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "Payroll Officer", "read": 1, "create": 1, "report": 1},
+  {"role": "Finance User", "read": 1, "report": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "export": 1, "print": 1}
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

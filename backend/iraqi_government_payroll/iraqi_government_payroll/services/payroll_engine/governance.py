@@ -129,3 +129,21 @@ def ensure_role_allowed(action, user_roles):
 			f"You are not authorized to '{action}' a payroll run. "
 			f"Requires one of: {allowed}.")
 	return True
+
+
+def build_event(action, from_state, to_state, actor, timestamp, note=""):
+	"""Pure builder for an immutable Payroll Run Governance Event payload.
+
+	Records one governance transition: `action` moved the run from `from_state`
+	to `to_state`, performed by `actor` at `timestamp`. The controller adds the
+	`payroll_run` link before insert.
+	"""
+	return {
+		"doctype": "Payroll Run Governance Event",
+		"action": action,
+		"from_state": from_state or DRAFT,
+		"to_state": to_state,
+		"actor": actor,
+		"event_timestamp": timestamp,
+		"note": note or "",
+	}

@@ -85,6 +85,12 @@ class TestPayrollRunAuthorization(unittest.TestCase):
 		frappe.utils = types.SimpleNamespace(now=lambda: "2026-01-01 00:00:00")
 		frappe.get_roles = lambda *a, **k: list(roles)
 
+		class _Event:
+			def insert(self, *a, **k):
+				return self
+
+		frappe.get_doc = lambda payload: _Event()
+
 		def whitelist(*a, **k):
 			def deco(f):
 				return f
@@ -117,6 +123,7 @@ class TestPayrollRunAuthorization(unittest.TestCase):
 	def _run(self, roles, **attrs):
 		cls = self._load_controller(roles)
 		inst = cls()
+		inst.name = "RUN-TEST"
 		for k, v in attrs.items():
 			setattr(inst, k, v)
 		return inst

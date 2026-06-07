@@ -41,53 +41,81 @@ class PayrollRun(Document):
 		"""Server-side guard: the current user must hold a role permitting `action`."""
 		governance.ensure_role_allowed(action, frappe.get_roles(frappe.session.user))
 
+	# --- Governance audit log (Phase 3 M5) --- #
+
+	def _log_event(self, action, from_state):
+		"""Insert one immutable governance event recording `action` (from_state ->
+		current workflow_state). Failure aborts the transition loudly: a state
+		change is never allowed to persist without its audit event.
+		"""
+		payload = governance.build_event(
+			action, from_state, self.workflow_state,
+			frappe.session.user, frappe.utils.now())
+		payload["payroll_run"] = self.name
+		try:
+			frappe.get_doc(payload).insert(ignore_permissions=True)
+		except Exception as exc:
+			frappe.throw(
+				f"Could not record governance audit event for '{action}'; "
+				f"transition aborted: {exc}")
+
 	# --- Governance workflow (server-side only) --- #
 
 	@frappe.whitelist()
 	def calculate_run(self):
 		"""Run the batch (build draft slips) and move to Calculated."""
 		self._ensure_role("calculate")
+		from_state = self.workflow_state
 		target = governance.ensure_can_calculate(self.workflow_state)
 		repository.run_payroll(self)            # sets run_status + counts (+saves)
 		self.workflow_state = target
 		self.calculated_by = frappe.session.user
 		self.calculated_on = frappe.utils.now()
 		self.save()
+		self._log_event("calculate", from_state)
 		return self.workflow_state
 
 	@frappe.whitelist()
 	def submit_for_review(self):
 		self._ensure_role("submit_for_review")
+		from_state = self.workflow_state
 		self.workflow_state = governance.next_state("submit_for_review", self.workflow_state)
 		self.reviewed_by = frappe.session.user
 		self.reviewed_on = frappe.utils.now()
 		self.save()
+		self._log_event("submit_for_review", from_state)
 		return self.workflow_state
 
 	@frappe.whitelist()
 	def approve_run(self):
 		self._ensure_role("approve")
+		from_state = self.workflow_state
 		governance.ensure_can_approve(self.workflow_state, self.error_count)
 		self.workflow_state = governance.APPROVED
 		self.approved_by = frappe.session.user
 		self.approved_on = frappe.utils.now()
 		self.save()
+		self._log_event("approve", from_state)
 		return self.workflow_state
 
 	@frappe.whitelist()
 	def submit_run(self):
 		self._ensure_role("submit")
+		from_state = self.workflow_state
 		self.workflow_state = governance.next_state("submit", self.workflow_state)
 		self.submitted_by = frappe.session.user
 		self.submitted_on = frappe.utils.now()
 		self.save()
+		self._log_event("submit", from_state)
 		return self.workflow_state
 
 	@frappe.whitelist()
 	def cancel_run(self):
 		self._ensure_role("cancel")
+		from_state = self.workflow_state
 		self.workflow_state = governance.next_state("cancel", self.workflow_state)
 		self.save()
+		self._log_event("cancel", from_state)
 		return self.workflow_state
 
 	# --- Locking & historical integrity (Phase 3 M3) --- #
@@ -96,20 +124,24 @@ class PayrollRun(Document):
 	def lock_run(self):
 		"""Lock a Submitted run -> immutable historical record (Administrator only)."""
 		self._ensure_role("lock")
+		from_state = self.workflow_state
 		self.workflow_state = governance.ensure_can_lock(self.workflow_state)
 		self.locked_by = frappe.session.user
 		self.locked_on = frappe.utils.now()
 		self.save()
+		self._log_event("lock", from_state)
 		return self.workflow_state
 
 	@frappe.whitelist()
 	def unlock_run(self):
 		"""Unlock a Locked run back to Submitted — Payroll Administrator only, audited."""
 		self._ensure_role("unlock")
+		from_state = self.workflow_state
 		self.workflow_state = governance.ensure_can_unlock(self.workflow_state)
 		self.unlocked_by = frappe.session.user
 		self.unlocked_on = frappe.utils.now()
 		self.save()
+		self._log_event("unlock", from_state)
 		return self.workflow_state
 
 	# --- Reporting helpers --- #
