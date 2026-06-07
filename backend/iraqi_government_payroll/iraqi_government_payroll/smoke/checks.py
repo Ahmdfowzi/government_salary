@@ -7,6 +7,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.locking
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.api
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.create
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.reports
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
 so the first failed assertion raises, aborts the run with a non-zero exit code,
@@ -259,3 +260,58 @@ def create():
 
 	frappe.db.rollback()                        # discard the created run; re-runnable
 	print("\nPAYROLL RUN CREATE SMOKE TEST PASSED")
+
+
+def reports():
+	"""Phase 4 M10 — the read-only report endpoints reconcile to the Salary Slip.
+
+	Builds a one-employee run (dedicated employee + period), calculates it (draft
+	slips), reads all five reports and checks every total ties back to the slip,
+	then rolls back so the check is re-runnable.
+	"""
+	from iraqi_government_payroll.api import reports_api as rep
+
+	EMP = "REP1"
+	if not frappe.db.exists("Government Employee Payroll Profile", EMP):
+		frappe.get_doc({
+			"doctype": "Government Employee Payroll Profile",
+			"employee_number": EMP, "employee_name": "Report Test",
+			"rule_set": "IRAQ-2015", "grade_code": "7", "current_grade": 7,
+			"current_stage": 1, "qualification": "Bachelor", "status": "Active",
+			"employment_status": "Active",
+		}).insert()
+		frappe.db.commit()                      # keep the profile; only the run is rolled back
+
+	if not frappe.db.exists("Payroll Period", {"year": 2018, "month": 6}):
+		frappe.get_doc({"doctype": "Payroll Period", "year": 2018, "month": 6,
+						"start_date": "2018-06-01", "end_date": "2018-06-30",
+						"status": "Open"}).insert()
+		frappe.db.commit()
+	period = frappe.get_value("Payroll Period", {"year": 2018, "month": 6}, "name")
+
+	run = frappe.get_doc({"doctype": "Payroll Run", "payroll_period": period,
+						  "rule_set": "IRAQ-2015", "scope": "Employee",
+						  "scope_reference": EMP}).insert()
+	run.calculate_run(); run.reload()
+
+	summary = rep.run_summary(run.name)
+	emp = rep.employee_register(run.name)
+	allow = rep.allowances_register(run.name)
+	ded = rep.deductions_register(run.name)
+	tax = rep.tax_register(run.name)
+	print("summary             :", summary)
+	print("employee rows       :", emp["rows"])
+
+	assert summary["employees"] == 1, summary
+	assert len(emp["rows"]) == 1
+	row = emp["rows"][0]
+	# reconcile registers back to the slip totals (the single source)
+	assert emp["totals"]["net"] == summary["total_net"], "net mismatch"
+	assert allow["grand_total"] == emp["totals"]["allowances"], "allowances mismatch"
+	assert ded["grand_total"] == emp["totals"]["deductions"], "deductions mismatch"
+	assert tax["total_tax"] <= ded["grand_total"], "tax exceeds deductions"
+	assert row["basic"] + row["allowances"] == summary["total_earnings"], "earnings mismatch"
+	print("reconciled          : net/allowances/deductions/tax all tie to the slip")
+
+	frappe.db.rollback()                        # discard the run; re-runnable
+	print("\nPAYROLL REPORTS SMOKE TEST PASSED")

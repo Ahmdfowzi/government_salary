@@ -27,9 +27,14 @@ import type {
   EmployeeMonthlySalary,
   PayrollCalculationSnapshot,
   RunGovernance,
+  RunSummaryReport,
+  EmployeeRegisterReport,
+  ComponentRegisterReport,
+  TaxRegisterReport,
 } from "../types";
 
 const API = "iraqi_government_payroll.iraqi_government_payroll.api.payroll_api";
+const REPORTS = "iraqi_government_payroll.iraqi_government_payroll.api.reports_api";
 
 export const payrollApi = {
   // Versioning spine + rule members
@@ -88,6 +93,19 @@ export const payrollApi = {
       `${API}.create_payroll_run`,
       { period, rule_set, scope, scope_reference },
     ),
+
+  // Read-only payroll reports (Phase 4 M10). Backend chooses Salary Slip (active
+  // run) vs immutable Snapshot (locked run); the UI only displays/exports.
+  reportRunSummary: (run: string) =>
+    callMethod<RunSummaryReport>(`${REPORTS}.run_summary`, { run }),
+  reportEmployeeRegister: (run: string) =>
+    callMethod<EmployeeRegisterReport>(`${REPORTS}.employee_register`, { run }),
+  reportAllowances: (run: string) =>
+    callMethod<ComponentRegisterReport>(`${REPORTS}.allowances_register`, { run }),
+  reportDeductions: (run: string) =>
+    callMethod<ComponentRegisterReport>(`${REPORTS}.deductions_register`, { run }),
+  reportTax: (run: string) =>
+    callMethod<TaxRegisterReport>(`${REPORTS}.tax_register`, { run }),
 
   // Calculation triggers — backend only (implemented in later milestones).
   calculateActiveSalary: (profile: string, period_date: string) =>

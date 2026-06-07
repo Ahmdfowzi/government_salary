@@ -338,6 +338,60 @@ export interface RunGovernance {
   events: GovernanceEvent[];
 }
 
+// Phase 4 M10 — read-only payroll report models (api.reports_api).
+export interface RunSummaryReport {
+  run: string;
+  employees: number;
+  total_basic: number;
+  total_earnings: number;
+  total_deductions: number;
+  total_net: number;
+}
+
+export interface EmployeeRegisterRow {
+  employee_profile: string;
+  employee_name: string;
+  grade_code?: string;
+  stage?: number;
+  basic: number;
+  allowances: number;
+  deductions: number;
+  net: number;
+}
+export interface EmployeeRegisterReport {
+  run: string;
+  rows: EmployeeRegisterRow[];
+  totals: { basic: number; allowances: number; deductions: number; net: number };
+}
+
+export interface ComponentRegisterRow {
+  employee_profile: string;
+  employee_name: string;
+  component_code: string;
+  component_name?: string;
+  amount: number;
+  basis_amount?: number;
+  rate?: number | null;
+}
+export interface ComponentRegisterReport {
+  run: string;
+  rows: ComponentRegisterRow[];
+  totals_by_component: Record<string, number>;
+  grand_total: number;
+}
+
+export interface TaxRegisterRow {
+  employee_profile: string;
+  employee_name: string;
+  taxable: number;
+  tax: number;
+}
+export interface TaxRegisterReport {
+  run: string;
+  rows: TaxRegisterRow[];
+  total_tax: number;
+}
+
 export interface SalarySlipLine {
   component_code?: string;
   component_name?: string;
