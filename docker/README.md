@@ -46,6 +46,25 @@ docker compose -f docker/docker-compose.yml exec frappe \
 Expected: `basic 296000 · gross 429200 · net 371487`, Payroll Run
 `Completed With Warnings`, then `SMOKE TEST PASSED`.
 
+## 3b. Governance & locking smoke checks (Phase 3)
+Run these via **`bench execute`** (a single process), NOT `bench console`. With
+`bench execute` the first failed assertion raises, the command exits non-zero,
+and the trailing `… PASSED` line is unreachable unless every check passed — so a
+failure can never be masked by a false PASSED (the old line-by-line `bench
+console < script` harness could both swallow errors and print a false PASSED):
+```bash
+docker compose -f docker/docker-compose.yml exec frappe \
+  bash -lc "cd ~/frappe-bench && bench --site payroll.localhost execute \
+    iraqi_government_payroll.smoke.checks.governance"
+
+docker compose -f docker/docker-compose.yml exec frappe \
+  bash -lc "cd ~/frappe-bench && bench --site payroll.localhost execute \
+    iraqi_government_payroll.smoke.checks.locking"
+```
+Expected on success: the per-step trace ending in `GOVERNANCE SMOKE TEST PASSED`
+/ `PAYROLL LOCKING SMOKE TEST PASSED` and exit code `0`. `docker/smoke-*.py` are
+thin entry points that call these same functions.
+
 ## 4. (Optional) open the desk UI
 ```bash
 docker compose -f docker/docker-compose.yml exec frappe \
