@@ -35,11 +35,18 @@ class PayrollRun(Document):
 			frappe.throw(f"Cannot delete a payroll run in '{state}' state.")
 		governance.ensure_can_delete(state)
 
+	# --- Authorization (segregation of duties) --- #
+
+	def _ensure_role(self, action):
+		"""Server-side guard: the current user must hold a role permitting `action`."""
+		governance.ensure_role_allowed(action, frappe.get_roles(frappe.session.user))
+
 	# --- Governance workflow (server-side only) --- #
 
 	@frappe.whitelist()
 	def calculate_run(self):
 		"""Run the batch (build draft slips) and move to Calculated."""
+		self._ensure_role("calculate")
 		target = governance.ensure_can_calculate(self.workflow_state)
 		repository.run_payroll(self)            # sets run_status + counts (+saves)
 		self.workflow_state = target
@@ -50,6 +57,7 @@ class PayrollRun(Document):
 
 	@frappe.whitelist()
 	def submit_for_review(self):
+		self._ensure_role("submit_for_review")
 		self.workflow_state = governance.next_state("submit_for_review", self.workflow_state)
 		self.reviewed_by = frappe.session.user
 		self.reviewed_on = frappe.utils.now()
@@ -58,6 +66,7 @@ class PayrollRun(Document):
 
 	@frappe.whitelist()
 	def approve_run(self):
+		self._ensure_role("approve")
 		governance.ensure_can_approve(self.workflow_state, self.error_count)
 		self.workflow_state = governance.APPROVED
 		self.approved_by = frappe.session.user
@@ -67,6 +76,7 @@ class PayrollRun(Document):
 
 	@frappe.whitelist()
 	def submit_run(self):
+		self._ensure_role("submit")
 		self.workflow_state = governance.next_state("submit", self.workflow_state)
 		self.submitted_by = frappe.session.user
 		self.submitted_on = frappe.utils.now()
@@ -75,6 +85,7 @@ class PayrollRun(Document):
 
 	@frappe.whitelist()
 	def cancel_run(self):
+		self._ensure_role("cancel")
 		self.workflow_state = governance.next_state("cancel", self.workflow_state)
 		self.save()
 		return self.workflow_state
@@ -83,7 +94,8 @@ class PayrollRun(Document):
 
 	@frappe.whitelist()
 	def lock_run(self):
-		"""Lock a Submitted run -> immutable historical record."""
+		"""Lock a Submitted run -> immutable historical record (Administrator only)."""
+		self._ensure_role("lock")
 		self.workflow_state = governance.ensure_can_lock(self.workflow_state)
 		self.locked_by = frappe.session.user
 		self.locked_on = frappe.utils.now()
@@ -93,9 +105,7 @@ class PayrollRun(Document):
 	@frappe.whitelist()
 	def unlock_run(self):
 		"""Unlock a Locked run back to Submitted — Payroll Administrator only, audited."""
-		roles = set(frappe.get_roles(frappe.session.user))
-		if not ({"Payroll Administrator", "System Manager"} & roles):
-			frappe.throw("Only a Payroll Administrator may unlock a payroll run.")
+		self._ensure_role("unlock")
 		self.workflow_state = governance.ensure_can_unlock(self.workflow_state)
 		self.unlocked_by = frappe.session.user
 		self.unlocked_on = frappe.utils.now()

@@ -19,6 +19,27 @@ CANCELLED = "Cancelled"
 
 WORKFLOW_STATES = [DRAFT, CALCULATED, UNDER_REVIEW, APPROVED, SUBMITTED, LOCKED, CANCELLED]
 
+# Custom roles (mirror fixtures/role.json)
+PAYROLL_OFFICER = "Payroll Officer"
+PAYROLL_MANAGER = "Payroll Manager"
+PAYROLL_ADMINISTRATOR = "Payroll Administrator"
+# Frappe superuser — always permitted (escape hatch, matches the M3 unlock guard).
+SYSTEM_MANAGER = "System Manager"
+
+# Segregation of duties: which roles may perform each governance action.
+# The Officer prepares a run (calculate / submit_for_review) but may NOT approve,
+# submit, cancel, or lock it; the Manager approves / submits / cancels; only the
+# Administrator locks / unlocks. SYSTEM_MANAGER bypasses all of these.
+REQUIRED_ROLES = {
+	"calculate":         frozenset({PAYROLL_OFFICER, PAYROLL_MANAGER, PAYROLL_ADMINISTRATOR}),
+	"submit_for_review": frozenset({PAYROLL_OFFICER, PAYROLL_MANAGER, PAYROLL_ADMINISTRATOR}),
+	"approve":           frozenset({PAYROLL_MANAGER, PAYROLL_ADMINISTRATOR}),
+	"submit":            frozenset({PAYROLL_MANAGER, PAYROLL_ADMINISTRATOR}),
+	"cancel":            frozenset({PAYROLL_MANAGER, PAYROLL_ADMINISTRATOR}),
+	"lock":              frozenset({PAYROLL_ADMINISTRATOR}),
+	"unlock":            frozenset({PAYROLL_ADMINISTRATOR}),
+}
+
 # action -> (set of states it may be performed FROM, resulting state)
 TRANSITIONS = {
 	"calculate":         ({DRAFT, CALCULATED, UNDER_REVIEW}, CALCULATED),
@@ -82,3 +103,29 @@ def ensure_can_unlock(current):
 def is_locked(current):
 	"""Reporting helper: True when the run is in the immutable Locked state."""
 	return (current or DRAFT) == LOCKED
+
+
+def role_allowed(action, user_roles):
+	"""Pure predicate: True if any of `user_roles` may perform `action`.
+
+	Unknown actions are denied for everyone (fail closed); for a known action
+	SYSTEM_MANAGER is always allowed.
+	"""
+	if action not in REQUIRED_ROLES:
+		return False
+	roles = set(user_roles or ())
+	if SYSTEM_MANAGER in roles:
+		return True
+	return bool(REQUIRED_ROLES[action] & roles)
+
+
+def ensure_role_allowed(action, user_roles):
+	"""Segregation-of-duties guard: raise PayrollError unless a role permits `action`."""
+	if action not in REQUIRED_ROLES:
+		raise PayrollError(f"Unknown governance action: {action}")
+	if not role_allowed(action, user_roles):
+		allowed = ", ".join(sorted(REQUIRED_ROLES[action]))
+		raise PayrollError(
+			f"You are not authorized to '{action}' a payroll run. "
+			f"Requires one of: {allowed}.")
+	return True
