@@ -6,7 +6,12 @@ controller hooks, and the current PC (pending-clarification) limitations.
 
 ---
 
-## 1. Engine layers (M3 → M7)
+> **M-number namespace:** the `M3 → M7` below are **Phase 2 engine** milestones.
+> The **Phase 3 governance** milestones (also `M1 … M8`) are a separate track on
+> top of these engines — see `PHASE-3.md`. The Phase-3 governance/runtime hooks are
+> summarized in §3b.
+
+## 1. Engine layers (M3 → M7, Phase 2)
 All engines are **pure Python** under `services/` (no Frappe in the math path);
 Frappe wiring lives in `services/payroll_engine/repository.py` (lazy `import
 frappe`). Data access is separated from calculation so every engine is unit
@@ -36,7 +41,7 @@ slip money rounded with `round_iqd`.
 |---|---|---|
 | `Salary Slip.validate` | Recomputes & populates fields from the engines on every save | Intended (draft calculation); deterministic, no side effects beyond the slip |
 | `Salary Slip.on_submit` | Writes one immutable Salary Slip snapshot | **Guarded**: skips if a `Salary Slip` snapshot already exists for the slip |
-| `Payroll Run.run_batch()` | Manual method; builds **draft** slips, tallies results | **Not** triggered on save; no auto-execution; never submits slips |
+| `Payroll Run.calculate_run()` | Governed method (Phase 3 M1); runs the batch (`repository.run_payroll`) to build **draft** slips + tally, then moves Draft → Calculated | **Not** triggered on save; no auto-execution; never submits slips |
 | `Annual Increment Request.on_submit` | Applies increment to the profile + snapshot | **Guarded**: refuses if an `Annual Increment` snapshot already exists for the request; profile-state dates also prevent re-increment |
 | `Promotion Request.on_submit` | Applies promotion to the profile + snapshot | **Guarded**: refuses if a `Promotion` snapshot already exists for the request; grade-date also prevents re-promotion |
 | `Pension Calculation` controller | `validate`/`on_submit` are **stubs** | Retirement pension is computed by the pure service on demand; the controller intentionally does **not** auto-compute on save |
@@ -45,6 +50,25 @@ slip money rounded with `round_iqd`.
 Guarantees: no unintended recalculation except the intended Salary Slip draft
 calc; no snapshot duplication; no profile mutation outside the increment/
 promotion submit hooks; no payroll-run auto-execution on save.
+
+## 3b. Governance & operations layer (Phase 3)
+A governed/auditable layer over the engines — **no math changes**. Authority and
+transitions are enforced **server-side only**; the API and frontend route, never
+re-decide. Full milestone summary in `PHASE-3.md`.
+
+| Surface | Behaviour | Safety |
+|---|---|---|
+| `Payroll Run` governance methods (`calculate_run` … `unlock_run`) | State machine `Draft → Calculated → Under Review → Approved → Submitted → Locked` (+ Cancelled) in `services/payroll_engine/governance.py` | Each transition enforces a **role** (M4 `ensure_role_allowed`) and appends one immutable audit event (M5); a failed audit insert **aborts** the transition |
+| `Payroll Run.on_trash` | Blocks deletion of a Submitted / Locked / submitted-docstatus run | Finalized runs are undeletable |
+| `Payroll Run Governance Event` | `on_update`/`on_trash` block edits & deletes | Append-only audit trail, immutable at the app layer |
+| Lifecycle records (`Employee Appointment`, `Transfer`, `Leave…`, `Return…`, `Retirement`, `Termination`) | `on_trash` blocks deletion | Permanent, reconstructable employment timeline |
+| Retroactive guard (`doc_events.validate`) | Rejects Promotion / Transfer / Retirement dated inside a **locked** payroll period | Locked history cannot be altered after the fact |
+| `api/payroll_api.py` (`run_governance_action`, `get_run_governance`, `create_payroll_run`) | Thin REST routing + input validation only | No workflow/role/audit logic duplicated; `create_payroll_run` also blocks a duplicate active run for the same period + rule_set + scope |
+
+> **Naming caveat:** the lock-state helper on the Payroll Run controller is
+> `is_run_locked()`, **not** `is_locked` — the latter shadows Frappe's
+> `Document.is_locked` property and breaks `check_if_locked()` on every save
+> (Phase 3 M5.3). Do not reintroduce a method named `is_locked`.
 
 ## 4. Idempotency guards
 - **Salary Slip snapshot** — one per slip (`frappe.db.exists` on `salary_slip` + type).

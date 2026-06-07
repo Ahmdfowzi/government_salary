@@ -16,24 +16,35 @@ iraqi-government-payroll/
 │   ├── pyproject.toml · MANIFEST.in · requirements.txt · license.txt
 │   └── iraqi_government_payroll/
 │       ├── hooks.py · modules.txt · patches.txt
-│       ├── government_payroll/doctype/      9 DocTypes (+2 child tables)
-│       ├── services/                        backend calculation services
-│       │   ├── payroll_engine/  tax/  pension/  allowance/
-│       │   └── promotion/  increment/  audit/
-│       ├── api/payroll_api.py               whitelisted REST endpoints
+│       ├── government_payroll/doctype/      34 DocTypes (incl. child tables)
+│       ├── services/                        backend calc + governance services
+│       │   ├── payroll_engine/ (+ governance.py)  tax/  pension/  allowance/
+│       │   ├── promotion/  increment/  audit/
+│       │   └── lifecycle/  historical/
+│       ├── api/payroll_api.py               whitelisted REST (calc + governance)
+│       ├── smoke/checks.py                  live bench smoke checks
 │       └── fixtures/role.json               RBAC roles
 └── frontend/                                Next.js + TS + Tailwind
     └── src/
-        ├── app/government-payroll/...        9 routes
+        ├── app/government-payroll/...        routes (+ payroll-runs governance UI)
         └── shared/  components layouts forms tables services types
 ```
 
 ## Phase status
 
-- **Phase 1 (this build): structure & design only.** DocTypes, RBAC, service
-  placeholders and frontend routes exist. **No calculation logic, no dashboards,
-  no full UI, no hardcoded legal numbers.**
-- **Phase 2:** implement the Python engines, load official legal figures as
-  fixtures, build the data-entry/list UI, and add tests.
+- **Phase 1 — structure & design.** ✅ DocTypes, RBAC roles, service skeletons and
+  frontend routes. See `PHASE-1.md`.
+- **Phase 2 — calculation engines.** ✅ Pure-Python active-salary / tax / pension /
+  increment / promotion engines, official legal fixtures (one versioned
+  `IRAQ-2015` rule set), Salary Slip + Payroll Run batch, and the test suite. See
+  `PHASE-2-PLAN.md`.
+- **Phase 3 — governance, lifecycle & operations (M1–M8).** ✅ Approval workflow,
+  employee lifecycle, payroll locking + historical integrity, segregation-of-duties
+  RBAC, an immutable governance audit log, a governance REST API, the Payroll Runs
+  UI, and run creation. See **`PHASE-3.md`**.
 
-See `PHASE-1.md` for the full file manifest and the Phase 2 backlog.
+**Current verification:** 164 backend tests pass (`python3 -m unittest`); the app is
+validated on a **live Docker bench** (`docker/`) — `bench migrate` clean, 34
+DocTypes, and four `bench execute` smoke checks (governance / locking / api /
+create) green; `next build` + `next lint` pass. Engine boundaries and runtime
+safety: `ENGINE-BOUNDARIES.md`. Install & bench checklist: `BENCH-READINESS.md`.

@@ -46,24 +46,30 @@ docker compose -f docker/docker-compose.yml exec frappe \
 Expected: `basic 296000 · gross 429200 · net 371487`, Payroll Run
 `Completed With Warnings`, then `SMOKE TEST PASSED`.
 
-## 3b. Governance & locking smoke checks (Phase 3)
+## 3b. Phase 3 governance smoke checks
 Run these via **`bench execute`** (a single process), NOT `bench console`. With
 `bench execute` the first failed assertion raises, the command exits non-zero,
 and the trailing `… PASSED` line is unreachable unless every check passed — so a
 failure can never be masked by a false PASSED (the old line-by-line `bench
-console < script` harness could both swallow errors and print a false PASSED):
-```bash
-docker compose -f docker/docker-compose.yml exec frappe \
-  bash -lc "cd ~/frappe-bench && bench --site payroll.localhost execute \
-    iraqi_government_payroll.smoke.checks.governance"
+console < script` harness could both swallow errors and print a false PASSED).
 
-docker compose -f docker/docker-compose.yml exec frappe \
-  bash -lc "cd ~/frappe-bench && bench --site payroll.localhost execute \
-    iraqi_government_payroll.smoke.checks.locking"
+Four checks live in `iraqi_government_payroll.smoke.checks` —
+`governance` · `locking` · `api` · `create`:
+```bash
+for c in governance locking api create; do
+  docker compose -f docker/docker-compose.yml exec frappe \
+    bash -lc "cd ~/frappe-bench && bench --site payroll.localhost execute \
+      iraqi_government_payroll.smoke.checks.$c"
+done
 ```
-Expected on success: the per-step trace ending in `GOVERNANCE SMOKE TEST PASSED`
-/ `PAYROLL LOCKING SMOKE TEST PASSED` and exit code `0`. `docker/smoke-*.py` are
-thin entry points that call these same functions.
+Expected: each prints its per-step trace ending in `… SMOKE TEST PASSED` and exits
+`0` — `GOVERNANCE`, `PAYROLL LOCKING`, `GOVERNANCE API`, `PAYROLL RUN CREATE`.
+`docker/smoke-*.py` are thin entry points to the same functions.
+
+> **Python pin:** `install-app.sh` forces the bench virtualenv onto **Python
+> 3.12.12** (the `frappe/bench` image defaults to 3.14, which Frappe v15 does not
+> support and which breaks the document-save lock path). It self-heals an existing
+> bench's env without touching the site/DB.
 
 ## 4. (Optional) open the desk UI
 ```bash
