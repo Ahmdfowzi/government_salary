@@ -169,6 +169,15 @@ class TestPayrollRunDeleteGuard(unittest.TestCase):
 		inst.docstatus = 0
 		inst.on_trash()   # no raise
 
+	def test_does_not_shadow_frappe_is_locked_property(self):
+		# Regression: a method named `is_locked` on the controller shadows
+		# frappe Document.is_locked (a property used by check_if_locked() on every
+		# save), which broke all saves on a live bench. The lock-state helper must
+		# be `is_run_locked`, and `is_locked` must NOT be defined on the class.
+		cls = self._load_controller()
+		self.assertNotIn("is_locked", vars(cls))
+		self.assertTrue(callable(getattr(cls, "is_run_locked", None)))
+
 
 if __name__ == "__main__":
 	unittest.main()

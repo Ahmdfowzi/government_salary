@@ -113,13 +113,22 @@ def locking():
 						  "rule_set": "IRAQ-2015", "scope": "Employee",
 						  "scope_reference": EMP}).insert()
 	run.calculate_run(); run.reload()
+	# The run builds DRAFT slips; submitting one fires Salary Slip.on_submit, which
+	# writes the immutable Payroll Calculation Snapshot the historical-integrity
+	# checks below read back. (Governance run state is independent of slip docstatus.)
+	slip = frappe.db.get_value(
+		"Salary Slip", {"payroll_run": run.name, "employee_profile": EMP}, "name")
+	assert slip, "run did not produce a Salary Slip for the employee"
+	slip_doc = frappe.get_doc("Salary Slip", slip)
+	if slip_doc.docstatus == 0:
+		slip_doc.submit()
 	run.submit_for_review(); run.reload()
 	run.approve_run(); run.reload()
 	run.submit_run(); run.reload()
 	run.lock_run(); run.reload()
 	print("workflow_state      :", run.workflow_state, "| locked_by:", run.locked_by)
 	assert run.workflow_state == "Locked", run.workflow_state
-	assert run.is_locked() and run.is_historical_period()
+	assert run.is_run_locked() and run.is_historical_period()
 
 	net_before = hist.get_payroll_snapshot(run.name, EMP)["net_amount"]
 	print("historical net      :", net_before)

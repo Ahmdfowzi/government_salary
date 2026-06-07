@@ -146,9 +146,12 @@ class PayrollRun(Document):
 
 	# --- Reporting helpers --- #
 
-	def is_locked(self):
+	# NOTE: do NOT name this `is_locked` — that shadows frappe.model.document.
+	# Document.is_locked (a property used by Document.check_if_locked() on every
+	# save), which made check_if_locked() mis-fire and break every save.
+	def is_run_locked(self):
 		return governance.is_locked(self.workflow_state)
 
 	def is_historical_period(self):
 		"""A locked run is a finalized, immutable historical period."""
-		return self.is_locked()
+		return self.is_run_locked()
