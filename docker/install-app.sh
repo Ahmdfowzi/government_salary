@@ -14,11 +14,45 @@ SITE="payroll.localhost"
 APP_SRC="/mnt/iraqi_government_payroll"
 FRAPPE_BRANCH="version-15"
 
+# Pin the bench Python to a Frappe v15-supported version. The frappe/bench image
+# ships Python 3.14 as the pyenv default, but Frappe v15 supports 3.10-3.12 only;
+# under 3.14 the document-save path hits a Frappe-core file_lock TOCTOU
+# (check_if_locked -> lock_age().stat() FileNotFoundError). 3.12.12 ships in the
+# image. We force the bench virtualenv onto it.
+PY_VERSION="3.12.12"
+PY_BIN="$HOME/.pyenv/versions/$PY_VERSION/bin/python3"
+if [ ! -x "$PY_BIN" ]; then
+  PY_BIN="$(command -v python3.12 || command -v python3)"
+fi
+echo ">> pinned bench Python: $PY_BIN ($("$PY_BIN" --version 2>&1))"
+
 if [ ! -d "$BENCH_DIR" ]; then
-  echo ">> bench init ($FRAPPE_BRANCH)"
-  bench init --skip-redis-config-generation --frappe-branch "$FRAPPE_BRANCH" "$BENCH_DIR"
+  echo ">> bench init ($FRAPPE_BRANCH, Python $PY_VERSION)"
+  bench init --skip-redis-config-generation --python "$PY_BIN" \
+    --frappe-branch "$FRAPPE_BRANCH" "$BENCH_DIR"
 fi
 cd "$BENCH_DIR"
+
+# Self-heal: if an already-initialized bench env is on the wrong Python (e.g. a
+# 3.14 bench built before this pin), rebuild only the virtualenv onto the pinned
+# version. The site and database are untouched, so no re-migrate / re-seed is
+# needed — just a Python swap.
+CUR_PY="$(./env/bin/python -c 'import sys;print("%d.%d"%sys.version_info[:2])' 2>/dev/null || echo none)"
+PIN_MM="${PY_VERSION%.*}"
+if [ "$CUR_PY" != "$PIN_MM" ]; then
+  echo ">> rebuilding bench env with Python $PY_VERSION (was: $CUR_PY)"
+  rm -rf env
+  "$PY_BIN" -m venv env
+  ./env/bin/python -m pip install --quiet --upgrade pip wheel
+  ./env/bin/python -m pip install --quiet -e apps/frappe
+  for extra in apps/*/; do
+    name="$(basename "$extra")"
+    [ "$name" = "frappe" ] && continue
+    [ -f "$extra/pyproject.toml" ] || [ -f "$extra/setup.py" ] && \
+      ./env/bin/python -m pip install --quiet -e "$extra" || true
+  done
+  bench setup requirements || true
+fi
 
 echo ">> point bench at the compose services"
 bench set-config -g db_host mariadb
