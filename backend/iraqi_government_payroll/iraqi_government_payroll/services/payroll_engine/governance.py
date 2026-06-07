@@ -131,6 +131,31 @@ def ensure_role_allowed(action, user_roles):
 	return True
 
 
+# Canonical action order (for stable UI button ordering); every entry is a key of
+# both TRANSITIONS and REQUIRED_ROLES.
+GOVERNANCE_ACTIONS = (
+	"calculate", "submit_for_review", "approve", "submit", "lock", "unlock", "cancel",
+)
+
+
+def available_actions(current_state, user_roles):
+	"""Actions that are BOTH valid from `current_state` and permitted for `user_roles`.
+
+	Pure (state x role) view over TRANSITIONS + REQUIRED_ROLES — the single source
+	of truth, so a client never re-encodes the state machine or role matrix. Note:
+	runtime-only guards (e.g. approve requires zero blocking errors) are NOT applied
+	here; the controller method still enforces them when the action is invoked.
+	"""
+	cur = current_state or DRAFT
+	roles = list(user_roles or ())
+	out = []
+	for action in GOVERNANCE_ACTIONS:
+		allowed_from, _target = TRANSITIONS[action]
+		if cur in allowed_from and role_allowed(action, roles):
+			out.append(action)
+	return out
+
+
 def build_event(action, from_state, to_state, actor, timestamp, note=""):
 	"""Pure builder for an immutable Payroll Run Governance Event payload.
 

@@ -5,6 +5,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
 
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.governance
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.locking
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.api
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
 so the first failed assertion raises, aborts the run with a non-zero exit code,
@@ -163,3 +164,58 @@ def locking():
 
 	frappe.db.commit()
 	print("\nPAYROLL LOCKING SMOKE TEST PASSED")
+
+
+def api():
+	"""Phase 3 M6 — the governance REST surface (api.payroll_api) end to end.
+
+	Drives a run through get_run_governance + run_governance_action and checks that
+	state, available actions and the M5 audit trail flow through the API exactly as
+	through the controller. Runs as Administrator (System Manager bypasses roles).
+	"""
+	from iraqi_government_payroll.api import payroll_api as papi
+
+	if not frappe.db.exists("Government Employee Payroll Profile", {"employee_number": "E1"}):
+		frappe.get_doc({
+			"doctype": "Government Employee Payroll Profile",
+			"employee_number": "E1", "employee_name": "Smoke Test",
+			"rule_set": "IRAQ-2015", "grade_code": "7", "current_grade": 7,
+			"current_stage": 1, "qualification": "Bachelor", "status": "Active",
+		}).insert()
+	if not frappe.db.exists("Payroll Period", {"year": 2020, "month": 6}):
+		frappe.get_doc({"doctype": "Payroll Period", "year": 2020, "month": 6,
+						"start_date": "2020-06-01", "end_date": "2020-06-30", "status": "Open"}).insert()
+	period = frappe.get_value("Payroll Period", {"year": 2020, "month": 6}, "name")
+
+	run = frappe.get_doc({"doctype": "Payroll Run", "payroll_period": period,
+						  "rule_set": "IRAQ-2015", "scope": "All"}).insert()
+
+	g0 = papi.get_run_governance(run.name)
+	print("initial state       :", g0["workflow_state"], "| actions:", g0["allowed_actions"])
+	assert g0["workflow_state"] == "Draft", g0["workflow_state"]
+	assert "calculate" in g0["allowed_actions"]
+
+	r1 = papi.run_governance_action(run.name, "calculate")
+	print("after calculate     :", r1["workflow_state"], "| actions:", r1["allowed_actions"])
+	assert r1["workflow_state"] == "Calculated", r1["workflow_state"]
+	assert "submit_for_review" in r1["allowed_actions"]
+
+	papi.run_governance_action(run.name, "submit_for_review")
+	papi.run_governance_action(run.name, "approve")
+	r2 = papi.run_governance_action(run.name, "submit")
+	print("after submit        :", r2["workflow_state"], "| actions:", r2["allowed_actions"])
+	assert r2["workflow_state"] == "Submitted", r2["workflow_state"]
+
+	# Unknown action is rejected before any dispatch
+	bad = _blocked(lambda: papi.run_governance_action(run.name, "nuke"))
+	print("unknown rejected    :", bad)
+	assert bad, "unknown action was not rejected"
+
+	# The same immutable M5 audit trail is visible through the read endpoint
+	g1 = papi.get_run_governance(run.name)
+	logged = [e["action"] for e in g1["events"]]
+	print("events via API      :", logged)
+	assert logged == ["calculate", "submit_for_review", "approve", "submit"], logged
+
+	frappe.db.commit()
+	print("\nGOVERNANCE API SMOKE TEST PASSED")
