@@ -31,6 +31,7 @@ import type {
   EmployeeRegisterReport,
   ComponentRegisterReport,
   TaxRegisterReport,
+  PensionRegisterReport,
 } from "../types";
 
 const API = "iraqi_government_payroll.iraqi_government_payroll.api.payroll_api";
@@ -106,6 +107,12 @@ export const payrollApi = {
     callMethod<ComponentRegisterReport>(`${REPORTS}.deductions_register`, { run }),
   reportTax: (run: string) =>
     callMethod<TaxRegisterReport>(`${REPORTS}.tax_register`, { run }),
+  reportPensionRegister: (from_date?: string, to_date?: string, status?: string) =>
+    callMethod<PensionRegisterReport>(`${REPORTS}.pension_register`, {
+      from_date,
+      to_date,
+      status,
+    }),
 
   // Calculation triggers — backend only (implemented in later milestones).
   calculateActiveSalary: (profile: string, period_date: string) =>

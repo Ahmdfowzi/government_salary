@@ -183,5 +183,121 @@ class TestReportSourceSelection(unittest.TestCase):
 		self.assertEqual(emp["rows"][0]["allowances"], 133200)
 
 
+def _pension_row(emp, name, approved, cert, col, tax, other, eos, **extra):
+	gross = approved + cert + col
+	net = gross - tax - other
+	row = {
+		"employee_profile": emp, "employee_name": name, "qualification": "Bachelor",
+		"service_years": 30, "average_36_months": 1010000,
+		"approved_pension": approved, "certificate_allowance": cert, "cost_of_living": col,
+		"gross_pension": gross, "monthly_tax": tax, "other_deductions": other,
+		"net_pension": net, "end_of_service_bonus": eos,
+		"status": "Approved", "calculation_date": "2026-06-01",
+	}
+	row.update(extra)
+	return row
+
+
+PENSION_ROWS = [
+	_pension_row("R1", "Mahmoud", 909000, 90900, 227250, 60000, 0, 12360000),
+	_pension_row("R2", "Layla", 600000, 0, 150000, 30000, 5000, 0),
+]
+
+
+class TestPensionRegister(unittest.TestCase):
+	def test_totals(self):
+		reg = rs.pension_register(PENSION_ROWS)
+		self.assertEqual(reg["count"], 2)
+		self.assertEqual(reg["totals"]["approved_pension"], 1509000)
+		self.assertEqual(reg["totals"]["gross_pension"], 1227150 + 750000)
+		self.assertEqual(reg["totals"]["net_pension"], 1167150 + 715000)
+		self.assertEqual(reg["totals"]["end_of_service_bonus"], 12360000)
+
+	def test_rows_passthrough_all_fields(self):
+		reg = rs.pension_register(PENSION_ROWS)
+		row = reg["rows"][0]
+		for f in ("employee_profile", "employee_name", "qualification", "service_years",
+				  "average_36_months", "approved_pension", "certificate_allowance",
+				  "cost_of_living", "gross_pension", "monthly_tax", "other_deductions",
+				  "net_pension", "end_of_service_bonus", "status", "calculation_date"):
+			self.assertIn(f, row)
+
+	def test_reconciliation(self):
+		# gross == approved + cert + col ; net == gross - tax - other
+		for r in PENSION_ROWS:
+			self.assertEqual(r["gross_pension"],
+							 r["approved_pension"] + r["certificate_allowance"] + r["cost_of_living"])
+			self.assertEqual(r["net_pension"],
+							 r["gross_pension"] - r["monthly_tax"] - r["other_deductions"])
+
+
+class TestPensionSourceSelection(unittest.TestCase):
+	"""Finalized (Approved) record with a snapshot -> snapshot figures; else -> live."""
+
+	def _load_api(self, *, record, snapshot=None):
+		frappe = types.ModuleType("frappe")
+		frappe.throw = lambda msg, *a, **k: _raise(msg)
+		frappe._ = lambda s, *a, **k: s
+		frappe.db = types.SimpleNamespace(
+			get_value=lambda dt, name, field: "Bachelor")  # qualification lookup
+
+		def get_all(dt, filters=None, fields=None, **k):
+			if dt == "Pension Calculation":
+				return [record]
+			if dt == "Payroll Calculation Snapshot":
+				return [snapshot] if snapshot else []
+			return []
+		frappe.get_all = get_all
+
+		def whitelist(*a, **k):
+			def deco(f):
+				return f
+			return deco if not (a and callable(a[0])) else a[0]
+		frappe.whitelist = whitelist
+		sys.modules["frappe"] = frappe
+		import importlib
+		mod = importlib.import_module("iraqi_government_payroll.api.reports_api")
+		importlib.reload(mod)
+		return mod
+
+	def test_finalized_reads_snapshot(self):
+		# live record says net 999; snapshot output says net 715000 -> snapshot wins
+		record = {"name": "PC1", "employee_profile": "R2", "employee_name": "Layla",
+				  "calculation_date": "2026-06-01", "status": "Approved",
+				  "period_date": "2026-06-01", "service_years": 99, "net_pension": 999,
+				  "approved_pension": 1, "certificate_allowance": 1, "cost_of_living": 1,
+				  "gross_pension": 3, "monthly_tax": 1, "other_deductions": 1,
+				  "average_36_months": 1, "end_of_service_bonus": 1}
+		out_json = ('{"service_months": 360, "avg36": 1010000, "approved_pension": 600000,'
+					' "certificate_allowance": 0, "cost_of_living": 150000,'
+					' "gross_pension": 750000, "monthly_tax": 30000, "other_deductions": 5000,'
+					' "net_pension": 715000, "end_of_service_bonus": 0}')
+		snap = {"name": "SN1", "employee_name": "Layla", "gross_amount": 750000,
+				"net_amount": 715000, "output_snapshot": out_json}
+		api = self._load_api(record=record, snapshot=snap)
+		reg = api.pension_register("2026-06-01", "2026-06-30", "Approved")
+		row = reg["rows"][0]
+		self.assertEqual(row["net_pension"], 715000)        # from snapshot, not 999
+		self.assertEqual(row["service_years"], 30)          # 360 months / 12
+		self.assertEqual(row["status"], "Approved")
+		self.assertEqual(row["qualification"], "Bachelor")  # profile lookup
+		self.assertEqual(row["calculation_date"], "2026-06-01")
+
+	def test_non_finalized_reads_live(self):
+		record = {"name": "PC2", "employee_profile": "R3", "employee_name": "Omar",
+				  "calculation_date": "2026-06-02", "status": "Calculated",
+				  "period_date": "2026-06-01", "service_years": 28, "net_pension": 500000,
+				  "approved_pension": 400000, "certificate_allowance": 0, "cost_of_living": 100000,
+				  "gross_pension": 500000, "monthly_tax": 0, "other_deductions": 0,
+				  "average_36_months": 800000, "end_of_service_bonus": 0}
+		# snapshot present but must be ignored (status not finalized)
+		api = self._load_api(record=record, snapshot={"name": "X", "output_snapshot": "{}"})
+		reg = api.pension_register("2026-06-01", "2026-06-30", None)
+		row = reg["rows"][0]
+		self.assertEqual(row["net_pension"], 500000)        # from live record
+		self.assertEqual(row["service_years"], 28)
+		self.assertEqual(row["status"], "Calculated")
+
+
 if __name__ == "__main__":
 	unittest.main()

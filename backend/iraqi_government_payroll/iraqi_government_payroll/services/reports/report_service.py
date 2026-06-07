@@ -124,3 +124,23 @@ def tax_register(rows):
 			})
 			total += amount
 	return {"rows": out, "total_tax": total}
+
+
+# Pension register monetary columns (for the totals row).
+PENSION_TOTAL_FIELDS = (
+	"approved_pension", "certificate_allowance", "cost_of_living", "gross_pension",
+	"monthly_tax", "other_deductions", "net_pension", "end_of_service_bonus",
+)
+
+
+def pension_register(rows):
+	"""Report 6 — Retirement Pension Register (Phase 4 M11).
+
+	Pass-through of normalized rows (built by the API from stored Pension
+	Calculation / Retirement Pension Snapshot values — NO recomputation here) plus
+	column totals. Reconciliation the API rows satisfy (asserted in tests):
+	gross_pension == approved + certificate + cost_of_living, and
+	net_pension == gross_pension - monthly_tax - other_deductions.
+	"""
+	totals = {f: sum(_i(r.get(f)) for r in rows) for f in PENSION_TOTAL_FIELDS}
+	return {"count": len(rows), "rows": rows, "totals": totals}

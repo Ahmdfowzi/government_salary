@@ -1,9 +1,9 @@
 "use client";
 
-// Payroll reports (Phase 4 M10) — read-only. The backend aggregates Salary Slip
-// (active run) or immutable Snapshot (locked run); this page only selects a run +
-// report, renders the returned rows, and exports them client-side as CSV. No
-// calculation or workflow logic here.
+// Payroll reports (Phase 4 M10/M11) — read-only. The backend aggregates Salary
+// Slip / Snapshot (run reports) or Pension Calculation / Retirement Pension
+// Snapshot (pension register). This page only selects inputs, renders the returned
+// rows, and exports them client-side as CSV. No calculation or workflow logic.
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@shared/components/PageHeader";
@@ -25,12 +25,16 @@ const REPORT_TYPES = [
   { key: "allowances", label: "كشف المخصصات" },
   { key: "deductions", label: "كشف الاستقطاعات" },
   { key: "tax", label: "كشف الضريبة" },
+  { key: "pension", label: "كشف التقاعد" },
 ] as const;
 type ReportKey = (typeof REPORT_TYPES)[number]["key"];
+type RunReportKey = Exclude<ReportKey, "pension">;
+
+const PENSION_STATUSES = ["", "Draft", "Calculated", "Approved"];
 
 const rows = (r: unknown) => r as Record<string, unknown>[];
 
-async function loadReport(type: ReportKey, run: string): Promise<Renderable> {
+async function loadRunReport(type: RunReportKey, run: string): Promise<Renderable> {
   switch (type) {
     case "summary": {
       const d = await payrollApi.reportRunSummary(run);
@@ -99,10 +103,47 @@ async function loadReport(type: ReportKey, run: string): Promise<Renderable> {
   }
 }
 
+async function loadPensionReport(
+  from: string,
+  to: string,
+  status: string,
+): Promise<Renderable> {
+  const d = await payrollApi.reportPensionRegister(
+    from || undefined,
+    to || undefined,
+    status || undefined,
+  );
+  return {
+    columns: [
+      { key: "employee_profile", header: "الموظف" },
+      { key: "employee_name", header: "الاسم" },
+      { key: "qualification", header: "التحصيل" },
+      { key: "service_years", header: "سنوات الخدمة", numeric: true },
+      { key: "average_36_months", header: "متوسط ٣٦ شهر", numeric: true },
+      { key: "approved_pension", header: "التقاعد المُقَرّ", numeric: true },
+      { key: "certificate_allowance", header: "مخصص الشهادة", numeric: true },
+      { key: "cost_of_living", header: "غلاء المعيشة", numeric: true },
+      { key: "gross_pension", header: "الإجمالي", numeric: true },
+      { key: "monthly_tax", header: "الضريبة الشهرية", numeric: true },
+      { key: "other_deductions", header: "استقطاعات أخرى", numeric: true },
+      { key: "net_pension", header: "الصافي", numeric: true },
+      { key: "end_of_service_bonus", header: "مكافأة نهاية الخدمة", numeric: true },
+      { key: "status", header: "الحالة" },
+      { key: "calculation_date", header: "تاريخ الاحتساب", numeric: true },
+    ],
+    rows: rows(d.rows),
+    totalsLine: `الإجمالي — الصافي: ${d.totals.net_pension ?? 0} (عدد: ${d.count})`,
+    csvName: "pension-register",
+  };
+}
+
 export default function ReportsPage() {
   const [runs, setRuns] = useState<PayrollRun[]>([]);
   const [run, setRun] = useState("");
   const [type, setType] = useState<ReportKey>("summary");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [status, setStatus] = useState("");
   const [report, setReport] = useState<Renderable | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -112,46 +153,35 @@ export default function ReportsPage() {
   }, []);
 
   useEffect(() => {
-    if (!run) {
+    const isPension = type === "pension";
+    if (!isPension && !run) {
       setReport(null);
       return;
     }
     setLoading(true);
     setError(null);
-    loadReport(type, run)
-      .then(setReport)
+    const p = isPension
+      ? loadPensionReport(fromDate, toDate, status)
+      : loadRunReport(type, run);
+    p.then(setReport)
       .catch((e: Error) => {
         setError(e.message);
         setReport(null);
       })
       .finally(() => setLoading(false));
-  }, [run, type]);
+  }, [type, run, fromDate, toDate, status]);
+
+  const isPension = type === "pension";
 
   return (
     <div>
       <PageHeader
         title="التقارير"
-        subtitle="كشوف الرواتب — للعرض والتصدير فقط (Payroll registers)"
+        subtitle="كشوف الرواتب والتقاعد — للعرض والتصدير فقط"
       />
 
       {/* Controls */}
       <div className="mb-6 flex flex-wrap items-end gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-slate-600">الدورة</span>
-          <select
-            value={run}
-            onChange={(e) => setRun(e.target.value)}
-            className="rounded-lg border border-slate-300 px-3 py-2"
-          >
-            <option value="">— اختر دورة —</option>
-            {runs.map((r) => (
-              <option key={r.name} value={r.name}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-slate-600">التقرير</span>
           <select
@@ -166,6 +196,59 @@ export default function ReportsPage() {
             ))}
           </select>
         </label>
+
+        {isPension ? (
+          <>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-slate-600">من تاريخ</span>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-slate-600">إلى تاريخ</span>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-slate-600">الحالة</span>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+              >
+                {PENSION_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s || "الكل"}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        ) : (
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-slate-600">الدورة</span>
+            <select
+              value={run}
+              onChange={(e) => setRun(e.target.value)}
+              className="rounded-lg border border-slate-300 px-3 py-2"
+            >
+              <option value="">— اختر دورة —</option>
+              {runs.map((r) => (
+                <option key={r.name} value={r.name}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <button
           type="button"
@@ -185,7 +268,7 @@ export default function ReportsPage() {
         </div>
       ) : null}
 
-      {!run ? (
+      {!isPension && !run ? (
         <p className="text-sm text-slate-500">اختر دورة رواتب لعرض التقرير.</p>
       ) : null}
 

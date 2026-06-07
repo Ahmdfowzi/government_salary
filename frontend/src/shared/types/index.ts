@@ -392,6 +392,34 @@ export interface TaxRegisterReport {
   total_tax: number;
 }
 
+// Phase 4 M11 — Retirement Pension Register (read-only, from Pension Calculation
+// / Retirement Pension Snapshot).
+export interface PensionRegisterRow {
+  employee_profile: string;
+  employee_name: string;
+  qualification: string;
+  service_years: number;
+  average_36_months: number;
+  approved_pension: number;
+  certificate_allowance: number;
+  cost_of_living: number;
+  gross_pension: number;
+  monthly_tax: number;
+  other_deductions: number;
+  net_pension: number;
+  end_of_service_bonus: number;
+  status: string;
+  calculation_date: string;
+}
+export interface PensionRegisterReport {
+  from_date: string | null;
+  to_date: string | null;
+  status: string | null;
+  count: number;
+  rows: PensionRegisterRow[];
+  totals: Record<string, number>;
+}
+
 export interface SalarySlipLine {
   component_code?: string;
   component_name?: string;

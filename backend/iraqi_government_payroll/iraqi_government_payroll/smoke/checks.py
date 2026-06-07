@@ -8,6 +8,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.api
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.create
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.reports
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.pension_report
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
 so the first failed assertion raises, aborts the run with a non-zero exit code,
@@ -315,3 +316,55 @@ def reports():
 
 	frappe.db.rollback()                        # discard the run; re-runnable
 	print("\nPAYROLL REPORTS SMOKE TEST PASSED")
+
+
+def pension_report():
+	"""Phase 4 M11 — the Retirement Pension Register reads stored Pension
+	Calculation values and reconciles. Inserts one sample record (no retirement
+	calc here — figures are supplied as already-computed), reads the register,
+	checks reconciliation, then rolls back.
+	"""
+	from iraqi_government_payroll.api import reports_api as rep
+
+	if not frappe.db.exists("Government Employee Payroll Profile", "PEN1"):
+		frappe.get_doc({
+			"doctype": "Government Employee Payroll Profile",
+			"employee_number": "PEN1", "employee_name": "Pension Test",
+			"rule_set": "IRAQ-2015", "grade_code": "7", "current_grade": 7,
+			"current_stage": 1, "qualification": "Bachelor", "status": "Active",
+			"employment_status": "Retired",
+		}).insert()
+		frappe.db.commit()
+
+	# Stored, already-computed pension figures (gross = approved + cert + col;
+	# net = gross - tax - other). NOT computed here.
+	approved, cert, col, tax, other, eos = 909000, 90900, 227250, 60000, 0, 12360000
+	gross = approved + cert + col
+	net = gross - tax - other
+	frappe.get_doc({
+		"doctype": "Pension Calculation", "employee_profile": "PEN1",
+		"employee_name": "Pension Test", "rule_set": "IRAQ-2015",
+		"calculation_date": "2026-06-15", "period_date": "2026-06-01", "status": "Calculated",
+		"service_years": 36, "average_36_months": 1010000, "accrual_rate": 2.5,
+		"approved_pension": approved, "certificate_allowance": cert, "cost_of_living": col,
+		"gross_pension": gross, "monthly_tax": tax, "other_deductions": other,
+		"net_pension": net, "end_of_service_bonus": eos,
+	}).insert()
+
+	reg = rep.pension_register("2026-06-01", "2026-06-30", None)
+	print("pension rows        :", reg["rows"])
+	print("pension totals      :", reg["totals"])
+	assert reg["count"] == 1, reg["count"]
+	row = reg["rows"][0]
+	assert row["qualification"] == "Bachelor", row["qualification"]
+	assert row["net_pension"] == net
+	# reconciliation against stored figures (no recompute)
+	assert row["gross_pension"] == row["approved_pension"] + row["certificate_allowance"] \
+		+ row["cost_of_living"], "gross mismatch"
+	assert row["net_pension"] == row["gross_pension"] - row["monthly_tax"] \
+		- row["other_deductions"], "net mismatch"
+	assert reg["totals"]["net_pension"] == net
+	print("reconciled          : gross/net tie to stored pension figures")
+
+	frappe.db.rollback()                        # discard the record; re-runnable
+	print("\nRETIREMENT PENSION REGISTER SMOKE TEST PASSED")

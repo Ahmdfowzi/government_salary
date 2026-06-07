@@ -9,6 +9,8 @@ Source selection: a LOCKED run is read from the immutable Payroll Calculation
 Snapshot (historical integrity); any other run is read from the live Salary Slip.
 """
 
+import json
+
 import frappe
 
 from iraqi_government_payroll.services.reports import report_service as rs
@@ -124,3 +126,112 @@ def deductions_register(run):
 @frappe.whitelist()
 def tax_register(run):
 	return {"run": run, **rs.tax_register(_rows_for(run))}
+
+
+# --------------------------- Retirement Pension Register (M11) --------------------------- #
+# Pension Calculation is per-employee and on-demand (not tied to a Payroll Run), so
+# this register is filtered by calculation_date range + status. Source selection
+# mirrors M10: a FINALIZED record (status Approved) reads its monetary figures from
+# the immutable Retirement Pension snapshot; otherwise from the live record.
+# Identity/metadata (employee, name, qualification, status, calculation_date) come
+# from the live record + profile — the pension snapshot does not store them.
+
+# Pension Calculation columns (qualification is NOT here — it comes from the profile).
+_PENSION_FIELDS = [
+	"name", "employee_profile", "employee_name", "calculation_date",
+	"status", "period_date", "service_years", "average_36_months", "approved_pension",
+	"certificate_allowance", "cost_of_living", "gross_pension", "monthly_tax",
+	"other_deductions", "net_pension", "end_of_service_bonus",
+]
+
+_FINALIZED = "Approved"
+
+
+def _qualification(emp, cache):
+	if emp not in cache:
+		cache[emp] = frappe.db.get_value(
+			"Government Employee Payroll Profile", emp, "qualification") or ""
+	return cache[emp]
+
+
+def _pension_row_from_live(rec, qual):
+	return {
+		"employee_profile": rec.get("employee_profile"),
+		"employee_name": rec.get("employee_name"),
+		"qualification": qual,
+		"service_years": rec.get("service_years") or 0,
+		"average_36_months": rec.get("average_36_months") or 0,
+		"approved_pension": rec.get("approved_pension") or 0,
+		"certificate_allowance": rec.get("certificate_allowance") or 0,
+		"cost_of_living": rec.get("cost_of_living") or 0,
+		"gross_pension": rec.get("gross_pension") or 0,
+		"monthly_tax": rec.get("monthly_tax") or 0,
+		"other_deductions": rec.get("other_deductions") or 0,
+		"net_pension": rec.get("net_pension") or 0,
+		"end_of_service_bonus": rec.get("end_of_service_bonus") or 0,
+		"status": rec.get("status"),
+		"calculation_date": rec.get("calculation_date"),
+	}
+
+
+def _retirement_snapshot(employee_profile, period_date):
+	"""Latest immutable Retirement Pension snapshot for (employee, period), or None."""
+	if not period_date:
+		return None
+	found = frappe.get_all(
+		"Payroll Calculation Snapshot",
+		filters={"employee_profile": employee_profile, "period_date": period_date,
+				 "calculation_type": "Retirement Pension"},
+		fields=["name", "employee_name", "gross_amount", "net_amount", "output_snapshot"],
+		order_by="creation desc", limit_page_length=1)
+	return found[0] if found else None
+
+
+def _pension_row_from_snapshot(snap, rec, qual):
+	"""Monetary fields from the immutable snapshot's output JSON; identity/date from
+	the (finalized) live record. service_years recovered from stored service_months."""
+	out = json.loads(snap.get("output_snapshot") or "{}")
+	return {
+		"employee_profile": rec.get("employee_profile"),
+		"employee_name": rec.get("employee_name") or snap.get("employee_name"),
+		"qualification": qual,
+		"service_years": int(out.get("service_months") or 0) // 12,
+		"average_36_months": out.get("avg36") or 0,
+		"approved_pension": out.get("approved_pension") or 0,
+		"certificate_allowance": out.get("certificate_allowance") or 0,
+		"cost_of_living": out.get("cost_of_living") or 0,
+		"gross_pension": out.get("gross_pension") or snap.get("gross_amount") or 0,
+		"monthly_tax": out.get("monthly_tax") or 0,
+		"other_deductions": out.get("other_deductions") or 0,
+		"net_pension": out.get("net_pension") or snap.get("net_amount") or 0,
+		"end_of_service_bonus": out.get("end_of_service_bonus") or 0,
+		"status": _FINALIZED,                         # a snapshot exists -> finalized
+		"calculation_date": rec.get("calculation_date"),
+	}
+
+
+@frappe.whitelist()
+def pension_register(from_date=None, to_date=None, status=None):
+	"""Retirement Pension Register filtered by calculation_date range + status."""
+	filters = {}
+	if from_date and to_date:
+		filters["calculation_date"] = ["between", [from_date, to_date]]
+	elif from_date:
+		filters["calculation_date"] = [">=", from_date]
+	elif to_date:
+		filters["calculation_date"] = ["<=", to_date]
+	if status:
+		filters["status"] = status
+
+	records = frappe.get_all("Pension Calculation", filters=filters, fields=_PENSION_FIELDS)
+	qual_cache = {}
+	rows = []
+	for rec in records:
+		qual = _qualification(rec.get("employee_profile"), qual_cache)
+		snap = (_retirement_snapshot(rec.get("employee_profile"), rec.get("period_date"))
+				if rec.get("status") == _FINALIZED else None)
+		rows.append(_pension_row_from_snapshot(snap, rec, qual) if snap
+					else _pension_row_from_live(rec, qual))
+
+	return {"from_date": from_date, "to_date": to_date, "status": status,
+			**rs.pension_register(rows)}
