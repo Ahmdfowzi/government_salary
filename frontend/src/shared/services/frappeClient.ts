@@ -17,6 +17,29 @@ function buildUrl(path: string, query?: Query): string {
   return url.toString();
 }
 
+// Pull a human-readable message out of a Frappe error response body. Frappe puts
+// thrown messages in `_server_messages` (a JSON array of JSON strings) or in
+// `exception` ("frappe.exceptions.ValidationError: <msg>"); fall back to status.
+function extractError(body: string, status: number, statusText: string): string {
+  try {
+    const json = JSON.parse(body);
+    if (typeof json._server_messages === "string") {
+      const msgs = JSON.parse(json._server_messages) as string[];
+      if (msgs.length) {
+        const last = JSON.parse(msgs[msgs.length - 1]) as { message?: string };
+        if (last.message) return last.message;
+      }
+    }
+    if (typeof json.exception === "string" && json.exception.includes(": ")) {
+      return json.exception.slice(json.exception.indexOf(": ") + 2);
+    }
+    if (typeof json.message === "string") return json.message;
+  } catch {
+    /* not JSON — fall through to the status line */
+  }
+  return `Frappe request failed: ${status} ${statusText}`;
+}
+
 async function request<T>(path: string, init?: RequestInit, query?: Query): Promise<T> {
   const res = await fetch(buildUrl(path, query), {
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -24,7 +47,7 @@ async function request<T>(path: string, init?: RequestInit, query?: Query): Prom
     ...init,
   });
   if (!res.ok) {
-    throw new Error(`Frappe request failed: ${res.status} ${res.statusText}`);
+    throw new Error(extractError(await res.text(), res.status, res.statusText));
   }
   const json = await res.json();
   return (json.data ?? json.message ?? json) as T;

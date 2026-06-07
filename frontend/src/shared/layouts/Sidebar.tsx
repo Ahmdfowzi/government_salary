@@ -17,6 +17,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/government-payroll/increments", label: "العلاوات السنوية" },
   { href: "/government-payroll/promotions", label: "الترفيعات" },
   { href: "/government-payroll/pension", label: "التقاعد" },
+  { href: "/government-payroll/payroll-runs", label: "دورات الرواتب" },
   { href: "/government-payroll/calculation-logs", label: "سجلات الاحتساب" },
 ];
 

@@ -26,6 +26,7 @@ import type {
   SalarySlip,
   EmployeeMonthlySalary,
   PayrollCalculationSnapshot,
+  RunGovernance,
 } from "../types";
 
 const API = "iraqi_government_payroll.iraqi_government_payroll.api.payroll_api";
@@ -67,6 +68,16 @@ export const payrollApi = {
 
   // Audit / reproducibility
   snapshots: () => getList<PayrollCalculationSnapshot>("Payroll Calculation Snapshot"),
+
+  // Payroll Run governance (Phase 3 M6/M7). The backend is authoritative for
+  // state, permissions and the audit trail; the UI only renders what these return.
+  runGovernance: (run: string) =>
+    callMethod<RunGovernance>(`${API}.get_run_governance`, { run }),
+  runAction: (run: string, action: string) =>
+    callMethod<Pick<RunGovernance, "name" | "workflow_state" | "allowed_actions">>(
+      `${API}.run_governance_action`,
+      { run, action },
+    ),
 
   // Calculation triggers — backend only (implemented in later milestones).
   calculateActiveSalary: (profile: string, period_date: string) =>

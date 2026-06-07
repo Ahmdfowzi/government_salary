@@ -295,14 +295,47 @@ export interface PayrollPeriod {
   status: "Open" | "Calculating" | "Review" | "Approved" | "Locked";
 }
 
+export type WorkflowState =
+  | "Draft"
+  | "Calculated"
+  | "Under Review"
+  | "Approved"
+  | "Submitted"
+  | "Locked"
+  | "Cancelled";
+
 export interface PayrollRun {
   name: string;
   payroll_period: string;
   rule_set?: string;
   scope?: "Employee" | "Government Entity" | "All";
   scope_reference?: string;
+  workflow_state?: WorkflowState;
   run_status?: "Draft" | "Queued" | "Completed" | "Failed";
   run_date?: string;
+}
+
+// One immutable governance transition (mirrors Payroll Run Governance Event).
+export interface GovernanceEvent {
+  action: string;
+  from_state: string;
+  to_state: string;
+  actor: string;
+  event_timestamp: string;
+}
+
+// Read model returned by api.payroll_api.get_run_governance / run_governance_action.
+// `allowed_actions` is the AUTHORITATIVE list of actions the caller may take now —
+// computed entirely on the backend. The UI renders buttons from it and never
+// re-derives transitions or permissions.
+export interface RunGovernance {
+  name: string;
+  workflow_state: WorkflowState;
+  run_status?: string;
+  error_count?: number;
+  allowed_actions: string[];
+  audit: Record<string, string | null>;
+  events: GovernanceEvent[];
 }
 
 export interface SalarySlipLine {
