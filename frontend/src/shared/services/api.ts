@@ -78,6 +78,16 @@ export const payrollApi = {
       `${API}.run_governance_action`,
       { run, action },
     ),
+  createRun: (
+    period: string,
+    rule_set: string,
+    scope: string,
+    scope_reference?: string,
+  ) =>
+    callMethod<Pick<RunGovernance, "name" | "workflow_state" | "allowed_actions">>(
+      `${API}.create_payroll_run`,
+      { period, rule_set, scope, scope_reference },
+    ),
 
   // Calculation triggers — backend only (implemented in later milestones).
   calculateActiveSalary: (profile: string, period_date: string) =>

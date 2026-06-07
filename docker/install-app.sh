@@ -114,7 +114,7 @@ echo ">> install-app + migrate"
 bench --site "$SITE" install-app iraqi_government_payroll || true
 bench --site "$SITE" migrate
 
-echo ">> fixture counts (expect: scale 143 | qual 16 | brackets 4 | durations 9 | roles 6 | doctypes 27)"
+echo ">> fixture counts (expect: scale 143 | qual 16 | brackets 4 | durations 9 | roles 6 | doctypes 34)"
 bench --site "$SITE" console <<'PY'
 import frappe
 print("Rule Sets          :", frappe.db.count("Government Rule Set"))
@@ -123,6 +123,6 @@ print("Qual rules (16)    :", frappe.db.count("Qualification Appointment Rule"))
 print("Tax brackets (4)   :", frappe.db.count("Income Tax Bracket"))
 print("Promo durations(9) :", frappe.db.count("Promotion Grade Duration"))
 print("Roles (6)          :", frappe.db.count("Role", {"role_name":["in",["Payroll Administrator","Payroll Manager","Payroll Officer","HR User","Finance User","Auditor"]]}))
-print("Custom DocTypes(27):", frappe.db.count("DocType", {"module":"Government Payroll"}))
+print("Custom DocTypes(34):", frappe.db.count("DocType", {"module":"Government Payroll"}))
 PY
 echo ">> done. Site: http://localhost:8000  (start with: bench start)"

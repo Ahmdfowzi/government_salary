@@ -36,7 +36,7 @@ This performs (idempotently):
 - `bench get-app /mnt/iraqi_government_payroll`
 - `bench --site payroll.localhost install-app iraqi_government_payroll`
 - `bench --site payroll.localhost migrate`
-- prints fixture counts (expect: scale **143** · qual **16** · brackets **4** · durations **9** · roles **6** · DocTypes **27**)
+- prints fixture counts (expect: scale **143** · qual **16** · brackets **4** · durations **9** · roles **6** · DocTypes **34**)
 
 ## 3. Salary Slip + Payroll Run smoke test
 ```bash

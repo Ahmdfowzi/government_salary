@@ -98,3 +98,65 @@ def get_run_governance(run):
 		"audit": {f: doc.get(f) for f in _AUDIT_FIELDS},
 		"events": events,
 	}
+
+
+_SCOPES = ("All", "Government Entity", "Employee")
+_SCOPE_REF_DOCTYPE = {
+	"Employee": "Government Employee Payroll Profile",
+	"Government Entity": "Government Entity",
+}
+
+
+@frappe.whitelist()
+def create_payroll_run(period, rule_set=None, scope="All", scope_reference=None):
+	"""Create a new Payroll Run (starts in Draft) after validating its inputs.
+
+	Validation only — no governance/engine logic. Create permission is enforced by
+	the Payroll Run DocType perms. Prevents a duplicate run for the same
+	period + rule_set + scope + scope_reference while an existing one is not
+	Cancelled. Returns the new run's name, workflow_state and available actions.
+	"""
+	scope = scope or "All"
+	rule_set = (rule_set or "").strip() or None
+	scope_reference = (scope_reference or "").strip() or None
+
+	if scope not in _SCOPES:
+		frappe.throw(f"Invalid scope '{scope}'. Expected one of: {', '.join(_SCOPES)}.")
+	if not period or not frappe.db.exists("Payroll Period", period):
+		frappe.throw(f"Payroll Period '{period}' does not exist.")
+	if rule_set and not frappe.db.exists("Government Rule Set", rule_set):
+		frappe.throw(f"Government Rule Set '{rule_set}' does not exist.")
+
+	if scope == "All":
+		scope_reference = None
+	else:
+		if not scope_reference:
+			frappe.throw(f"A scope reference is required when scope is '{scope}'.")
+		ref_doctype = _SCOPE_REF_DOCTYPE[scope]
+		if not frappe.db.exists(ref_doctype, scope_reference):
+			frappe.throw(f"{ref_doctype} '{scope_reference}' does not exist.")
+
+	# Duplicate guard: no second active (non-Cancelled) run for the same target.
+	for c in frappe.get_all(
+			"Payroll Run",
+			filters={"payroll_period": period, "scope": scope,
+					 "workflow_state": ["!=", governance.CANCELLED]},
+			fields=["name", "rule_set", "scope_reference"]):
+		if (c.get("rule_set") or None) == rule_set \
+				and (c.get("scope_reference") or None) == scope_reference:
+			frappe.throw(
+				f"A payroll run already exists for this period / rule set / scope: {c['name']}.")
+
+	doc = frappe.get_doc({
+		"doctype": "Payroll Run",
+		"payroll_period": period,
+		"rule_set": rule_set,
+		"scope": scope,
+		"scope_reference": scope_reference,
+	}).insert()
+	return {
+		"name": doc.name,
+		"workflow_state": doc.workflow_state,
+		"allowed_actions": governance.available_actions(
+			doc.workflow_state, frappe.get_roles(frappe.session.user)),
+	}

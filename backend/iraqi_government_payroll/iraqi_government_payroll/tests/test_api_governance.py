@@ -163,5 +163,103 @@ class TestApiDispatch(unittest.TestCase):
 		self.assertEqual(res["run_status"], "Completed With Warnings")
 
 
+class TestCreatePayrollRun(unittest.TestCase):
+	"""create_payroll_run validation + duplicate guard (fake frappe)."""
+
+	def _load(self, *, existing=None, dup_rows=None, roles=None):
+		existing = set(existing or ())          # {(doctype, name), ...}
+		captured = {}
+		frappe = types.ModuleType("frappe")
+		frappe.throw = lambda msg, *a, **k: _raise(msg)
+		frappe._ = lambda s, *a, **k: s
+		frappe.session = types.SimpleNamespace(user="officer@x")
+		frappe.get_roles = lambda *a, **k: list(roles or [ADMIN])
+		frappe.db = types.SimpleNamespace(
+			exists=lambda dt, name=None: (dt, name) in existing)
+
+		def get_all(dt, filters=None, fields=None, **k):
+			captured["filters"] = filters
+			return list(dup_rows or [])
+		frappe.get_all = get_all
+
+		class NewRun:
+			def __init__(self, payload):
+				self.payload = payload
+				self.name = "PR-NEW"
+				self.workflow_state = "Draft"
+
+			def insert(self):
+				return self
+		frappe.get_doc = lambda payload: NewRun(payload)
+
+		def whitelist(*a, **k):
+			def deco(f):
+				return f
+			return deco if not (a and callable(a[0])) else a[0]
+		frappe.whitelist = whitelist
+		sys.modules["frappe"] = frappe
+		import importlib
+		mod = importlib.import_module("iraqi_government_payroll.api.payroll_api")
+		importlib.reload(mod)
+		return mod, captured
+
+	def test_happy_path_all_scope(self):
+		api, cap = self._load(existing={("Payroll Period", "P1"),
+										 ("Government Rule Set", "IRAQ-2015")})
+		res = api.create_payroll_run("P1", "IRAQ-2015", "All", None)
+		self.assertEqual(res["name"], "PR-NEW")
+		self.assertEqual(res["workflow_state"], "Draft")
+		self.assertEqual(res["allowed_actions"], ["calculate", "cancel"])  # Admin from Draft
+		# duplicate guard excludes Cancelled runs
+		self.assertEqual(cap["filters"]["workflow_state"], ["!=", gov.CANCELLED])
+
+	def test_missing_period_rejected(self):
+		api, _ = self._load(existing=set())
+		with self.assertRaises(Exception):
+			api.create_payroll_run("NOPE", None, "All", None)
+
+	def test_invalid_scope_rejected(self):
+		api, _ = self._load(existing={("Payroll Period", "P1")})
+		with self.assertRaises(Exception):
+			api.create_payroll_run("P1", None, "Galaxy", None)
+
+	def test_unknown_rule_set_rejected(self):
+		api, _ = self._load(existing={("Payroll Period", "P1")})
+		with self.assertRaises(Exception):
+			api.create_payroll_run("P1", "NO-RULES", "All", None)
+
+	def test_employee_scope_requires_reference(self):
+		api, _ = self._load(existing={("Payroll Period", "P1")})
+		with self.assertRaises(Exception):
+			api.create_payroll_run("P1", None, "Employee", None)
+
+	def test_employee_scope_reference_must_exist(self):
+		api, _ = self._load(existing={("Payroll Period", "P1")})
+		with self.assertRaises(Exception):
+			api.create_payroll_run("P1", None, "Employee", "GHOST")
+
+	def test_employee_scope_happy(self):
+		api, _ = self._load(existing={
+			("Payroll Period", "P1"),
+			("Government Employee Payroll Profile", "EMP1")})
+		res = api.create_payroll_run("P1", None, "Employee", "EMP1")
+		self.assertEqual(res["workflow_state"], "Draft")
+
+	def test_duplicate_active_run_rejected(self):
+		api, _ = self._load(
+			existing={("Payroll Period", "P1"), ("Government Rule Set", "IRAQ-2015")},
+			dup_rows=[{"name": "PR-1", "rule_set": "IRAQ-2015", "scope_reference": None}])
+		with self.assertRaises(Exception):
+			api.create_payroll_run("P1", "IRAQ-2015", "All", None)
+
+	def test_different_rule_set_not_a_duplicate(self):
+		api, _ = self._load(
+			existing={("Payroll Period", "P1"), ("Government Rule Set", "IRAQ-2015"),
+					  ("Government Rule Set", "IRAQ-2008")},
+			dup_rows=[{"name": "PR-1", "rule_set": "IRAQ-2008", "scope_reference": None}])
+		res = api.create_payroll_run("P1", "IRAQ-2015", "All", None)  # different rule_set
+		self.assertEqual(res["workflow_state"], "Draft")
+
+
 if __name__ == "__main__":
 	unittest.main()

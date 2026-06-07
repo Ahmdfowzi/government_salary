@@ -6,6 +6,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.governance
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.locking
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.api
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.create
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
 so the first failed assertion raises, aborts the run with a non-zero exit code,
@@ -219,3 +220,42 @@ def api():
 
 	frappe.db.commit()
 	print("\nGOVERNANCE API SMOKE TEST PASSED")
+
+
+def create():
+	"""Phase 3 M8 — the create_payroll_run endpoint: validation + duplicate guard.
+
+	Uses a dedicated period (2019/12) that no other check touches, and rolls back
+	the created run at the end so the check is re-runnable and never collides with
+	the duplicate guard on a later run.
+	"""
+	from iraqi_government_payroll.api import payroll_api as papi
+
+	if not frappe.db.exists("Payroll Period", {"year": 2019, "month": 12}):
+		frappe.get_doc({"doctype": "Payroll Period", "year": 2019, "month": 12,
+						"start_date": "2019-12-01", "end_date": "2019-12-31",
+						"status": "Open"}).insert()
+		frappe.db.commit()                      # keep the period; only the run is rolled back
+	period = frappe.get_value("Payroll Period", {"year": 2019, "month": 12}, "name")
+
+	r = papi.create_payroll_run(period, "IRAQ-2015", "All", None)
+	print("created run          :", r["name"], "|", r["workflow_state"], "| actions:", r["allowed_actions"])
+	assert r["workflow_state"] == "Draft", r["workflow_state"]
+	assert "calculate" in r["allowed_actions"]
+
+	# Duplicate (same period + rule_set + scope, not cancelled) is blocked
+	dup_blocked = _blocked(lambda: papi.create_payroll_run(period, "IRAQ-2015", "All", None))
+	print("duplicate blocked    :", dup_blocked)
+	assert dup_blocked, "duplicate active run was allowed"
+
+	# Invalid inputs are rejected
+	bad_period = _blocked(lambda: papi.create_payroll_run("NO-SUCH-PERIOD", "IRAQ-2015", "All", None))
+	print("bad period rejected  :", bad_period)
+	assert bad_period, "non-existent period was accepted"
+
+	missing_ref = _blocked(lambda: papi.create_payroll_run(period, "IRAQ-2015", "Employee", None))
+	print("missing ref rejected :", missing_ref)
+	assert missing_ref, "Employee scope without a reference was accepted"
+
+	frappe.db.rollback()                        # discard the created run; re-runnable
+	print("\nPAYROLL RUN CREATE SMOKE TEST PASSED")
