@@ -9,6 +9,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.create
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.reports
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.pension_report
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.bank_transfer
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
 so the first failed assertion raises, aborts the run with a non-zero exit code,
@@ -368,3 +369,57 @@ def pension_report():
 
 	frappe.db.rollback()                        # discard the record; re-runnable
 	print("\nRETIREMENT PENSION REGISTER SMOKE TEST PASSED")
+
+
+def bank_transfer():
+	"""Phase 4 M12 — Bank Transfer Export: net from the slip, bank from the profile,
+	missing bank data flagged (never skipped). One employee has bank details, one
+	does not; both appear. Rolls back so it is re-runnable.
+	"""
+	from iraqi_government_payroll.api import reports_api as rep
+
+	# BANKED employee (has an account) and UNBANKED employee (no account/iban).
+	for emp, name, acct in (("BANK1", "Banked", "1122334455"), ("BANK2", "Unbanked", None)):
+		if not frappe.db.exists("Government Employee Payroll Profile", emp):
+			doc = {
+				"doctype": "Government Employee Payroll Profile",
+				"employee_number": emp, "employee_name": name,
+				"rule_set": "IRAQ-2015", "grade_code": "7", "current_grade": 7,
+				"current_stage": 1, "qualification": "Bachelor", "status": "Active",
+				"employment_status": "Active",
+			}
+			if acct:
+				doc["bank_account"] = acct
+				doc["bank_name"] = "Rafidain"
+			frappe.get_doc(doc).insert()
+			frappe.db.commit()
+
+	if not frappe.db.exists("Payroll Period", {"year": 2017, "month": 6}):
+		frappe.get_doc({"doctype": "Payroll Period", "year": 2017, "month": 6,
+						"start_date": "2017-06-01", "end_date": "2017-06-30",
+						"status": "Open"}).insert()
+		frappe.db.commit()
+	period = frappe.get_value("Payroll Period", {"year": 2017, "month": 6}, "name")
+
+	run = frappe.get_doc({"doctype": "Payroll Run", "payroll_period": period,
+						  "rule_set": "IRAQ-2015", "scope": "All"}).insert()
+	run.calculate_run(); run.reload()
+
+	bt = rep.bank_transfer(run.name)
+	print("bank rows           :", bt["rows"])
+	print("incomplete_count    :", bt["incomplete_count"], "| total_net:", bt["total_net"])
+
+	by = {r["employee_profile"]: r for r in bt["rows"]}
+	assert "BANK1" in by and "BANK2" in by, "an employee row was skipped"   # nothing skipped
+	assert by["BANK1"]["bank_complete"] is True, by["BANK1"]
+	assert by["BANK1"]["bank_account"] == "1122334455"
+	assert by["BANK2"]["bank_complete"] is False, by["BANK2"]
+	assert "bank_account" in by["BANK2"]["missing"], by["BANK2"]["missing"]
+	# net is read from the slip (positive for the banked active employee)
+	assert by["BANK1"]["net"] > 0
+	# total_net is the plain sum of slip nets (no recompute)
+	assert bt["total_net"] == sum(r["net"] for r in bt["rows"])
+	print("flagged             : BANK2 missing bank_account, included not skipped")
+
+	frappe.db.rollback()                        # discard the run; re-runnable
+	print("\nBANK TRANSFER SMOKE TEST PASSED")

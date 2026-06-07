@@ -144,3 +144,48 @@ def pension_register(rows):
 	"""
 	totals = {f: sum(_i(r.get(f)) for r in rows) for f in PENSION_TOTAL_FIELDS}
 	return {"count": len(rows), "rows": rows, "totals": totals}
+
+
+def bank_transfer(rows):
+	"""Report 7 — Bank Transfer Export (Phase 4 M12).
+
+	One row per employee: net salary (read from the slip/snapshot, NOT recomputed)
+	plus bank details from the profile. EVERY row is included — a row with no
+	payable account or no positive net is flagged (bank_complete=False + `missing`
+	reasons), never skipped.
+
+	Complete row = (iban OR bank_account) AND net > 0.
+	"""
+	out = []
+	total_net = 0
+	incomplete = 0
+	for r in rows:
+		net = _i(r.get("net"))
+		iban = (r.get("iban") or "").strip()
+		account = (r.get("bank_account") or "").strip()
+		missing = []
+		if not iban and not account:
+			missing.append("bank_account")      # no payable account identifier
+		if net <= 0:
+			missing.append("net")
+		complete = not missing
+		if not complete:
+			incomplete += 1
+		out.append({
+			"employee_profile": r.get("employee_profile"),
+			"employee_name": r.get("employee_name"),
+			"iban": iban,
+			"bank_name": (r.get("bank_name") or "").strip(),
+			"bank_account": account,
+			"national_id": (r.get("national_id") or "").strip(),
+			"net": net,
+			"bank_complete": complete,
+			"missing": missing,
+		})
+		total_net += net
+	return {
+		"rows": out,
+		"count": len(out),
+		"incomplete_count": incomplete,
+		"total_net": total_net,
+	}

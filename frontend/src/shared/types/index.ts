@@ -420,6 +420,27 @@ export interface PensionRegisterReport {
   totals: Record<string, number>;
 }
 
+// Phase 4 M12 — Bank Transfer Export (read-only). Net comes from Salary Slip /
+// Snapshot; bank details from the profile. Incomplete rows are flagged, not skipped.
+export interface BankTransferRow {
+  employee_profile: string;
+  employee_name: string;
+  iban: string;
+  bank_name: string;
+  bank_account: string;
+  national_id: string;
+  net: number;
+  bank_complete: boolean;
+  missing: string[];
+}
+export interface BankTransferReport {
+  run: string;
+  rows: BankTransferRow[];
+  count: number;
+  incomplete_count: number;
+  total_net: number;
+}
+
 export interface SalarySlipLine {
   component_code?: string;
   component_name?: string;

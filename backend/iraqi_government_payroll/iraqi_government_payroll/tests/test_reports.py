@@ -299,5 +299,99 @@ class TestPensionSourceSelection(unittest.TestCase):
 		self.assertEqual(row["status"], "Calculated")
 
 
+class TestBankTransfer(unittest.TestCase):
+	"""Pure bank_transfer flagging: complete = (iban OR bank_account) AND net>0."""
+
+	def _rows(self):
+		return [
+			# complete: has account + net
+			{"employee_profile": "E1", "employee_name": "Ali", "net": 371487,
+			 "iban": "", "bank_name": "Rafidain", "bank_account": "12345", "national_id": "X"},
+			# complete: has iban only + net
+			{"employee_profile": "E2", "employee_name": "Sara", "net": 200000,
+			 "iban": "IQ98...", "bank_name": "", "bank_account": "", "national_id": ""},
+			# incomplete: no account, no iban
+			{"employee_profile": "E3", "employee_name": "Omar", "net": 150000,
+			 "iban": "", "bank_name": "", "bank_account": "", "national_id": ""},
+			# incomplete: has account but net 0
+			{"employee_profile": "E4", "employee_name": "Hana", "net": 0,
+			 "iban": "", "bank_name": "", "bank_account": "999", "national_id": ""},
+		]
+
+	def test_all_rows_included_and_flagged(self):
+		res = rs.bank_transfer(self._rows())
+		self.assertEqual(res["count"], 4)               # nothing skipped
+		flags = {r["employee_profile"]: r["bank_complete"] for r in res["rows"]}
+		self.assertEqual(flags, {"E1": True, "E2": True, "E3": False, "E4": False})
+		self.assertEqual(res["incomplete_count"], 2)
+
+	def test_missing_reasons(self):
+		res = rs.bank_transfer(self._rows())
+		by = {r["employee_profile"]: r["missing"] for r in res["rows"]}
+		self.assertEqual(by["E1"], [])
+		self.assertEqual(by["E3"], ["bank_account"])    # no payable identifier
+		self.assertEqual(by["E4"], ["net"])             # has account, net 0
+
+	def test_total_net_reconciles(self):
+		res = rs.bank_transfer(self._rows())
+		# total_net is the plain sum of the slip-sourced net — ties to the register
+		self.assertEqual(res["total_net"], 371487 + 200000 + 150000 + 0)
+
+
+class TestBankTransferApi(unittest.TestCase):
+	"""Net from Salary Slip (active) vs Snapshot (locked); bank from profile."""
+
+	def _load_api(self, *, workflow_state):
+		frappe = types.ModuleType("frappe")
+		frappe.throw = lambda msg, *a, **k: _raise(msg)
+		frappe._ = lambda s, *a, **k: s
+		frappe.db = types.SimpleNamespace(get_value=lambda dt, name, field: workflow_state)
+
+		def get_all(dt, filters=None, fields=None, **k):
+			if dt == "Salary Slip" and fields and "basic_salary" in fields:
+				return [{"name": "SLIP-1", "employee_profile": "E1", "employee_name": "Ali",
+						 "grade_code": "7", "stage": 1, "basic_salary": 296000,
+						 "total_earnings": 429200, "total_deductions": 57713, "net_salary": 371487}]
+			if dt == "Salary Slip":            # name-only lookup (snapshot path)
+				return [{"name": "SLIP-1"}]
+			if dt == "Salary Slip Line":
+				return []
+			if dt == "Payroll Calculation Snapshot":
+				return [{"name": "SNAP-1", "employee_profile": "E1", "employee_name": "Ali",
+						 "grade_code": "7", "stage": 1, "gross_amount": 429200,
+						 "total_deductions": 57713, "net_amount": 999999}]
+			if dt == "Payroll Calculation Snapshot Line":
+				return []
+			if dt == "Government Employee Payroll Profile":
+				return [{"name": "E1", "iban": "", "bank_name": "Rafidain",
+						 "bank_account": "12345", "national_id": "N1"}]
+			return []
+		frappe.get_all = get_all
+
+		def whitelist(*a, **k):
+			def deco(f):
+				return f
+			return deco if not (a and callable(a[0])) else a[0]
+		frappe.whitelist = whitelist
+		sys.modules["frappe"] = frappe
+		import importlib
+		mod = importlib.import_module("iraqi_government_payroll.api.reports_api")
+		importlib.reload(mod)
+		return mod
+
+	def test_active_uses_salary_slip_net_and_profile_bank(self):
+		api = self._load_api(workflow_state="Calculated")
+		res = api.bank_transfer("RUN-1")
+		row = res["rows"][0]
+		self.assertEqual(row["net"], 371487)            # live slip net
+		self.assertEqual(row["bank_account"], "12345")  # joined from profile
+		self.assertTrue(row["bank_complete"])
+
+	def test_locked_uses_snapshot_net(self):
+		api = self._load_api(workflow_state="Locked")
+		res = api.bank_transfer("RUN-1")
+		self.assertEqual(res["rows"][0]["net"], 999999)  # immutable snapshot net
+
+
 if __name__ == "__main__":
 	unittest.main()

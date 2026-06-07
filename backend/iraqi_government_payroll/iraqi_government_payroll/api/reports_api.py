@@ -128,6 +128,38 @@ def tax_register(run):
 	return {"run": run, **rs.tax_register(_rows_for(run))}
 
 
+_BANK_FIELDS = ["name", "iban", "bank_name", "bank_account", "national_id"]
+
+
+@frappe.whitelist()
+def bank_transfer(run):
+	"""Bank Transfer Export (M12): net salary per employee (from the live Salary
+	Slip for an active run, or the immutable Snapshot for a locked run — via
+	_rows_for) joined to the profile's bank details. Net is read, never recomputed;
+	rows with no payable account or non-positive net are flagged (see
+	report_service.bank_transfer), never skipped."""
+	rows = _rows_for(run)
+	emps = [r["employee_profile"] for r in rows if r.get("employee_profile")]
+	bank = {}
+	if emps:
+		for b in frappe.get_all("Government Employee Payroll Profile",
+								filters={"name": ["in", emps]}, fields=_BANK_FIELDS):
+			bank[b["name"]] = b
+	enriched = []
+	for r in rows:
+		b = bank.get(r.get("employee_profile"), {})
+		enriched.append({
+			"employee_profile": r.get("employee_profile"),
+			"employee_name": r.get("employee_name"),
+			"net": r.get("net") or 0,
+			"iban": b.get("iban"),
+			"bank_name": b.get("bank_name"),
+			"bank_account": b.get("bank_account"),
+			"national_id": b.get("national_id"),
+		})
+	return {"run": run, **rs.bank_transfer(enriched)}
+
+
 # --------------------------- Retirement Pension Register (M11) --------------------------- #
 # Pension Calculation is per-employee and on-demand (not tied to a Payroll Run), so
 # this register is filtered by calculation_date range + status. Source selection

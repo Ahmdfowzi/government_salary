@@ -25,6 +25,7 @@ const REPORT_TYPES = [
   { key: "allowances", label: "كشف المخصصات" },
   { key: "deductions", label: "كشف الاستقطاعات" },
   { key: "tax", label: "كشف الضريبة" },
+  { key: "bank", label: "تحويل بنكي" },
   { key: "pension", label: "كشف التقاعد" },
 ] as const;
 type ReportKey = (typeof REPORT_TYPES)[number]["key"];
@@ -98,6 +99,28 @@ async function loadRunReport(type: RunReportKey, run: string): Promise<Renderabl
         rows: rows(d.rows),
         totalsLine: `إجمالي الضريبة: ${d.total_tax}`,
         csvName: `tax-register-${run}`,
+      };
+    }
+    case "bank": {
+      const d = await payrollApi.reportBankTransfer(run);
+      const mapped = d.rows.map((r) => ({
+        ...r,
+        status_text: r.bank_complete ? "مكتمل" : `ناقص: ${r.missing.join("، ")}`,
+      }));
+      return {
+        columns: [
+          { key: "employee_profile", header: "الموظف" },
+          { key: "employee_name", header: "الاسم" },
+          { key: "iban", header: "IBAN" },
+          { key: "bank_name", header: "المصرف" },
+          { key: "bank_account", header: "رقم الحساب" },
+          { key: "national_id", header: "الهوية" },
+          { key: "net", header: "الصافي", numeric: true },
+          { key: "status_text", header: "الحالة" },
+        ],
+        rows: rows(mapped),
+        totalsLine: `الإجمالي — الصافي: ${d.total_net} | غير مكتمل: ${d.incomplete_count} من ${d.count}`,
+        csvName: `bank-transfer-${run}`,
       };
     }
   }
@@ -299,7 +322,12 @@ export default function ReportsPage() {
                   </tr>
                 ) : (
                   report.rows.map((r, i) => (
-                    <tr key={i} className="border-t border-slate-100">
+                    <tr
+                      key={i}
+                      className={`border-t border-slate-100 ${
+                        r["bank_complete"] === false ? "bg-rose-50" : ""
+                      }`}
+                    >
                       {report.columns.map((c) => (
                         <td key={c.key} className="px-4 py-3 text-slate-800">
                           {c.numeric ? (

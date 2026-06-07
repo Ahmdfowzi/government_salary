@@ -19,6 +19,9 @@
   "column_break_org",
   "employment_type",
   "bank_account",
+  "iban",
+  "bank_name",
+  "national_id",
   "section_break_lifecycle",
   "employment_status",
   "current_entity",
@@ -135,6 +138,21 @@
    "fieldname": "bank_account",
    "fieldtype": "Data",
    "label": "Bank Account"
+  },
+  {
+   "fieldname": "iban",
+   "fieldtype": "Data",
+   "label": "IBAN"
+  },
+  {
+   "fieldname": "bank_name",
+   "fieldtype": "Data",
+   "label": "Bank Name"
+  },
+  {
+   "fieldname": "national_id",
+   "fieldtype": "Data",
+   "label": "National ID"
   },
   {
    "fieldname": "section_break_lifecycle",

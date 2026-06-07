@@ -32,6 +32,7 @@ import type {
   ComponentRegisterReport,
   TaxRegisterReport,
   PensionRegisterReport,
+  BankTransferReport,
 } from "../types";
 
 const API = "iraqi_government_payroll.iraqi_government_payroll.api.payroll_api";
@@ -113,6 +114,8 @@ export const payrollApi = {
       to_date,
       status,
     }),
+  reportBankTransfer: (run: string) =>
+    callMethod<BankTransferReport>(`${REPORTS}.bank_transfer`, { run }),
 
   // Calculation triggers — backend only (implemented in later milestones).
   calculateActiveSalary: (profile: string, period_date: string) =>
