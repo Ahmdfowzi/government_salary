@@ -14,6 +14,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.pdf_export
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.accounting_journal
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.security
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.demo
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
 so the first failed assertion raises, aborts the run with a non-zero exit code,
@@ -658,3 +659,47 @@ def security():
 
 	frappe.db.rollback()
 	print("\nSECURITY SMOKE TEST PASSED")
+
+
+def demo():
+	"""Phase 5 M4 — seed the demo dataset (idempotent) and verify the dashboard /
+	reports / exports return meaningful data. This check COMMITS (the demo data is
+	meant to persist for demonstration); re-running is safe (the seed is idempotent).
+	"""
+	from iraqi_government_payroll.demo import seed
+	from iraqi_government_payroll.api import reports_api as rep
+	from iraqi_government_payroll.api import accounting_api as acc
+
+	summary = seed.seed_demo()
+	print("seed summary        :", summary)
+
+	# Demo structure + employees
+	assert summary["entities"] == 4, summary
+	emp_total = frappe.db.count("Government Employee Payroll Profile",
+								{"employee_number": ["like", "DEMO-EMP-%"]})
+	assert emp_total >= 25, f"expected >=25 demo employees, got {emp_total}"
+
+	# Run states: active (Calculated) / completed (Submitted) / locked (Locked)
+	states = summary["runs"]["states"]
+	assert states["active"] == "Calculated", states
+	assert states["completed"] == "Submitted", states
+	assert states["locked"] == "Locked", states
+	active, locked = summary["runs"]["active"], summary["runs"]["locked"]
+
+	# Reports return non-empty data (active = live slips, locked = snapshots)
+	assert len(rep.employee_register(active)["rows"]) == emp_total, "employee register empty"
+	assert len(rep.tax_register(active)["rows"]) == emp_total, "tax register empty"
+	bt = rep.bank_transfer(active)
+	assert len(bt["rows"]) == emp_total and bt["incomplete_count"] > 0, "bank transfer wrong"
+	assert len(rep.employee_register(locked)["rows"]) == emp_total, "locked snapshot report empty"
+
+	# Accounting journal (proposal) balances; pension register has rows
+	j = acc.journal_export(active)
+	assert j["balanced"] and j["total_debit"] == j["total_credit"] and j["total_debit"] > 0, j
+	pr = rep.pension_register("2024-01-01", "2024-12-31", None)
+	assert pr["count"] >= 5, f"pension register too small: {pr['count']}"
+
+	print("verified            : %d employees, reports non-empty, journal balanced, pension %d"
+		  % (emp_total, pr["count"]))
+	frappe.db.commit()                          # keep the demo data
+	print("\nDEMO DATA SMOKE TEST PASSED")
