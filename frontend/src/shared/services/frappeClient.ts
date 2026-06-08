@@ -2,19 +2,27 @@
 // Responsibility: transport only. No payroll math happens here or anywhere in
 // the frontend — calculations are backend (Python) only.
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_FRAPPE_BASE_URL ?? "http://localhost:8000";
+// Default to a RELATIVE base ("") so requests go to the Next app's own origin and
+// ride the same-origin proxy in next.config.mjs (which forwards /api to the Frappe
+// site host). This avoids the cross-origin CORS block and the host-routing 404
+// that previously surfaced as "Load failed". Set NEXT_PUBLIC_FRAPPE_BASE_URL to an
+// absolute URL only if you deploy the frontend on the SAME origin as Frappe (or
+// have Frappe CORS configured).
+const BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_BASE_URL ?? "";
 
 type Query = Record<string, string | number | undefined>;
 
 function buildUrl(path: string, query?: Query): string {
-  const url = new URL(path, BASE_URL);
-  if (query) {
-    for (const [k, v] of Object.entries(query)) {
-      if (v !== undefined) url.searchParams.set(k, String(v));
-    }
-  }
-  return url.toString();
+  const qs = query
+    ? Object.entries(query)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+        .join("&")
+    : "";
+  const rel = qs ? `${path}?${qs}` : path;
+  // Relative base -> resolve against the current origin (the proxy). Absolute base
+  // (if explicitly configured) -> resolve against it.
+  return BASE_URL ? new URL(rel, BASE_URL).toString() : rel;
 }
 
 // Pull a human-readable message out of a Frappe error response body. Frappe puts

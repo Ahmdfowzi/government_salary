@@ -40,9 +40,13 @@ import type {
   SavedEmployeeProfile,
 } from "../types";
 
-const API = "iraqi_government_payroll.iraqi_government_payroll.api.payroll_api";
-const REPORTS = "iraqi_government_payroll.iraqi_government_payroll.api.reports_api";
-const ACCT = "iraqi_government_payroll.iraqi_government_payroll.api.accounting_api";
+// Frappe dotted method paths. The app's Python package is `iraqi_government_payroll`
+// (single — the inner package dir), so methods live at iraqi_government_payroll.api.*
+// NOT iraqi_government_payroll.iraqi_government_payroll.api.* (that doubled path
+// raises "No module named 'iraqi_government_payroll.iraqi_government_payroll'").
+const API = "iraqi_government_payroll.api.payroll_api";
+const REPORTS = "iraqi_government_payroll.api.reports_api";
+const ACCT = "iraqi_government_payroll.api.accounting_api";
 
 export const payrollApi = {
   // Versioning spine + rule members
