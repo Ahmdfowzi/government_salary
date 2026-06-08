@@ -105,7 +105,9 @@
    "fieldtype": "Int",
    "label": "From Grade (legacy)",
    "read_only": 1,
-   "description": "Deprecated legacy Int mirror of From Grade."
+   "hidden": 1,
+   "no_copy": 1,
+   "description": "Deprecated legacy Int mirror of From Grade, hidden from the form. Synced automatically."
   },
   {
    "fieldname": "from_stage",
@@ -137,7 +139,9 @@
    "fieldtype": "Int",
    "label": "To Grade (legacy)",
    "read_only": 1,
-   "description": "Deprecated legacy Int mirror of To Grade."
+   "hidden": 1,
+   "no_copy": 1,
+   "description": "Deprecated legacy Int mirror of To Grade, hidden from the form. Synced automatically."
   },
   {
    "fieldname": "proposed_stage",

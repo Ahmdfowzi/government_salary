@@ -212,6 +212,7 @@
    "fieldtype": "Link",
    "label": "Grade",
    "options": "Government Grade",
+   "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "description": "Employee salary grade (Government Grade master). Authoritative input; the engine resolves the basic salary by (grade, stage) against the active scale."
@@ -222,14 +223,18 @@
    "label": "Grade Code (deprecated)",
    "options": "\n10\n9\n8\n7\n6\n5\n4\n3\n2\n1\nSPECIAL_A\nSPECIAL_B\nSPECIAL_C",
    "read_only": 1,
-   "in_standard_filter": 1,
-   "description": "Deprecated: kept as a mirror of Grade for backward compatibility (slips/snapshots/reports). Set Grade instead; this is synced automatically."
+   "hidden": 1,
+   "no_copy": 1,
+   "description": "Deprecated mirror of Grade, hidden from the form. Synced automatically from Grade for backward compatibility (slips/snapshots/reports). Do not edit."
   },
   {
    "fieldname": "current_grade",
    "fieldtype": "Int",
    "label": "Current Grade (legacy)",
-   "description": "Deprecated legacy Int fallback (regular grades only); the engine uses Grade. Synced from Grade for regular grades."
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1,
+   "description": "Deprecated legacy Int mirror, hidden from the form. Synced from Grade for regular grades; the engine uses Grade. Do not edit."
   },
   {
    "fieldname": "current_stage",
@@ -261,7 +266,10 @@
    "fieldname": "appointment_grade",
    "fieldtype": "Int",
    "label": "Appointment Grade (legacy)",
-   "description": "Deprecated legacy Int mirror of Appointment Grade; kept for backward compatibility, synced from the Link."
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1,
+   "description": "Deprecated legacy Int mirror of Appointment Grade, hidden from the form. Synced from the Link for backward compatibility. Do not edit."
   },
   {
    "fieldname": "appointment_stage",

@@ -67,7 +67,10 @@
    "fieldname": "starting_grade",
    "fieldtype": "Int",
    "label": "Starting Grade (legacy)",
-   "description": "Deprecated legacy Int mirror of Starting Grade; synced from the Link."
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1,
+   "description": "Deprecated legacy Int mirror of Starting Grade, hidden from the form. Synced from the Link."
   },
   {
    "fieldname": "starting_stage",

@@ -99,7 +99,9 @@
    "fieldtype": "Int",
    "label": "Current Grade (legacy)",
    "read_only": 1,
-   "description": "Deprecated legacy Int mirror of Current Grade."
+   "hidden": 1,
+   "no_copy": 1,
+   "description": "Deprecated legacy Int mirror of Current Grade, hidden from the form. Synced automatically."
   },
   {
    "fieldname": "current_stage",

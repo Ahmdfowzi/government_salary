@@ -124,6 +124,42 @@ class TestGradeArchitecture(unittest.TestCase):
 		self.assertFalse(os.path.isdir(os.path.join(DOCTYPE_DIR, "government_stage")),
 						 "Government Stage DocType must not exist")
 
+	def test_deprecated_mirrors_hidden_and_readonly(self):
+		"""M4.2 UI cleanup: legacy grade mirrors are hidden + read-only so users
+		only ever interact with the Government Grade Link fields."""
+		mirrors = {
+			"government_employee_payroll_profile": ["grade_code", "current_grade", "appointment_grade"],
+			"promotion_request": ["from_grade", "to_grade"],
+			"annual_increment_request": ["current_grade"],
+			"qualification_appointment_rule": ["starting_grade"],
+		}
+		for dt_name, fieldnames in mirrors.items():
+			dt = doctype(dt_name)
+			for fn in fieldnames:
+				f = field(dt, fn)
+				self.assertIsNotNone(f, f"{dt_name}.{fn} missing")
+				self.assertEqual(f.get("hidden"), 1, f"{dt_name}.{fn} must be hidden")
+				self.assertEqual(f.get("read_only"), 1, f"{dt_name}.{fn} must be read_only")
+
+	def test_link_fields_visible_and_grade_required(self):
+		"""The real Link fields stay visible; grade is the required authoritative input."""
+		visible_links = {
+			"government_employee_payroll_profile": ["grade", "appointment_grade_ref"],
+			"government_salary_scale_detail": ["grade_ref"],
+			"qualification_appointment_rule": ["starting_grade_ref"],
+			"promotion_request": ["from_grade_ref", "to_grade_ref"],
+			"annual_increment_request": ["current_grade_ref"],
+		}
+		for dt_name, fieldnames in visible_links.items():
+			dt = doctype(dt_name)
+			for fn in fieldnames:
+				self.assertNotEqual(field(dt, fn).get("hidden"), 1,
+									f"{dt_name}.{fn} (Link) must stay visible")
+		grade = field(doctype("government_employee_payroll_profile"), "grade")
+		self.assertEqual(grade.get("reqd"), 1, "profile.grade must be required")
+		self.assertNotEqual(grade.get("hidden"), 1, "profile.grade must be visible")
+		self.assertNotEqual(grade.get("read_only"), 1, "profile.grade must be editable")
+
 	def test_position_owns_no_grade_or_stage(self):
 		pos = doctype("government_position")
 		for f in pos.get("fields", []):
