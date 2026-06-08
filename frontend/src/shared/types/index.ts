@@ -105,14 +105,24 @@ export interface GovernmentEmployeePayrollProfile {
   qualification?: string;
   specialization?: string;
   government_entity?: string;
+  current_entity?: string;
   government_position?: string;
+  current_position?: string;
   employment_type?: "Permanent" | "Contract" | "Daily Wage" | "Temporary";
   bank_account?: string;
+  bank_name?: string;
+  iban?: string;
+  national_id?: string;
+  /** Authoritative grade — Link to Government Grade (record name == grade code). */
+  grade?: string;
+  /** @deprecated hidden mirror of `grade`; do not expose in the UI. */
   grade_code?: string;
-  current_grade: number;
+  /** @deprecated legacy Int mirror; do not expose in the UI. */
+  current_grade?: number;
   current_stage: number;
   basic_salary?: number;
-  appointment_grade?: number;
+  /** Appointment grade — Link to Government Grade. */
+  appointment_grade_ref?: string;
   appointment_stage?: number;
   appointment_date?: string;
   current_stage_date?: string;
@@ -123,6 +133,32 @@ export interface GovernmentEmployeePayrollProfile {
   geographic_area?: string;
   risk_allowance_applicable?: boolean;
   protected_salary_difference?: number;
+}
+
+/** A row from payroll_api.list_grades — the Government Grade master picker source. */
+export interface GovernmentGradeOption {
+  grade_code: string;
+  grade_name_ar?: string;
+  grade_name_en?: string;
+  grade_type?: "Regular" | "Senior";
+  sort_order?: number;
+}
+
+/** Result of payroll_api.salary_preview — the (grade, stage) scale check. */
+export interface SalaryPreview {
+  valid: boolean;
+  basic_salary: number | null;
+  message: string;
+}
+
+/** Summary returned by payroll_api.save_employee_profile. */
+export interface SavedEmployeeProfile {
+  name: string;
+  employee_number: string;
+  employee_name: string;
+  grade?: string;
+  current_stage: number;
+  basic_salary: number | null;
 }
 
 export interface EmployeeMonthlySalary {

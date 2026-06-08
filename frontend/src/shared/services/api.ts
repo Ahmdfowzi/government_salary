@@ -35,6 +35,9 @@ import type {
   BankTransferReport,
   JournalExport,
   CurrentUser,
+  GovernmentGradeOption,
+  SalaryPreview,
+  SavedEmployeeProfile,
 } from "../types";
 
 const API = "iraqi_government_payroll.iraqi_government_payroll.api.payroll_api";
@@ -65,6 +68,20 @@ export const payrollApi = {
   getEmployee: (name: string) =>
     getDoc<GovernmentEmployeePayrollProfile>("Government Employee Payroll Profile", name),
   monthlySalaries: () => getList<EmployeeMonthlySalary>("Employee Monthly Salary"),
+
+  // Employee create/edit (Phase 5 M5). Master-data picker, live salary preview,
+  // and create/update — the backend validates grade+stage and enforces RBAC.
+  grades: () => callMethod<GovernmentGradeOption[]>(`${API}.list_grades`),
+  salaryPreview: (rule_set: string, grade: string, stage: number | string) =>
+    callMethod<SalaryPreview>(`${API}.salary_preview`, { rule_set, grade, stage }),
+  saveEmployeeProfile: (
+    payload: Partial<GovernmentEmployeePayrollProfile>,
+    name?: string,
+  ) =>
+    callMethod<SavedEmployeeProfile>(`${API}.save_employee_profile`, {
+      payload: JSON.stringify(payload),
+      name,
+    }),
 
   // Transactions
   increments: () => getList<AnnualIncrementRequest>("Annual Increment Request"),

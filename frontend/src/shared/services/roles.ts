@@ -43,6 +43,16 @@ export function canEditProfiles(roles: string[]): boolean {
   ]);
 }
 
+/** May the user CREATE/SAVE a profile via the frontend form? Mirrors the backend
+ *  DocType create/write perms exactly (Payroll Officer has read-only on profiles,
+ *  so it is excluded here even though it can "manage payroll" elsewhere). The
+ *  backend re-enforces this on every save — the gate here is UX only. */
+export function canWriteProfiles(roles: string[]): boolean {
+  return hasAny(roles, [
+    ...SUPERUSERS, ROLE.PAYROLL_ADMIN, ROLE.PAYROLL_MANAGER, ROLE.HR_OFFICER, ROLE.HR_USER,
+  ]);
+}
+
 /** May the user export reports (CSV/Excel/PDF)? Everyone except a pure Read Only User. */
 export function canExportReports(roles: string[]): boolean {
   return hasAny(roles, [

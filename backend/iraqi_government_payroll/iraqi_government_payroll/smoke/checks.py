@@ -15,6 +15,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.accounting_journal
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.security
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.grade_validation
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.employee_profile_api
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.demo
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
@@ -761,6 +762,85 @@ def grade_validation():
 
 	frappe.db.rollback()                         # discard everything; re-runnable
 	print("\nGRADE VALIDATION SMOKE TEST PASSED")
+
+
+def employee_profile_api():
+	"""Phase 5 M5 — the frontend employee create/edit endpoints: master list,
+	salary preview, create/update, RBAC, and Arabic validation. Uses a dedicated
+	employee number and cleans up at the end so it is re-runnable.
+	"""
+	from iraqi_government_payroll.api import payroll_api as papi
+
+	# list_grades -> the 13 active master codes
+	grades = papi.list_grades()
+	codes = {g["grade_code"] for g in grades}
+	print("active grades        :", sorted(codes))
+	assert codes >= {"7", "6", "SPECIAL_A"} and len(grades) == 13, grades
+	assert all(g.get("grade_name_ar") for g in grades), "grade missing Arabic name"
+
+	# salary_preview: valid combo returns a basic; invalid returns Arabic message
+	ok = papi.salary_preview("IRAQ-2015", "7", 1)
+	print("preview 7/1          :", ok)
+	assert ok["valid"] and ok["basic_salary"] and ok["basic_salary"] > 0, ok
+	bad = papi.salary_preview("IRAQ-2015", "7", 99)
+	print("preview 7/99         :", bad["valid"], "|", bad["message"])
+	assert not bad["valid"] and bad["basic_salary"] is None, bad
+	assert "سلم الرواتب" in bad["message"], "expected an Arabic scale message"
+
+	EMP = "GRD-API-1"
+	if frappe.db.exists("Government Employee Payroll Profile", EMP):
+		frappe.delete_doc("Government Employee Payroll Profile", EMP, force=True)
+		frappe.db.commit()
+
+	# create via the endpoint (Administrator) — grade Link only, no deprecated fields
+	created = papi.save_employee_profile({
+		"employee_number": EMP, "employee_name": "API Create Test",
+		"rule_set": "IRAQ-2015", "grade": "7", "current_stage": 1,
+		"qualification": "Bachelor", "status": "Active",
+	})
+	print("created              :", created)
+	assert created["name"] == EMP and created["grade"] == "7", created
+	assert created["basic_salary"] and created["basic_salary"] > 0, "no basic preview on create"
+	# deprecated mirror was synced by the controller, not by the client
+	assert frappe.db.get_value("Government Employee Payroll Profile", EMP, "grade_code") == "7"
+
+	# update via the endpoint — change the stage; basic re-previewed
+	updated = papi.save_employee_profile({"current_stage": 2}, name=EMP)
+	print("updated stage->2     :", updated["current_stage"], "| basic:", updated["basic_salary"])
+	assert updated["current_stage"] == 2, updated
+
+	# invalid placement on update -> Arabic throw, no change persisted
+	invalid = _blocked(lambda: papi.save_employee_profile({"current_stage": 99}, name=EMP))
+	print("invalid update 99    : blocked =", invalid)
+	assert invalid, "invalid (grade, stage) update was not rejected"
+	assert frappe.db.get_value("Government Employee Payroll Profile", EMP, "current_stage") == 2
+
+	# RBAC: a Read Only User may not create/edit through the endpoint
+	def ensure_user(email, role):
+		if not frappe.db.exists("User", email):
+			frappe.get_doc({"doctype": "User", "email": email, "send_welcome_email": 0,
+							"first_name": email.split("@")[0]}).insert(ignore_permissions=True)
+		u = frappe.get_doc("User", email)
+		if role not in {r.role for r in u.roles}:
+			u.append("roles", {"role": role})
+			u.save(ignore_permissions=True)
+		return email
+
+	ro = ensure_user("m5_readonly@test.local", "Read Only User")
+	frappe.db.commit()
+	frappe.set_user(ro)
+	denied = _blocked(lambda: papi.save_employee_profile({
+		"employee_number": "GRD-API-RO", "employee_name": "Nope",
+		"rule_set": "IRAQ-2015", "grade": "7", "current_stage": 1, "status": "Active"}))
+	frappe.set_user("Administrator")
+	print("read-only create     : denied =", denied)
+	assert denied, "Read Only User was ALLOWED to create a profile"
+	assert not frappe.db.exists("Government Employee Payroll Profile", "GRD-API-RO")
+
+	# cleanup (re-runnable)
+	frappe.delete_doc("Government Employee Payroll Profile", EMP, force=True)
+	frappe.db.commit()
+	print("\nEMPLOYEE PROFILE API SMOKE TEST PASSED")
 
 
 def demo():

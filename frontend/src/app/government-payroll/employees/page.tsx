@@ -1,26 +1,23 @@
 "use client";
 
-// Employee Payroll Profiles — searchable read-only list. A role badge shows
-// whether the user may edit; edit opens the Frappe desk form (which re-enforces
-// permissions). No destructive actions are offered here.
+// Employee Payroll Profiles — searchable list with in-app create/edit (Phase 5
+// M5). Create/edit is RBAC-gated in the UI and re-enforced by the backend; no
+// Frappe Desk needed. No destructive actions are offered here.
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@shared/components/PageHeader";
 import { SearchInput } from "@shared/components/SearchInput";
 import { Pill } from "@shared/components/Pill";
 import { Loading, ErrorBanner, Empty } from "@shared/components/States";
 import { payrollApi } from "@shared/services/api";
 import { useRoles } from "@shared/services/RolesContext";
-import { canEditProfiles } from "@shared/services/roles";
+import { canWriteProfiles } from "@shared/services/roles";
 import type { GovernmentEmployeePayrollProfile } from "@shared/types";
-
-const DESK_BASE =
-  (process.env.NEXT_PUBLIC_FRAPPE_BASE_URL ?? "http://localhost:8000") +
-  "/app/government-employee-payroll-profile/";
 
 export default function EmployeesPage() {
   const { roles } = useRoles();
-  const mayEdit = canEditProfiles(roles);
+  const mayWrite = canWriteProfiles(roles);
   const [list, setList] = useState<GovernmentEmployeePayrollProfile[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -34,7 +31,7 @@ export default function EmployeesPage() {
     const term = q.trim().toLowerCase();
     if (!term) return items;
     return items.filter((e) =>
-      [e.employee_number, e.employee_name, e.government_entity, e.grade_code]
+      [e.employee_number, e.employee_name, e.government_entity, e.grade]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(term)),
     );
@@ -49,9 +46,19 @@ export default function EmployeesPage() {
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <SearchInput value={q} onChange={setQ} placeholder="بحث بالاسم أو الرقم أو الجهة…" />
-        <Pill tone={mayEdit ? "info" : "neutral"}>
-          {mayEdit ? "وضع التحرير متاح" : "للعرض فقط"}
-        </Pill>
+        <div className="flex items-center gap-3">
+          <Pill tone={mayWrite ? "info" : "neutral"}>
+            {mayWrite ? "وضع التحرير متاح" : "للعرض فقط"}
+          </Pill>
+          {mayWrite ? (
+            <Link
+              href="/government-payroll/employees/new"
+              className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+            >
+              + إضافة موظف
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       {error ? <ErrorBanner message={error} /> : null}
@@ -83,18 +90,20 @@ export default function EmployeesPage() {
                     <td className="px-4 py-3 font-medium text-slate-900">{e.employee_name}</td>
                     <td className="px-4 py-3 text-slate-600">{e.government_entity ?? "—"}</td>
                     <td className="px-4 py-3 text-slate-600">{e.status}</td>
-                    <td className="px-4 py-3 num text-slate-800">{e.grade_code ?? e.current_grade}</td>
+                    <td className="px-4 py-3 num text-slate-800">{e.grade ?? "—"}</td>
                     <td className="px-4 py-3 num text-slate-800">{e.current_stage}</td>
                     <td className="px-4 py-3 num text-slate-800">{e.basic_salary ?? ""}</td>
                     <td className="px-4 py-3">
-                      <a
-                        href={DESK_BASE + encodeURIComponent(e.name)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sky-700 hover:underline"
-                      >
-                        {mayEdit ? "عرض / تعديل" : "عرض"}
-                      </a>
+                      {mayWrite ? (
+                        <Link
+                          href={`/government-payroll/employees/${encodeURIComponent(e.name)}/edit`}
+                          className="text-sky-700 hover:underline"
+                        >
+                          تعديل
+                        </Link>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}

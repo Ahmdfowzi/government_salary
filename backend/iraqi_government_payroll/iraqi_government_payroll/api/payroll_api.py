@@ -5,6 +5,8 @@ All calculations happen on the backend; the frontend only reads/writes data and
 triggers these endpoints. Phase 1 declares the surface; logic lands in Phase 2.
 """
 
+import json
+
 import frappe
 
 from iraqi_government_payroll.services.payroll_engine import governance
@@ -169,4 +171,128 @@ def create_payroll_run(period, rule_set=None, scope="All", scope_reference=None)
 		"workflow_state": doc.workflow_state,
 		"allowed_actions": governance.available_actions(
 			doc.workflow_state, frappe.get_roles(frappe.session.user)),
+	}
+
+
+# ---------------------------------------------------------------------------
+# Phase 5 M5 — Employee Payroll Profile create/edit from the frontend.
+#
+# The frontend never computes salary; these endpoints read master data, preview
+# the (grade, stage) basic salary via the SAME engine resolver the payroll uses,
+# and create/update profiles. Create/write permission is enforced by Frappe (the
+# DocType perms), and the profile controller validates grade+stage placement
+# against the active scale. The deprecated grade mirrors (grade_code,
+# current_grade, appointment_grade) are NEVER accepted from the client — the
+# controller keeps them in sync from the Grade Link.
+# ---------------------------------------------------------------------------
+
+# Fields the client is allowed to set on a profile. Deliberately excludes the
+# hidden/deprecated grade mirrors and engine-managed fields (basic_salary, dates).
+_PROFILE_WRITABLE = (
+	"employee_number", "employee_name", "rule_set",
+	"government_entity", "current_entity",
+	"government_position", "current_position",
+	"grade", "current_stage", "qualification", "specialization",
+	"employment_type", "appointment_date", "appointment_grade_ref", "appointment_stage",
+	"bank_account", "bank_name", "iban", "national_id",
+	"status",
+)
+
+
+@frappe.whitelist()
+def list_grades():
+	"""Active Government Grade master rows for the grade picker (most senior first)."""
+	return frappe.get_all(
+		"Government Grade", filters={"active": 1},
+		fields=["name as grade_code", "grade_name_ar", "grade_name_en",
+				"grade_type", "sort_order"],
+		order_by="sort_order asc")
+
+
+def _active_scale_details(rule_set):
+	"""Return (scale_name, details) for the active scale of a rule set, or (None, [])."""
+	scale = frappe.db.get_value(
+		"Government Salary Scale", {"rule_set": rule_set, "is_active": 1}, "name"
+	) or frappe.db.get_value("Government Salary Scale", {"rule_set": rule_set}, "name")
+	if not scale:
+		return None, []
+	return scale, frappe.get_all(
+		"Government Salary Scale Detail", filters={"parent": scale},
+		fields=["grade_code", "stage", "basic_salary"])
+
+
+def _scale_check(rule_set, grade, stage):
+	"""Validate a (grade, stage) placement in rule_set's active scale.
+	Returns {valid, basic_salary, message} with an Arabic message. Pure read —
+	reuses the engine resolver, never writes or computes new amounts."""
+	from iraqi_government_payroll.services.payroll_engine.scale_resolver import (
+		scale_has_grade_stage, get_basic_salary)
+
+	if not (rule_set and grade and stage not in (None, "")):
+		return {"valid": False, "basic_salary": None,
+				"message": "اختر مجموعة القواعد والدرجة والمرحلة."}
+	try:
+		stage_i = int(stage)
+	except (TypeError, ValueError):
+		return {"valid": False, "basic_salary": None,
+				"message": "المرحلة يجب أن تكون رقماً صحيحاً."}
+	if not frappe.db.exists("Government Rule Set", rule_set):
+		return {"valid": False, "basic_salary": None,
+				"message": f"مجموعة القواعد «{rule_set}» غير موجودة."}
+	scale, details = _active_scale_details(rule_set)
+	if not scale:
+		return {"valid": False, "basic_salary": None,
+				"message": f"لا يوجد سلم رواتب فعّال لمجموعة القواعد «{rule_set}»."}
+	if not scale_has_grade_stage(details, grade, stage_i):
+		return {"valid": False, "basic_salary": None,
+				"message": f"الدرجة «{grade}» والمرحلة «{stage_i}» غير موجودة "
+						   f"في سلم الرواتب الفعّال لمجموعة القواعد «{rule_set}»."}
+	return {"valid": True, "basic_salary": get_basic_salary(details, grade, stage_i),
+			"message": "تركيبة صحيحة."}
+
+
+@frappe.whitelist()
+def salary_preview(rule_set, grade, stage):
+	"""Preview the basic salary for (grade, stage). Read-only; backs the form's
+	live salary preview and validation with a clear Arabic message."""
+	return _scale_check(rule_set, grade, stage)
+
+
+@frappe.whitelist()
+def save_employee_profile(payload, name=None):
+	"""Create (name omitted) or update an Employee Payroll Profile from the frontend.
+
+	Permissions are enforced by Frappe — NO ignore_permissions — so only roles with
+	create/write on the DocType (HR Officer, Payroll Manager, Government Payroll
+	Administrator, …) succeed; Auditor / Read Only User are denied. Grade+stage are
+	validated against the active scale (Arabic message) before save, and again by
+	the controller. Returns the saved profile summary including the previewed basic.
+	"""
+	data = json.loads(payload) if isinstance(payload, str) else dict(payload or {})
+	clean = {k: data.get(k) for k in _PROFILE_WRITABLE if data.get(k) not in (None, "")}
+
+	# Pre-validate placement for a clear Arabic error (defense-in-depth; the
+	# controller re-validates on save).
+	if clean.get("grade") and clean.get("current_stage") and clean.get("rule_set"):
+		chk = _scale_check(clean["rule_set"], clean["grade"], clean["current_stage"])
+		if not chk["valid"]:
+			frappe.throw(chk["message"])
+
+	if name:
+		doc = frappe.get_doc("Government Employee Payroll Profile", name)
+		doc.update(clean)
+		doc.save()
+	else:
+		clean["doctype"] = "Government Employee Payroll Profile"
+		doc = frappe.get_doc(clean)
+		doc.insert()
+	frappe.db.commit()
+
+	basic = None
+	if doc.grade and doc.current_stage and doc.rule_set:
+		basic = _scale_check(doc.rule_set, doc.grade, doc.current_stage).get("basic_salary")
+	return {
+		"name": doc.name, "employee_number": doc.employee_number,
+		"employee_name": doc.employee_name, "grade": doc.grade,
+		"current_stage": doc.current_stage, "basic_salary": basic,
 	}
