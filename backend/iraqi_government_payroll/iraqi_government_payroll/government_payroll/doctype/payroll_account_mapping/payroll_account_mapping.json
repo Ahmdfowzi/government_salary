@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "creation": "2026-06-08 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "issingle": 1,
+ "description": "Maps payroll components to accounting account codes for the (proposal-only) journal export. No GL posting.",
+ "field_order": [
+  "section_break_expense",
+  "salary_expense_account",
+  "allowance_expense_account",
+  "section_break_payable",
+  "employee_payable_account",
+  "pension_payable_account",
+  "column_break_payable",
+  "tax_payable_account",
+  "other_deductions_payable_account"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_expense",
+   "fieldtype": "Section Break",
+   "label": "Expense Accounts (Debit)"
+  },
+  {
+   "fieldname": "salary_expense_account",
+   "fieldtype": "Data",
+   "label": "Salary Expense Account"
+  },
+  {
+   "fieldname": "allowance_expense_account",
+   "fieldtype": "Data",
+   "label": "Allowance Expense Account"
+  },
+  {
+   "fieldname": "section_break_payable",
+   "fieldtype": "Section Break",
+   "label": "Payable Accounts (Credit)"
+  },
+  {
+   "fieldname": "employee_payable_account",
+   "fieldtype": "Data",
+   "label": "Employee Payable Account"
+  },
+  {
+   "fieldname": "pension_payable_account",
+   "fieldtype": "Data",
+   "label": "Pension Payable Account"
+  },
+  {
+   "fieldname": "column_break_payable",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tax_payable_account",
+   "fieldtype": "Data",
+   "label": "Tax Payable Account"
+  },
+  {
+   "fieldname": "other_deductions_payable_account",
+   "fieldtype": "Data",
+   "label": "Other Deductions Payable Account"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-08 00:00:00",
+ "module": "Government Payroll",
+ "name": "Payroll Account Mapping",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "print": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "print": 1},
+  {"role": "Finance User", "read": 1, "print": 1},
+  {"role": "Auditor", "read": 1, "print": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

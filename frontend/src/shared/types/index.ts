@@ -441,6 +441,22 @@ export interface BankTransferReport {
   total_net: number;
 }
 
+// Phase 4 M15 — Accounting journal export (proposal only; no GL posting).
+export interface JournalRow {
+  account: string;
+  description: string;
+  debit: number;
+  credit: number;
+}
+export interface JournalExport {
+  run: string;
+  rows: JournalRow[];
+  total_debit: number;
+  total_credit: number;
+  balanced: boolean;
+  summary: Record<string, number>;
+}
+
 export interface SalarySlipLine {
   component_code?: string;
   component_name?: string;

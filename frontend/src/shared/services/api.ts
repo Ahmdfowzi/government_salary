@@ -33,10 +33,12 @@ import type {
   TaxRegisterReport,
   PensionRegisterReport,
   BankTransferReport,
+  JournalExport,
 } from "../types";
 
 const API = "iraqi_government_payroll.iraqi_government_payroll.api.payroll_api";
 const REPORTS = "iraqi_government_payroll.iraqi_government_payroll.api.reports_api";
+const ACCT = "iraqi_government_payroll.iraqi_government_payroll.api.accounting_api";
 
 export const payrollApi = {
   // Versioning spine + rule members
@@ -122,6 +124,12 @@ export const payrollApi = {
     params: { run?: string; from_date?: string; to_date?: string; status?: string },
     fmt: "xlsx" | "pdf" = "xlsx",
   ) => methodUrl(`${REPORTS}.export_report`, { report, fmt, ...params }),
+
+  // Accounting journal (proposal only — no GL posting).
+  journalExport: (run: string) =>
+    callMethod<JournalExport>(`${ACCT}.journal_export`, { run }),
+  journalExportUrl: (run: string) =>
+    methodUrl(`${ACCT}.export_journal`, { run, fmt: "xlsx" }),
 
   // Calculation triggers — backend only (implemented in later milestones).
   calculateActiveSalary: (profile: string, period_date: string) =>

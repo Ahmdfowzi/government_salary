@@ -12,6 +12,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.bank_transfer
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.excel_export
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.pdf_export
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.accounting_journal
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
 so the first failed assertion raises, aborts the run with a non-zero exit code,
@@ -528,3 +529,71 @@ def pdf_export():
 
 	frappe.db.rollback()                        # discard the run; re-runnable
 	print("\nPDF EXPORT SMOKE TEST PASSED")
+
+
+def accounting_journal():
+	"""Phase 4 M15 — accounting journal export proposes BALANCED rows, fails safely
+	on an incomplete mapping, and stays empty/safe for an empty run. Proposal only —
+	no GL Entry / Journal Entry is ever created. Rolls back so it is re-runnable.
+	"""
+	from iraqi_government_payroll.api import accounting_api as acc
+
+	mapping = {
+		"salary_expense_account": "5100", "allowance_expense_account": "5200",
+		"employee_payable_account": "2100", "pension_payable_account": "2200",
+		"tax_payable_account": "2300", "other_deductions_payable_account": "2400",
+	}
+	for field, value in mapping.items():
+		frappe.db.set_single_value("Payroll Account Mapping", field, value)
+
+	EMP = "JRN1"
+	if not frappe.db.exists("Government Employee Payroll Profile", EMP):
+		frappe.get_doc({
+			"doctype": "Government Employee Payroll Profile",
+			"employee_number": EMP, "employee_name": "Journal Test",
+			"rule_set": "IRAQ-2015", "grade_code": "7", "current_grade": 7,
+			"current_stage": 1, "qualification": "Bachelor", "status": "Active",
+			"employment_status": "Active",
+		}).insert()
+		frappe.db.commit()
+	if not frappe.db.exists("Payroll Period", {"year": 2020, "month": 6}):
+		frappe.get_doc({"doctype": "Payroll Period", "year": 2020, "month": 6,
+						"start_date": "2020-06-01", "end_date": "2020-06-30",
+						"status": "Open"}).insert()
+		frappe.db.commit()
+	period = frappe.get_value("Payroll Period", {"year": 2020, "month": 6}, "name")
+
+	run = frappe.get_doc({"doctype": "Payroll Run", "payroll_period": period,
+						  "rule_set": "IRAQ-2015", "scope": "Employee",
+						  "scope_reference": EMP}).insert()
+	run.calculate_run(); run.reload()
+
+	j = acc.journal_export(run.name)
+	print("journal rows        :", j["rows"])
+	print("debit/credit        :", j["total_debit"], "/", j["total_credit"], "| balanced:", j["balanced"])
+	assert j["balanced"] is True, j
+	assert j["total_debit"] == j["total_credit"], "debit != credit"
+	assert j["total_debit"] > 0, "expected a non-trivial journal"
+	descs = [r["description"] for r in j["rows"]]
+	assert "Salary Expense" in descs and "Employee Payable" in descs, descs
+	# debit and credit each sum independently to the same total
+	assert sum(r["debit"] for r in j["rows"]) == sum(r["credit"] for r in j["rows"])
+
+	# Incomplete mapping fails safely (no partial/invalid export)
+	frappe.db.set_single_value("Payroll Account Mapping", "employee_payable_account", "")
+	failed = _blocked(lambda: acc.journal_export(run.name))
+	print("incomplete mapping  : fails =", failed)
+	assert failed, "incomplete mapping did not fail"
+	frappe.db.set_single_value("Payroll Account Mapping", "employee_payable_account", "2100")
+
+	# Empty run -> safe empty balanced journal (no slips for a non-existent employee)
+	empty_run = frappe.get_doc({"doctype": "Payroll Run", "payroll_period": period,
+								"rule_set": "IRAQ-2015", "scope": "Employee",
+								"scope_reference": "NOBODY-XYZ"}).insert()
+	empty_run.calculate_run(); empty_run.reload()
+	ej = acc.journal_export(empty_run.name)
+	print("empty journal       :", ej["rows"], "| balanced:", ej["balanced"])
+	assert ej["rows"] == [] and ej["balanced"] and ej["total_debit"] == 0, ej
+
+	frappe.db.rollback()                        # discard everything; no posting, re-runnable
+	print("\nACCOUNTING JOURNAL SMOKE TEST PASSED")

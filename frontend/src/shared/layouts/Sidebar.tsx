@@ -19,6 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/government-payroll/pension", label: "التقاعد" },
   { href: "/government-payroll/payroll-runs", label: "دورات الرواتب" },
   { href: "/government-payroll/reports", label: "التقارير" },
+  { href: "/government-payroll/accounting-journal", label: "القيد المحاسبي" },
   { href: "/government-payroll/calculation-logs", label: "سجلات الاحتساب" },
 ];
 
