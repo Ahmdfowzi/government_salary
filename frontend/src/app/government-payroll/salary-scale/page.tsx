@@ -8,6 +8,7 @@ import { PageHeader } from "@shared/components/PageHeader";
 import { Pill } from "@shared/components/Pill";
 import { SearchInput } from "@shared/components/SearchInput";
 import { Loading, ErrorBanner, Empty } from "@shared/components/States";
+import { DataTable, type Column } from "@shared/tables/DataTable";
 import { loadScales } from "@shared/services/salary";
 import type { GovernmentSalaryScale, GovernmentSalaryScaleDetail } from "@shared/types";
 
@@ -15,6 +16,24 @@ interface Row extends GovernmentSalaryScaleDetail {
   scale: string;
   rule_set: string;
 }
+
+const columns: Column<Row>[] = [
+  { key: "grade", header: "الدرجة", numeric: true, render: (r) => r.grade_code ?? r.grade },
+  {
+    key: "type",
+    header: "النوع",
+    render: (r) => (
+      <Pill tone={r.grade_type === "Senior" ? "info" : "neutral"}>
+        {r.grade_type === "Senior" ? "عليا" : "اعتيادية"}
+      </Pill>
+    ),
+  },
+  { key: "stage", header: "المرحلة", numeric: true, render: (r) => r.stage },
+  { key: "basic", header: "الراتب الأساسي", numeric: true, render: (r) => r.basic_salary?.toLocaleString("en-US") },
+  { key: "increment", header: "العلاوة السنوية", numeric: true, render: (r) => r.annual_increment?.toLocaleString("en-US") ?? "—" },
+  { key: "promo", header: "سنوات الترفيع", numeric: true, render: (r) => r.promotion_years ?? "—" },
+  { key: "ruleset", header: "مجموعة القواعد", numeric: true, render: (r) => r.rule_set },
+];
 
 export default function SalaryScalePage() {
   const [scales, setScales] = useState<GovernmentSalaryScale[] | null>(null);
@@ -50,11 +69,9 @@ export default function SalaryScalePage() {
   return (
     <div>
       <PageHeader title="سلم الرواتب" subtitle="جدول الدرجات والمراحل والرواتب الأساسية (Government Salary Scale)" />
-
       <div className="mb-6">
         <SearchInput value={q} onChange={setQ} placeholder="تصفية حسب الدرجة…" />
       </div>
-
       {error ? <ErrorBanner message={error} /> : null}
       {scales === null && !error ? (
         <Loading />
@@ -62,38 +79,11 @@ export default function SalaryScalePage() {
         <Empty message="لا توجد بيانات سلم رواتب." />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-            <table className="w-full text-right text-sm">
-              <thead className="bg-slate-50 text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 font-medium">الدرجة</th>
-                  <th className="px-4 py-3 font-medium">النوع</th>
-                  <th className="px-4 py-3 font-medium">المرحلة</th>
-                  <th className="px-4 py-3 font-medium">الراتب الأساسي</th>
-                  <th className="px-4 py-3 font-medium">العلاوة السنوية</th>
-                  <th className="px-4 py-3 font-medium">سنوات الترفيع</th>
-                  <th className="px-4 py-3 font-medium">مجموعة القواعد</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r, i) => (
-                  <tr key={`${r.rule_set}-${r.grade_code ?? r.grade}-${r.stage}-${i}`} className="border-t border-slate-100 hover:bg-slate-50">
-                    <td className="px-4 py-3 num font-medium text-slate-900">{r.grade_code ?? r.grade}</td>
-                    <td className="px-4 py-3">
-                      <Pill tone={r.grade_type === "Senior" ? "info" : "neutral"}>
-                        {r.grade_type === "Senior" ? "عليا" : "اعتيادية"}
-                      </Pill>
-                    </td>
-                    <td className="px-4 py-3 num text-slate-700">{r.stage}</td>
-                    <td className="px-4 py-3 num font-medium text-slate-900">{r.basic_salary?.toLocaleString("en-US")}</td>
-                    <td className="px-4 py-3 num text-slate-600">{r.annual_increment?.toLocaleString("en-US") ?? "—"}</td>
-                    <td className="px-4 py-3 num text-slate-600">{r.promotion_years ?? "—"}</td>
-                    <td className="px-4 py-3 num text-slate-500">{r.rule_set}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            columns={columns}
+            rows={rows}
+            rowKey={(r, i) => `${r.rule_set}-${r.grade_code ?? r.grade}-${r.stage}-${i}`}
+          />
           <p className="mt-3 text-xs text-slate-400">
             عدد المدخلات: <span className="num">{rows.length}</span>
           </p>

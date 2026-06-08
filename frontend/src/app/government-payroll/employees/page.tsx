@@ -10,6 +10,7 @@ import { PageHeader } from "@shared/components/PageHeader";
 import { SearchInput } from "@shared/components/SearchInput";
 import { Pill } from "@shared/components/Pill";
 import { Loading, ErrorBanner, Empty } from "@shared/components/States";
+import { DataTable, type Column } from "@shared/tables/DataTable";
 import { payrollApi } from "@shared/services/api";
 import { loadScales, type ScaleData } from "@shared/services/salary";
 import { useRoles } from "@shared/services/RolesContext";
@@ -47,6 +48,31 @@ export default function EmployeesPage() {
     );
   }, [list, q]);
 
+  const columns: Column<GovernmentEmployeePayrollProfile>[] = [
+    { key: "number", header: "الرقم", numeric: true, render: (e) => e.employee_number },
+    { key: "name", header: "الاسم", render: (e) => e.employee_name },
+    { key: "entity", header: "الجهة", render: (e) => e.government_entity ?? "—" },
+    { key: "status", header: "الحالة", render: (e) => e.status },
+    { key: "grade", header: "الدرجة", numeric: true, render: (e) => e.grade ?? "—" },
+    { key: "stage", header: "المرحلة", numeric: true, render: (e) => e.current_stage },
+    { key: "basic", header: "الأساسي", numeric: true, render: (e) => basicOf(e)?.toLocaleString("en-US") ?? "—" },
+    {
+      key: "actions",
+      header: "",
+      render: (e) =>
+        mayWrite ? (
+          <Link
+            href={`/government-payroll/employees/${encodeURIComponent(e.name)}/edit`}
+            className="text-sky-700 hover:underline"
+          >
+            تعديل
+          </Link>
+        ) : (
+          <span className="text-slate-300">—</span>
+        ),
+    },
+  ];
+
   return (
     <div>
       <PageHeader
@@ -79,49 +105,7 @@ export default function EmployeesPage() {
         <Empty message="لا توجد نتائج." />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-            <table className="w-full text-right text-sm">
-              <thead className="bg-slate-50 text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 font-medium">الرقم</th>
-                  <th className="px-4 py-3 font-medium">الاسم</th>
-                  <th className="px-4 py-3 font-medium">الجهة</th>
-                  <th className="px-4 py-3 font-medium">الحالة</th>
-                  <th className="px-4 py-3 font-medium">الدرجة</th>
-                  <th className="px-4 py-3 font-medium">المرحلة</th>
-                  <th className="px-4 py-3 font-medium">الأساسي</th>
-                  <th className="px-4 py-3 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((e) => (
-                  <tr key={e.name} className="border-t border-slate-100 hover:bg-slate-50">
-                    <td className="px-4 py-3 num text-slate-800">{e.employee_number}</td>
-                    <td className="px-4 py-3 font-medium text-slate-900">{e.employee_name}</td>
-                    <td className="px-4 py-3 text-slate-600">{e.government_entity ?? "—"}</td>
-                    <td className="px-4 py-3 text-slate-600">{e.status}</td>
-                    <td className="px-4 py-3 num text-slate-800">{e.grade ?? "—"}</td>
-                    <td className="px-4 py-3 num text-slate-800">{e.current_stage}</td>
-                    <td className="px-4 py-3 num text-slate-800">
-                      {basicOf(e)?.toLocaleString("en-US") ?? "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {mayWrite ? (
-                        <Link
-                          href={`/government-payroll/employees/${encodeURIComponent(e.name)}/edit`}
-                          className="text-sky-700 hover:underline"
-                        >
-                          تعديل
-                        </Link>
-                      ) : (
-                        <span className="text-slate-300">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable columns={columns} rows={rows} rowKey={(e) => e.name} />
           <p className="mt-3 text-xs text-slate-400">
             عدد الموظفين: <span className="num">{rows.length}</span>
           </p>

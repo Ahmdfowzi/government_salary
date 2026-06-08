@@ -115,7 +115,7 @@ export default function DashboardPage() {
                       {run.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-slate-800 num">{run.payroll_period ?? ""}</td>
+                  <td className="px-4 py-3 text-slate-800"><span className="num">{run.payroll_period ?? ""}</span></td>
                   <td className="px-4 py-3"><StateBadge state={run.workflow_state ?? "Draft"} /></td>
                   <td className="px-4 py-3 text-xs text-slate-500">{run.run_status ?? "—"}</td>
                   <td className="px-4 py-3">

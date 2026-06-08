@@ -8,6 +8,7 @@ import { PageHeader } from "@shared/components/PageHeader";
 import { Pill } from "@shared/components/Pill";
 import { SearchInput } from "@shared/components/SearchInput";
 import { Loading, ErrorBanner, Empty } from "@shared/components/States";
+import { DataTable, type Column } from "@shared/tables/DataTable";
 import { payrollApi } from "@shared/services/api";
 import type { PayrollCalculationSnapshot } from "@shared/types";
 
@@ -16,6 +17,27 @@ const TYPE_TONE: Record<string, "info" | "success" | "warn" | "neutral"> = {
   "Annual Increment": "success",
   Promotion: "warn",
 };
+
+const columns: Column<PayrollCalculationSnapshot>[] = [
+  { key: "snapshot", header: "السجل", numeric: true, render: (s) => s.name },
+  { key: "employee", header: "الموظف", render: (s) => s.employee_name ?? s.employee_profile ?? "—" },
+  {
+    key: "type",
+    header: "النوع",
+    render: (s) =>
+      s.calculation_type ? <Pill tone={TYPE_TONE[s.calculation_type] ?? "neutral"}>{s.calculation_type}</Pill> : "—",
+  },
+  {
+    key: "gradestage",
+    header: "الدرجة/المرحلة",
+    numeric: true,
+    render: (s) => `${s.grade_code ?? "—"}${s.stage != null ? ` / ${s.stage}` : ""}`,
+  },
+  { key: "gross", header: "الإجمالي", numeric: true, render: (s) => s.gross_amount?.toLocaleString("en-US") ?? "—" },
+  { key: "deductions", header: "الاستقطاعات", numeric: true, render: (s) => s.total_deductions?.toLocaleString("en-US") ?? "—" },
+  { key: "net", header: "الصافي", numeric: true, render: (s) => s.net_amount?.toLocaleString("en-US") ?? "—" },
+  { key: "date", header: "التاريخ", numeric: true, render: (s) => s.period_date ?? s.calc_timestamp ?? "—" },
+];
 
 export default function CalculationLogsPage() {
   const [list, setList] = useState<PayrollCalculationSnapshot[] | null>(null);
@@ -52,7 +74,6 @@ export default function CalculationLogsPage() {
         title="سجلات الاحتساب"
         subtitle="لقطات تدقيق غير قابلة للتعديل وقابلة لإعادة الإنتاج (Payroll Calculation Snapshot)"
       />
-
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <SearchInput value={q} onChange={setQ} placeholder="بحث بالموظف أو السجل…" />
         <select
@@ -66,7 +87,6 @@ export default function CalculationLogsPage() {
           ))}
         </select>
       </div>
-
       {error ? <ErrorBanner message={error} /> : null}
       {list === null && !error ? (
         <Loading />
@@ -74,42 +94,7 @@ export default function CalculationLogsPage() {
         <Empty message="لا توجد لقطات احتساب." />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-            <table className="w-full text-right text-sm">
-              <thead className="bg-slate-50 text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 font-medium">السجل</th>
-                  <th className="px-4 py-3 font-medium">الموظف</th>
-                  <th className="px-4 py-3 font-medium">النوع</th>
-                  <th className="px-4 py-3 font-medium">الدرجة/المرحلة</th>
-                  <th className="px-4 py-3 font-medium">الإجمالي</th>
-                  <th className="px-4 py-3 font-medium">الاستقطاعات</th>
-                  <th className="px-4 py-3 font-medium">الصافي</th>
-                  <th className="px-4 py-3 font-medium">التاريخ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((s) => (
-                  <tr key={s.name} className="border-t border-slate-100 hover:bg-slate-50">
-                    <td className="px-4 py-3 num text-slate-700">{s.name}</td>
-                    <td className="px-4 py-3 font-medium text-slate-900">{s.employee_name ?? s.employee_profile ?? "—"}</td>
-                    <td className="px-4 py-3">
-                      {s.calculation_type ? (
-                        <Pill tone={TYPE_TONE[s.calculation_type] ?? "neutral"}>{s.calculation_type}</Pill>
-                      ) : "—"}
-                    </td>
-                    <td className="px-4 py-3 num text-slate-600">
-                      {(s.grade_code ?? "—")}{s.stage != null ? ` / ${s.stage}` : ""}
-                    </td>
-                    <td className="px-4 py-3 num text-slate-700">{s.gross_amount?.toLocaleString("en-US") ?? "—"}</td>
-                    <td className="px-4 py-3 num text-slate-600">{s.total_deductions?.toLocaleString("en-US") ?? "—"}</td>
-                    <td className="px-4 py-3 num font-medium text-slate-900">{s.net_amount?.toLocaleString("en-US") ?? "—"}</td>
-                    <td className="px-4 py-3 num text-slate-500">{s.period_date ?? s.calc_timestamp ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable columns={columns} rows={rows} rowKey={(s) => s.name} />
           <p className="mt-3 text-xs text-slate-400">
             عدد اللقطات: <span className="num">{rows.length}</span>
           </p>
