@@ -11,6 +11,7 @@ import { SearchInput } from "@shared/components/SearchInput";
 import { Pill } from "@shared/components/Pill";
 import { Loading, ErrorBanner, Empty } from "@shared/components/States";
 import { payrollApi } from "@shared/services/api";
+import { loadScales, type ScaleData } from "@shared/services/salary";
 import { useRoles } from "@shared/services/RolesContext";
 import { canWriteProfiles } from "@shared/services/roles";
 import type { GovernmentEmployeePayrollProfile } from "@shared/types";
@@ -19,12 +20,21 @@ export default function EmployeesPage() {
   const { roles } = useRoles();
   const mayWrite = canWriteProfiles(roles);
   const [list, setList] = useState<GovernmentEmployeePayrollProfile[] | null>(null);
+  const [scale, setScale] = useState<ScaleData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
 
   useEffect(() => {
     payrollApi.employees().then(setList).catch((e: Error) => setError(e.message));
+    // Basic salary is resolved from the salary scale (the engine's source); the
+    // profile field is not always populated.
+    loadScales().then(setScale).catch(() => setScale(null));
   }, []);
+
+  function basicOf(e: GovernmentEmployeePayrollProfile): number | undefined {
+    if (e.basic_salary) return e.basic_salary;
+    return scale?.basic(e.rule_set, e.grade, e.current_stage);
+  }
 
   const rows = useMemo(() => {
     const items = list ?? [];
@@ -92,7 +102,9 @@ export default function EmployeesPage() {
                     <td className="px-4 py-3 text-slate-600">{e.status}</td>
                     <td className="px-4 py-3 num text-slate-800">{e.grade ?? "—"}</td>
                     <td className="px-4 py-3 num text-slate-800">{e.current_stage}</td>
-                    <td className="px-4 py-3 num text-slate-800">{e.basic_salary ?? ""}</td>
+                    <td className="px-4 py-3 num text-slate-800">
+                      {basicOf(e)?.toLocaleString("en-US") ?? "—"}
+                    </td>
                     <td className="px-4 py-3">
                       {mayWrite ? (
                         <Link

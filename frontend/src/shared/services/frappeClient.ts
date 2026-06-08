@@ -61,9 +61,16 @@ async function request<T>(path: string, init?: RequestInit, query?: Query): Prom
   return (json.data ?? json.message ?? json) as T;
 }
 
-/** List documents of a DocType. */
+/** List documents of a DocType.
+ *  Defaults to ALL fields and NO row cap — Frappe's /api/resource otherwise
+ *  returns only `name` and caps at 20 rows, which left the UI tables empty.
+ *  Pass `query` to override (e.g. specific fields, filters, order_by, limit). */
 export function getList<T>(doctype: string, query?: Query): Promise<T[]> {
-  return request<T[]>(`/api/resource/${encodeURIComponent(doctype)}`, undefined, query);
+  return request<T[]>(`/api/resource/${encodeURIComponent(doctype)}`, undefined, {
+    fields: JSON.stringify(["*"]),
+    limit_page_length: 0,
+    ...query,
+  });
 }
 
 /** Fetch one document by name. */

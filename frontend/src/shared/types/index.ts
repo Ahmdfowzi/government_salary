@@ -284,7 +284,8 @@ export interface AnnualIncrementRequest {
   name: string;
   employee_profile: string;
   employee_name?: string;
-  current_grade?: number;
+  /** Grade Link (Government Grade); authoritative. */
+  current_grade_ref?: string;
   current_stage?: number;
   new_stage?: number;
   current_salary?: number;
@@ -298,9 +299,11 @@ export interface PromotionRequest {
   name: string;
   employee_profile: string;
   employee_name?: string;
-  from_grade?: number;
-  to_grade?: number;
+  /** Grade Links (Government Grade); authoritative. */
+  from_grade_ref?: string;
+  to_grade_ref?: string;
   proposed_stage?: number;
+  from_stage?: number;
   old_salary?: number;
   new_salary?: number;
   years_in_grade?: number;
@@ -543,6 +546,9 @@ export interface PayrollCalculationSnapshot {
   rule_set?: string;
   rule_set_version?: string;
   engine_version?: string;
+  grade_code?: string;
+  stage?: number;
+  qualification?: string;
   salary_slip?: string;
   payroll_period?: string;
   gross_amount?: number;

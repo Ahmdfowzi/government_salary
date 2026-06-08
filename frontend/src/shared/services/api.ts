@@ -52,6 +52,9 @@ export const payrollApi = {
   // Versioning spine + rule members
   ruleSets: () => getList<GovernmentRuleSet>("Government Rule Set"),
   salaryScales: () => getList<GovernmentSalaryScale>("Government Salary Scale"),
+  // Full scale doc incl. the `details` child table (grades/stages/basic salary) —
+  // child rows are not returned by the list API, so we fetch the parent doc.
+  salaryScale: (name: string) => getDoc<GovernmentSalaryScale>("Government Salary Scale", name),
   qualificationRules: () =>
     getList<QualificationAppointmentRule>("Qualification Appointment Rule"),
   allowances: () => getList<AllowanceRule>("Allowance Rule"),
