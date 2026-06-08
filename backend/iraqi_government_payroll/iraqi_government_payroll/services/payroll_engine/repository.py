@@ -61,7 +61,7 @@ def calculate_for_profile(profile_name, period_date):
 
 	p = frappe.get_doc("Government Employee Payroll Profile", profile_name)
 	emp = EmployeeInput(
-		grade_code=resolve_grade_code(p.get("grade_code"), p.get("current_grade")),
+		grade_code=resolve_grade_code(p.get("grade") or p.get("grade_code"), p.get("current_grade")),
 		stage=p.current_stage,
 		period_date=period_date,
 		qualification=p.qualification,
@@ -76,7 +76,8 @@ def calculate_for_profile(profile_name, period_date):
 
 def _employee_input_from_profile(profile, period_date):
 	return EmployeeInput(
-		grade_code=resolve_grade_code(profile.get("grade_code"), profile.get("current_grade")),
+		grade_code=resolve_grade_code(profile.get("grade") or profile.get("grade_code"),
+									  profile.get("current_grade")),
 		stage=profile.get("current_stage"),
 		period_date=str(period_date),
 		qualification=profile.get("qualification"),
@@ -159,7 +160,7 @@ def apply_increment(request):
 	rule = (frappe.get_doc("Annual Increment Rule", profile.rule_set).as_dict()
 			if frappe.db.exists("Annual Increment Rule", profile.rule_set) else {})
 	effective_date = request.get("due_date") or frappe.utils.today()
-	gc = resolve_grade_code(profile.get("grade_code"), profile.get("current_grade"))
+	gc = resolve_grade_code(profile.get("grade") or profile.get("grade_code"), profile.get("current_grade"))
 
 	res = compute_increment(
 		{"grade_code": gc, "current_stage": profile.current_stage,
@@ -194,7 +195,7 @@ def apply_promotion(request):
 	profile = frappe.get_doc("Government Employee Payroll Profile", request.employee_profile)
 	promotion_rule = frappe.get_doc("Promotion Rule", profile.rule_set).as_dict()
 	effective_date = request.get("due_date") or frappe.utils.today()
-	gc = resolve_grade_code(profile.get("grade_code"), profile.get("current_grade"))
+	gc = resolve_grade_code(profile.get("grade") or profile.get("grade_code"), profile.get("current_grade"))
 
 	scale = get_active_scale(load_context().scales, profile.rule_set)
 	res = compute_promotion(
@@ -207,6 +208,9 @@ def apply_promotion(request):
 
 	for k, v in res.profile_mutation.items():
 		profile.set(k, v)
+	# Promotion changes the grade: keep the new `grade` Link in step with the
+	# updated grade_code mirror (M4.1). Does NOT depend on Government Position.
+	profile.grade = profile.grade_code
 	profile.save()
 
 	request.from_grade = res.old_state["grade_code"] if str(res.old_state["grade_code"]).isdigit() else 0

@@ -87,7 +87,7 @@ def _seed_employees():
 		frappe.get_doc({
 			"doctype": "Government Employee Payroll Profile",
 			"employee_number": num, "employee_name": name,
-			"rule_set": RULE_SET, "grade_code": grade, "current_grade": int(grade),
+			"rule_set": RULE_SET, "grade": grade, "grade_code": grade, "current_grade": int(grade),
 			"current_stage": stage, "qualification": qual,
 			"status": "Active", "employment_status": "Active",
 			"government_entity": UNIT, "current_entity": UNIT,

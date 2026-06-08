@@ -8,6 +8,7 @@
  "field_order": [
   "grade_type",
   "grade_code",
+  "grade_ref",
   "grade",
   "stage",
   "column_break_amounts",
@@ -34,11 +35,18 @@
    "description": "Stable key for the grade (e.g. 10..1 or DEPUTY_MINISTER for senior grades)"
   },
   {
+   "fieldname": "grade_ref",
+   "fieldtype": "Link",
+   "label": "Grade (master)",
+   "options": "Government Grade",
+   "description": "Normalized reference to the Government Grade master (same value as grade_code). The legacy Int 'grade' below is deprecated; the engine matches on grade_code."
+  },
+  {
    "fieldname": "grade",
    "fieldtype": "Int",
-   "label": "Grade",
-   "reqd": 1,
-   "in_list_view": 1
+   "label": "Grade (legacy Int)",
+   "in_list_view": 1,
+   "description": "Deprecated legacy Int (regular grades only); unused by the engine, which keys on grade_code."
   },
   {
    "fieldname": "stage",

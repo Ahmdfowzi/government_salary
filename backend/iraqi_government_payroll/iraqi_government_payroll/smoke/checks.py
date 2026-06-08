@@ -14,6 +14,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.pdf_export
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.accounting_journal
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.security
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.grade_validation
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.demo
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
@@ -659,6 +660,93 @@ def security():
 
 	frappe.db.rollback()
 	print("\nSECURITY SMOKE TEST PASSED")
+
+
+def grade_validation():
+	"""Phase 5 M4.1 — Government Grade master + scale-placement validation, live.
+
+	Verifies, end to end on the bench:
+	  1. the Government Grade master holds the 13 legacy codes (values preserved);
+	  2. a profile saved with only grade_code backfills the new grade Link (sync);
+	  3. an invalid placement (grade 7 stage 99) is REJECTED at profile save — i.e.
+	     before any payroll calculation;
+	  4. a promotion changes the employee grade Link (and grade_code mirror) WITHOUT
+	     touching Government Position / Current Position (salary source = the scale,
+	     not the Position);
+	  5. an annual increment changes only the employee-level stage, never the grade.
+	Rolls back at the end so it is re-runnable.
+	"""
+	from iraqi_government_payroll.services.payroll_engine import repository as repo
+
+	# 1. Master preserves the 13 legacy codes exactly.
+	master = set(frappe.get_all("Government Grade", pluck="name"))
+	expected = {"10", "9", "8", "7", "6", "5", "4", "3", "2", "1",
+				"SPECIAL_A", "SPECIAL_B", "SPECIAL_C"}
+	print("grade master         :", sorted(master))
+	assert master >= expected, f"missing grade codes: {expected - master}"
+
+	# 2. Saving with only grade_code backfills the grade Link (controller sync).
+	EMP = "GRD1"
+	if frappe.db.exists("Government Employee Payroll Profile", EMP):
+		frappe.delete_doc("Government Employee Payroll Profile", EMP, force=True)
+	prof = frappe.get_doc({
+		"doctype": "Government Employee Payroll Profile",
+		"employee_number": EMP, "employee_name": "Grade Test",
+		"rule_set": "IRAQ-2015", "grade_code": "7", "current_grade": 7,
+		"current_stage": 1, "qualification": "Bachelor", "status": "Active",
+		"employment_status": "Active",
+		"appointment_date": "2000-01-01",
+		"current_grade_date": "2000-01-01", "current_stage_date": "2000-01-01",
+	}).insert()
+	prof.reload()
+	print("grade backfilled     : grade=%r grade_code=%r" % (prof.grade, prof.grade_code))
+	assert prof.grade == "7", f"grade Link not synced from grade_code: {prof.grade!r}"
+
+	# 3. Invalid placement is rejected at SAVE (before any payroll run).
+	prof.current_stage = 99
+	rejected = _blocked(lambda: prof.save())
+	print("invalid stage 99     : rejected =", rejected)
+	assert rejected, "grade 7 stage 99 was accepted — validation did not fire"
+	prof.reload()                                # discard the bad in-memory change
+	assert prof.current_stage == 1, "profile mutated despite rejected save"
+
+	# Capture Position before promotion (must be untouched by the promotion).
+	pos_before = (prof.government_position, prof.current_position)
+
+	# 4. Promotion changes grade WITHOUT Position. Grade 7 -> 6 per the scale.
+	preq = frappe.get_doc({
+		"doctype": "Promotion Request", "employee_profile": EMP,
+		"employee_name": "Grade Test", "approval_status": "Approved",
+		"due_date": "2024-01-01",
+	}).insert()
+	res = repo.apply_promotion(preq)
+	prof.reload()
+	print("after promotion      : grade=%r grade_code=%r stage=%r (was 7)" %
+		  (prof.grade, prof.grade_code, prof.current_stage))
+	assert prof.grade != "7", "promotion did not change the grade"
+	assert prof.grade == prof.grade_code, "grade Link and grade_code mirror diverged"
+	assert frappe.db.exists("Government Grade", prof.grade), "new grade not in master"
+	assert (prof.government_position, prof.current_position) == pos_before, \
+		"promotion changed Government Position — grade must not derive from Position"
+	print("position unchanged   :", pos_before, "(grade driven by scale, not Position)")
+
+	# 5. Increment changes only the employee-level stage, not the grade.
+	grade_after_promo = prof.grade
+	stage_before = prof.current_stage
+	ireq = frappe.get_doc({
+		"doctype": "Annual Increment Request", "employee_profile": EMP,
+		"employee_name": "Grade Test", "approval_status": "Approved",
+		"due_date": "2025-01-01",
+	}).insert()
+	repo.apply_increment(ireq)
+	prof.reload()
+	print("after increment      : grade=%r stage=%r (was %r)" %
+		  (prof.grade, prof.current_stage, stage_before))
+	assert prof.grade == grade_after_promo, "increment changed the grade — it must not"
+	assert prof.current_stage == stage_before + 1, "increment did not advance the stage by 1"
+
+	frappe.db.rollback()                         # discard everything; re-runnable
+	print("\nGRADE VALIDATION SMOKE TEST PASSED")
 
 
 def demo():

@@ -29,6 +29,7 @@ fixtures = [
 		"Auditor",
 		"Read Only User",
 	]]]},
+	"Government Grade",
 	"Government Rule Set",
 	"Government Salary Scale",
 	"Qualification Appointment Rule",

@@ -43,3 +43,20 @@ def get_basic_salary(scale_details, grade_code, stage):
 		if str(d.get("grade_code")) == gc and int(d.get("stage")) == st:
 			return d.get("basic_salary")
 	raise PayrollError(f"No salary scale row for grade_code={gc} stage={st}")
+
+
+def scale_has_grade_stage(scale_details, grade_code, stage):
+	"""Pure predicate: does a (grade_code, stage) row exist in the scale? (M4.1)
+
+	Used to validate employee placement before payroll calculation, without
+	raising. Returns False on an empty/None stage so callers can skip cleanly.
+	"""
+	if grade_code in (None, "") or stage in (None, ""):
+		return False
+	gc = str(grade_code)
+	try:
+		st = int(stage)
+	except (TypeError, ValueError):
+		return False
+	return any(str(d.get("grade_code")) == gc and int(d.get("stage")) == st
+			   for d in scale_details or [])

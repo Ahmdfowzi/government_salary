@@ -16,7 +16,8 @@
     "stage": 1,
     "basic_salary": 910000,
     "annual_increment": 20000,
-    "promotion_years": null
+    "promotion_years": null,
+    "grade_ref": "1"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -26,7 +27,8 @@
     "stage": 2,
     "basic_salary": 930000,
     "annual_increment": 20000,
-    "promotion_years": null
+    "promotion_years": null,
+    "grade_ref": "1"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -36,7 +38,8 @@
     "stage": 3,
     "basic_salary": 950000,
     "annual_increment": 20000,
-    "promotion_years": null
+    "promotion_years": null,
+    "grade_ref": "1"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -46,7 +49,8 @@
     "stage": 4,
     "basic_salary": 970000,
     "annual_increment": 20000,
-    "promotion_years": null
+    "promotion_years": null,
+    "grade_ref": "1"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -56,7 +60,8 @@
     "stage": 5,
     "basic_salary": 990000,
     "annual_increment": 20000,
-    "promotion_years": null
+    "promotion_years": null,
+    "grade_ref": "1"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -66,7 +71,8 @@
     "stage": 6,
     "basic_salary": 1010000,
     "annual_increment": 20000,
-    "promotion_years": null
+    "promotion_years": null,
+    "grade_ref": "1"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -76,7 +82,8 @@
     "stage": 7,
     "basic_salary": 1030000,
     "annual_increment": 20000,
-    "promotion_years": null
+    "promotion_years": null,
+    "grade_ref": "1"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -86,7 +93,8 @@
     "stage": 8,
     "basic_salary": 1050000,
     "annual_increment": 20000,
-    "promotion_years": null
+    "promotion_years": null,
+    "grade_ref": "1"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -96,7 +104,8 @@
     "stage": 9,
     "basic_salary": 1070000,
     "annual_increment": 20000,
-    "promotion_years": null
+    "promotion_years": null,
+    "grade_ref": "1"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -106,7 +115,8 @@
     "stage": 10,
     "basic_salary": 1090000,
     "annual_increment": 20000,
-    "promotion_years": null
+    "promotion_years": null,
+    "grade_ref": "1"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -116,7 +126,8 @@
     "stage": 11,
     "basic_salary": 1110000,
     "annual_increment": 20000,
-    "promotion_years": null
+    "promotion_years": null,
+    "grade_ref": "1"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -126,7 +137,8 @@
     "stage": 1,
     "basic_salary": 723000,
     "annual_increment": 17000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "2"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -136,7 +148,8 @@
     "stage": 2,
     "basic_salary": 740000,
     "annual_increment": 17000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "2"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -146,7 +159,8 @@
     "stage": 3,
     "basic_salary": 757000,
     "annual_increment": 17000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "2"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -156,7 +170,8 @@
     "stage": 4,
     "basic_salary": 774000,
     "annual_increment": 17000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "2"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -166,7 +181,8 @@
     "stage": 5,
     "basic_salary": 791000,
     "annual_increment": 17000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "2"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -176,7 +192,8 @@
     "stage": 6,
     "basic_salary": 808000,
     "annual_increment": 17000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "2"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -186,7 +203,8 @@
     "stage": 7,
     "basic_salary": 825000,
     "annual_increment": 17000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "2"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -196,7 +214,8 @@
     "stage": 8,
     "basic_salary": 842000,
     "annual_increment": 17000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "2"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -206,7 +225,8 @@
     "stage": 9,
     "basic_salary": 859000,
     "annual_increment": 17000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "2"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -216,7 +236,8 @@
     "stage": 10,
     "basic_salary": 876000,
     "annual_increment": 17000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "2"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -226,7 +247,8 @@
     "stage": 11,
     "basic_salary": 893000,
     "annual_increment": 17000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "2"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -236,7 +258,8 @@
     "stage": 1,
     "basic_salary": 600000,
     "annual_increment": 10000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "3"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -246,7 +269,8 @@
     "stage": 2,
     "basic_salary": 610000,
     "annual_increment": 10000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "3"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -256,7 +280,8 @@
     "stage": 3,
     "basic_salary": 620000,
     "annual_increment": 10000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "3"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -266,7 +291,8 @@
     "stage": 4,
     "basic_salary": 630000,
     "annual_increment": 10000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "3"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -276,7 +302,8 @@
     "stage": 5,
     "basic_salary": 640000,
     "annual_increment": 10000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "3"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -286,7 +313,8 @@
     "stage": 6,
     "basic_salary": 650000,
     "annual_increment": 10000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "3"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -296,7 +324,8 @@
     "stage": 7,
     "basic_salary": 660000,
     "annual_increment": 10000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "3"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -306,7 +335,8 @@
     "stage": 8,
     "basic_salary": 670000,
     "annual_increment": 10000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "3"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -316,7 +346,8 @@
     "stage": 9,
     "basic_salary": 680000,
     "annual_increment": 10000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "3"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -326,7 +357,8 @@
     "stage": 10,
     "basic_salary": 690000,
     "annual_increment": 10000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "3"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -336,7 +368,8 @@
     "stage": 11,
     "basic_salary": 700000,
     "annual_increment": 10000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "3"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -346,7 +379,8 @@
     "stage": 1,
     "basic_salary": 509000,
     "annual_increment": 8000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "4"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -356,7 +390,8 @@
     "stage": 2,
     "basic_salary": 517000,
     "annual_increment": 8000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "4"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -366,7 +401,8 @@
     "stage": 3,
     "basic_salary": 525000,
     "annual_increment": 8000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "4"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -376,7 +412,8 @@
     "stage": 4,
     "basic_salary": 533000,
     "annual_increment": 8000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "4"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -386,7 +423,8 @@
     "stage": 5,
     "basic_salary": 541000,
     "annual_increment": 8000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "4"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -396,7 +434,8 @@
     "stage": 6,
     "basic_salary": 549000,
     "annual_increment": 8000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "4"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -406,7 +445,8 @@
     "stage": 7,
     "basic_salary": 557000,
     "annual_increment": 8000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "4"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -416,7 +456,8 @@
     "stage": 8,
     "basic_salary": 565000,
     "annual_increment": 8000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "4"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -426,7 +467,8 @@
     "stage": 9,
     "basic_salary": 573000,
     "annual_increment": 8000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "4"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -436,7 +478,8 @@
     "stage": 10,
     "basic_salary": 581000,
     "annual_increment": 8000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "4"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -446,7 +489,8 @@
     "stage": 11,
     "basic_salary": 589000,
     "annual_increment": 8000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "4"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -456,7 +500,8 @@
     "stage": 1,
     "basic_salary": 429000,
     "annual_increment": 6000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "5"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -466,7 +511,8 @@
     "stage": 2,
     "basic_salary": 435000,
     "annual_increment": 6000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "5"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -476,7 +522,8 @@
     "stage": 3,
     "basic_salary": 441000,
     "annual_increment": 6000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "5"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -486,7 +533,8 @@
     "stage": 4,
     "basic_salary": 447000,
     "annual_increment": 6000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "5"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -496,7 +544,8 @@
     "stage": 5,
     "basic_salary": 453000,
     "annual_increment": 6000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "5"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -506,7 +555,8 @@
     "stage": 6,
     "basic_salary": 459000,
     "annual_increment": 6000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "5"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -516,7 +566,8 @@
     "stage": 7,
     "basic_salary": 465000,
     "annual_increment": 6000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "5"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -526,7 +577,8 @@
     "stage": 8,
     "basic_salary": 471000,
     "annual_increment": 6000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "5"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -536,7 +588,8 @@
     "stage": 9,
     "basic_salary": 477000,
     "annual_increment": 6000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "5"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -546,7 +599,8 @@
     "stage": 10,
     "basic_salary": 483000,
     "annual_increment": 6000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "5"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -556,7 +610,8 @@
     "stage": 11,
     "basic_salary": 489000,
     "annual_increment": 6000,
-    "promotion_years": 5
+    "promotion_years": 5,
+    "grade_ref": "5"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -566,7 +621,8 @@
     "stage": 1,
     "basic_salary": 362000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "6"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -576,7 +632,8 @@
     "stage": 2,
     "basic_salary": 368000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "6"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -586,7 +643,8 @@
     "stage": 3,
     "basic_salary": 374000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "6"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -596,7 +654,8 @@
     "stage": 4,
     "basic_salary": 380000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "6"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -606,7 +665,8 @@
     "stage": 5,
     "basic_salary": 386000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "6"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -616,7 +676,8 @@
     "stage": 6,
     "basic_salary": 392000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "6"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -626,7 +687,8 @@
     "stage": 7,
     "basic_salary": 398000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "6"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -636,7 +698,8 @@
     "stage": 8,
     "basic_salary": 404000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "6"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -646,7 +709,8 @@
     "stage": 9,
     "basic_salary": 410000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "6"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -656,7 +720,8 @@
     "stage": 10,
     "basic_salary": 416000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "6"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -666,7 +731,8 @@
     "stage": 11,
     "basic_salary": 422000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "6"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -676,7 +742,8 @@
     "stage": 1,
     "basic_salary": 296000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "7"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -686,7 +753,8 @@
     "stage": 2,
     "basic_salary": 302000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "7"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -696,7 +764,8 @@
     "stage": 3,
     "basic_salary": 308000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "7"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -706,7 +775,8 @@
     "stage": 4,
     "basic_salary": 314000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "7"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -716,7 +786,8 @@
     "stage": 5,
     "basic_salary": 320000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "7"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -726,7 +797,8 @@
     "stage": 6,
     "basic_salary": 326000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "7"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -736,7 +808,8 @@
     "stage": 7,
     "basic_salary": 332000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "7"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -746,7 +819,8 @@
     "stage": 8,
     "basic_salary": 338000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "7"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -756,7 +830,8 @@
     "stage": 9,
     "basic_salary": 344000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "7"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -766,7 +841,8 @@
     "stage": 10,
     "basic_salary": 350000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "7"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -776,7 +852,8 @@
     "stage": 11,
     "basic_salary": 356000,
     "annual_increment": 6000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "7"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -786,7 +863,8 @@
     "stage": 1,
     "basic_salary": 260000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "8"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -796,7 +874,8 @@
     "stage": 2,
     "basic_salary": 263000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "8"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -806,7 +885,8 @@
     "stage": 3,
     "basic_salary": 266000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "8"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -816,7 +896,8 @@
     "stage": 4,
     "basic_salary": 269000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "8"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -826,7 +907,8 @@
     "stage": 5,
     "basic_salary": 272000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "8"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -836,7 +918,8 @@
     "stage": 6,
     "basic_salary": 275000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "8"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -846,7 +929,8 @@
     "stage": 7,
     "basic_salary": 278000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "8"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -856,7 +940,8 @@
     "stage": 8,
     "basic_salary": 281000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "8"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -866,7 +951,8 @@
     "stage": 9,
     "basic_salary": 284000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "8"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -876,7 +962,8 @@
     "stage": 10,
     "basic_salary": 287000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "8"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -886,7 +973,8 @@
     "stage": 11,
     "basic_salary": 290000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "8"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -896,7 +984,8 @@
     "stage": 1,
     "basic_salary": 210000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "9"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -906,7 +995,8 @@
     "stage": 2,
     "basic_salary": 213000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "9"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -916,7 +1006,8 @@
     "stage": 3,
     "basic_salary": 216000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "9"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -926,7 +1017,8 @@
     "stage": 4,
     "basic_salary": 219000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "9"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -936,7 +1028,8 @@
     "stage": 5,
     "basic_salary": 222000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "9"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -946,7 +1039,8 @@
     "stage": 6,
     "basic_salary": 225000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "9"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -956,7 +1050,8 @@
     "stage": 7,
     "basic_salary": 228000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "9"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -966,7 +1061,8 @@
     "stage": 8,
     "basic_salary": 231000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "9"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -976,7 +1072,8 @@
     "stage": 9,
     "basic_salary": 234000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "9"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -986,7 +1083,8 @@
     "stage": 10,
     "basic_salary": 237000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "9"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -996,7 +1094,8 @@
     "stage": 11,
     "basic_salary": 240000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "9"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1006,7 +1105,8 @@
     "stage": 1,
     "basic_salary": 170000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "10"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1016,7 +1116,8 @@
     "stage": 2,
     "basic_salary": 173000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "10"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1026,7 +1127,8 @@
     "stage": 3,
     "basic_salary": 176000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "10"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1036,7 +1138,8 @@
     "stage": 4,
     "basic_salary": 179000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "10"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1046,7 +1149,8 @@
     "stage": 5,
     "basic_salary": 182000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "10"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1056,7 +1160,8 @@
     "stage": 6,
     "basic_salary": 185000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "10"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1066,7 +1171,8 @@
     "stage": 7,
     "basic_salary": 188000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "10"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1076,7 +1182,8 @@
     "stage": 8,
     "basic_salary": 191000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "10"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1086,7 +1193,8 @@
     "stage": 9,
     "basic_salary": 194000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "10"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1096,7 +1204,8 @@
     "stage": 10,
     "basic_salary": 197000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "10"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1106,7 +1215,8 @@
     "stage": 11,
     "basic_salary": 200000,
     "annual_increment": 3000,
-    "promotion_years": 4
+    "promotion_years": 4,
+    "grade_ref": "10"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1116,7 +1226,8 @@
     "stage": 1,
     "basic_salary": 2413000,
     "annual_increment": 83000,
-    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل"
+    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل",
+    "grade_ref": "SPECIAL_A"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1126,7 +1237,8 @@
     "stage": 2,
     "basic_salary": 2496000,
     "annual_increment": 83000,
-    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل"
+    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل",
+    "grade_ref": "SPECIAL_A"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1136,7 +1248,8 @@
     "stage": 3,
     "basic_salary": 2579000,
     "annual_increment": 83000,
-    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل"
+    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل",
+    "grade_ref": "SPECIAL_A"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1146,7 +1259,8 @@
     "stage": 4,
     "basic_salary": 2662000,
     "annual_increment": 83000,
-    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل"
+    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل",
+    "grade_ref": "SPECIAL_A"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1156,7 +1270,8 @@
     "stage": 5,
     "basic_salary": 2745000,
     "annual_increment": 83000,
-    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل"
+    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل",
+    "grade_ref": "SPECIAL_A"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1166,7 +1281,8 @@
     "stage": 6,
     "basic_salary": 2828000,
     "annual_increment": 83000,
-    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل"
+    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل",
+    "grade_ref": "SPECIAL_A"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1176,7 +1292,8 @@
     "stage": 7,
     "basic_salary": 2911000,
     "annual_increment": 83000,
-    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل"
+    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل",
+    "grade_ref": "SPECIAL_A"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1186,7 +1303,8 @@
     "stage": 8,
     "basic_salary": 2994000,
     "annual_increment": 83000,
-    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل"
+    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل",
+    "grade_ref": "SPECIAL_A"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1196,7 +1314,8 @@
     "stage": 9,
     "basic_salary": 3077000,
     "annual_increment": 83000,
-    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل"
+    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل",
+    "grade_ref": "SPECIAL_A"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1206,7 +1325,8 @@
     "stage": 10,
     "basic_salary": 3160000,
     "annual_increment": 83000,
-    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل"
+    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل",
+    "grade_ref": "SPECIAL_A"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1216,7 +1336,8 @@
     "stage": 11,
     "basic_salary": 3243000,
     "annual_increment": 83000,
-    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل"
+    "senior_title": "وكيل وزارة ومن بدرجته/مستشار بدرجة وكيل",
+    "grade_ref": "SPECIAL_A"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1226,7 +1347,8 @@
     "stage": 1,
     "basic_salary": 2000000,
     "annual_increment": 83000,
-    "senior_title": "الدرجة الخاصة"
+    "senior_title": "الدرجة الخاصة",
+    "grade_ref": "SPECIAL_B"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1236,7 +1358,8 @@
     "stage": 2,
     "basic_salary": 2083000,
     "annual_increment": 83000,
-    "senior_title": "الدرجة الخاصة"
+    "senior_title": "الدرجة الخاصة",
+    "grade_ref": "SPECIAL_B"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1246,7 +1369,8 @@
     "stage": 3,
     "basic_salary": 2166000,
     "annual_increment": 83000,
-    "senior_title": "الدرجة الخاصة"
+    "senior_title": "الدرجة الخاصة",
+    "grade_ref": "SPECIAL_B"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1256,7 +1380,8 @@
     "stage": 4,
     "basic_salary": 2249000,
     "annual_increment": 83000,
-    "senior_title": "الدرجة الخاصة"
+    "senior_title": "الدرجة الخاصة",
+    "grade_ref": "SPECIAL_B"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1266,7 +1391,8 @@
     "stage": 5,
     "basic_salary": 2332000,
     "annual_increment": 83000,
-    "senior_title": "الدرجة الخاصة"
+    "senior_title": "الدرجة الخاصة",
+    "grade_ref": "SPECIAL_B"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1276,7 +1402,8 @@
     "stage": 6,
     "basic_salary": 2415000,
     "annual_increment": 83000,
-    "senior_title": "الدرجة الخاصة"
+    "senior_title": "الدرجة الخاصة",
+    "grade_ref": "SPECIAL_B"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1286,7 +1413,8 @@
     "stage": 7,
     "basic_salary": 2498000,
     "annual_increment": 83000,
-    "senior_title": "الدرجة الخاصة"
+    "senior_title": "الدرجة الخاصة",
+    "grade_ref": "SPECIAL_B"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1296,7 +1424,8 @@
     "stage": 8,
     "basic_salary": 2581000,
     "annual_increment": 83000,
-    "senior_title": "الدرجة الخاصة"
+    "senior_title": "الدرجة الخاصة",
+    "grade_ref": "SPECIAL_B"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1306,7 +1435,8 @@
     "stage": 9,
     "basic_salary": 2664000,
     "annual_increment": 83000,
-    "senior_title": "الدرجة الخاصة"
+    "senior_title": "الدرجة الخاصة",
+    "grade_ref": "SPECIAL_B"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1316,7 +1446,8 @@
     "stage": 10,
     "basic_salary": 2747000,
     "annual_increment": 83000,
-    "senior_title": "الدرجة الخاصة"
+    "senior_title": "الدرجة الخاصة",
+    "grade_ref": "SPECIAL_B"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1326,7 +1457,8 @@
     "stage": 11,
     "basic_salary": 2830000,
     "annual_increment": 83000,
-    "senior_title": "الدرجة الخاصة"
+    "senior_title": "الدرجة الخاصة",
+    "grade_ref": "SPECIAL_B"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1336,7 +1468,8 @@
     "stage": 1,
     "basic_salary": 1500000,
     "annual_increment": 83000,
-    "senior_title": "مدير عام ومن بدرجته"
+    "senior_title": "مدير عام ومن بدرجته",
+    "grade_ref": "SPECIAL_C"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1346,7 +1479,8 @@
     "stage": 2,
     "basic_salary": 1583000,
     "annual_increment": 83000,
-    "senior_title": "مدير عام ومن بدرجته"
+    "senior_title": "مدير عام ومن بدرجته",
+    "grade_ref": "SPECIAL_C"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1356,7 +1490,8 @@
     "stage": 3,
     "basic_salary": 1666000,
     "annual_increment": 83000,
-    "senior_title": "مدير عام ومن بدرجته"
+    "senior_title": "مدير عام ومن بدرجته",
+    "grade_ref": "SPECIAL_C"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1366,7 +1501,8 @@
     "stage": 4,
     "basic_salary": 1749000,
     "annual_increment": 83000,
-    "senior_title": "مدير عام ومن بدرجته"
+    "senior_title": "مدير عام ومن بدرجته",
+    "grade_ref": "SPECIAL_C"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1376,7 +1512,8 @@
     "stage": 5,
     "basic_salary": 1832000,
     "annual_increment": 83000,
-    "senior_title": "مدير عام ومن بدرجته"
+    "senior_title": "مدير عام ومن بدرجته",
+    "grade_ref": "SPECIAL_C"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1386,7 +1523,8 @@
     "stage": 6,
     "basic_salary": 1915000,
     "annual_increment": 83000,
-    "senior_title": "مدير عام ومن بدرجته"
+    "senior_title": "مدير عام ومن بدرجته",
+    "grade_ref": "SPECIAL_C"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1396,7 +1534,8 @@
     "stage": 7,
     "basic_salary": 1998000,
     "annual_increment": 83000,
-    "senior_title": "مدير عام ومن بدرجته"
+    "senior_title": "مدير عام ومن بدرجته",
+    "grade_ref": "SPECIAL_C"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1406,7 +1545,8 @@
     "stage": 8,
     "basic_salary": 2081000,
     "annual_increment": 83000,
-    "senior_title": "مدير عام ومن بدرجته"
+    "senior_title": "مدير عام ومن بدرجته",
+    "grade_ref": "SPECIAL_C"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1416,7 +1556,8 @@
     "stage": 9,
     "basic_salary": 2164000,
     "annual_increment": 83000,
-    "senior_title": "مدير عام ومن بدرجته"
+    "senior_title": "مدير عام ومن بدرجته",
+    "grade_ref": "SPECIAL_C"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1426,7 +1567,8 @@
     "stage": 10,
     "basic_salary": 2247000,
     "annual_increment": 83000,
-    "senior_title": "مدير عام ومن بدرجته"
+    "senior_title": "مدير عام ومن بدرجته",
+    "grade_ref": "SPECIAL_C"
    },
    {
     "doctype": "Government Salary Scale Detail",
@@ -1436,7 +1578,8 @@
     "stage": 11,
     "basic_salary": 2330000,
     "annual_increment": 83000,
-    "senior_title": "مدير عام ومن بدرجته"
+    "senior_title": "مدير عام ومن بدرجته",
+    "grade_ref": "SPECIAL_C"
    }
   ]
  }

@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:grade_code",
+ "creation": "2026-06-08 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "description": "Master list of government salary grades. The record NAME is the canonical grade code (e.g. \"7\", \"SPECIAL_A\"), so a Link to this DocType stores the same value the legacy grade_code Select used.",
+ "field_order": [
+  "grade_code",
+  "grade_type",
+  "column_break_main",
+  "sort_order",
+  "section_break_labels",
+  "grade_label_ar",
+  "grade_label_en"
+ ],
+ "fields": [
+  {
+   "fieldname": "grade_code",
+   "fieldtype": "Data",
+   "label": "Grade Code",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "Canonical code used as the record name and by the engine (e.g. 7, SPECIAL_A)."
+  },
+  {
+   "fieldname": "grade_type",
+   "fieldtype": "Select",
+   "label": "Grade Type",
+   "options": "Regular\nSenior",
+   "default": "Regular",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order",
+   "in_list_view": 1,
+   "description": "Seniority order (ascending = most senior first)."
+  },
+  {
+   "fieldname": "section_break_labels",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "grade_label_ar",
+   "fieldtype": "Data",
+   "label": "Label (Arabic)"
+  },
+  {
+   "fieldname": "grade_label_en",
+   "fieldtype": "Data",
+   "label": "Label (English)"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-08 00:00:00",
+ "module": "Government Payroll",
+ "name": "Government Grade",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1, "share": 1},
+  {"role": "Government Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "print": 1, "share": 1},
+  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "report": 1, "print": 1},
+  {"role": "Payroll Manager", "read": 1, "report": 1, "print": 1},
+  {"role": "Payroll Officer", "read": 1, "report": 1},
+  {"role": "HR Officer", "read": 1, "report": 1, "print": 1},
+  {"role": "Finance Officer", "read": 1, "report": 1, "print": 1},
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1},
+  {"role": "Read Only User", "read": 1, "report": 1, "print": 1}
+ ],
+ "sort_field": "sort_order",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}

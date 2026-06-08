@@ -30,6 +30,7 @@
   "last_lifecycle_event",
   "last_lifecycle_event_date",
   "section_break_grade",
+  "grade",
   "grade_code",
   "current_grade",
   "current_stage",
@@ -206,20 +207,28 @@
    "label": "Current Grade & Stage"
   },
   {
-   "fieldname": "grade_code",
-   "fieldtype": "Select",
-   "label": "Grade Code",
-   "options": "\n10\n9\n8\n7\n6\n5\n4\n3\n2\n1\nSPECIAL_A\nSPECIAL_B\nSPECIAL_C",
+   "fieldname": "grade",
+   "fieldtype": "Link",
+   "label": "Grade",
+   "options": "Government Grade",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "description": "Canonical grade key used by the engine. Falls back to current_grade for regular grades if empty."
+   "description": "Employee salary grade (Government Grade master). Authoritative input; the engine resolves the basic salary by (grade, stage) against the active scale."
+  },
+  {
+   "fieldname": "grade_code",
+   "fieldtype": "Select",
+   "label": "Grade Code (deprecated)",
+   "options": "\n10\n9\n8\n7\n6\n5\n4\n3\n2\n1\nSPECIAL_A\nSPECIAL_B\nSPECIAL_C",
+   "read_only": 1,
+   "in_standard_filter": 1,
+   "description": "Deprecated: kept as a mirror of Grade for backward compatibility (slips/snapshots/reports). Set Grade instead; this is synced automatically."
   },
   {
    "fieldname": "current_grade",
    "fieldtype": "Int",
    "label": "Current Grade (legacy)",
-   "reqd": 1,
-   "description": "Legacy/display value for regular grades; the engine uses grade_code."
+   "description": "Deprecated legacy Int fallback (regular grades only); the engine uses Grade. Synced from Grade for regular grades."
   },
   {
    "fieldname": "current_stage",

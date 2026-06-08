@@ -1,1 +1,5 @@
 # Patches applied during migrate. One per line, in order.
+[pre_model_sync]
+
+[post_model_sync]
+iraqi_government_payroll.patches.v5_1.backfill_government_grade
