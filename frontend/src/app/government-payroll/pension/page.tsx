@@ -5,6 +5,8 @@
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@shared/components/PageHeader";
+import { ExportButtons } from "@shared/components/ExportButtons";
+import { Loading, ErrorBanner } from "@shared/components/States";
 import { payrollApi } from "@shared/services/api";
 import { downloadCsv } from "@shared/services/csv";
 import { useRoles } from "@shared/services/RolesContext";
@@ -96,32 +98,19 @@ export default function PensionPage() {
           </select>
         </label>
 
-        {mayExport ? (
-          <>
-            <button type="button"
-              onClick={() => data && downloadCsv("pension-register", data.rows as unknown as Record<string, unknown>[], COLUMNS)}
-              disabled={!data || data.rows.length === 0}
-              className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50">
-              تنزيل CSV
-            </button>
-            <button type="button" onClick={() => window.open(xlsxUrl(), "_blank")}
-              disabled={!data || data.rows.length === 0}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
-              تنزيل Excel
-            </button>
-            <button type="button" onClick={() => window.open(pdfUrl(), "_blank")}
-              disabled={!data || data.rows.length === 0}
-              className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50">
-              تنزيل PDF
-            </button>
-          </>
-        ) : null}
+        <ExportButtons
+          canExport={mayExport}
+          disabled={!data || data.rows.length === 0}
+          onCsv={() =>
+            data && downloadCsv("pension-register", data.rows as unknown as Record<string, unknown>[], COLUMNS)
+          }
+          onExcel={() => window.open(xlsxUrl(), "_blank")}
+          onPdf={() => window.open(pdfUrl(), "_blank")}
+        />
       </div>
 
-      {error ? (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>
-      ) : null}
-      {loading ? <p className="text-sm text-slate-500">جارٍ التحميل…</p> : null}
+      {error ? <ErrorBanner message={error} /> : null}
+      {loading ? <Loading /> : null}
 
       {data && !loading ? (
         <>
@@ -158,9 +147,11 @@ export default function PensionPage() {
               </tbody>
             </table>
           </div>
-          <p className="mt-3 text-sm font-medium text-slate-700">
-            عدد المتقاعدين: <span className="num">{data.count}</span>
-          </p>
+          <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-700">
+            <span>عدد المتقاعدين: <span className="num font-medium">{data.count}</span></span>
+            <span>إجمالي التقاعد: <span className="num font-medium">{data.totals?.gross_pension ?? 0}</span></span>
+            <span>إجمالي الصافي: <span className="num font-medium">{data.totals?.net_pension ?? 0}</span></span>
+          </div>
         </>
       ) : null}
     </div>

@@ -1,23 +1,30 @@
 "use client";
 
-// Dashboard — payroll status summary, latest runs (locked/unlocked indicators),
-// and role-aware quick actions. Read-only overview; all data from existing APIs.
+// Dashboard — payroll status summary, latest runs (locked/unlocked + run status),
+// and role-grouped quick actions. Read-only overview from existing APIs.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@shared/components/PageHeader";
 import { StateBadge } from "@shared/components/StateBadge";
+import { StatCard } from "@shared/components/Card";
+import { Pill } from "@shared/components/Pill";
+import { Loading, ErrorBanner, Empty } from "@shared/components/States";
 import { payrollApi } from "@shared/services/api";
 import { useRoles } from "@shared/services/RolesContext";
-import { canExportJournal } from "@shared/services/roles";
+import { canExportJournal, canManagePayroll } from "@shared/services/roles";
 import type { PayrollRun } from "@shared/types";
 
-function StatCard({ label, value, accent }: { label: string; value: number; accent?: string }) {
+const IN_PROGRESS = ["Draft", "Calculated", "Under Review", "Approved"];
+
+function QuickLink({ href, label }: { href: string; label: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5">
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className={`mt-1 text-2xl font-bold num ${accent ?? "text-slate-900"}`}>{value}</p>
-    </div>
+    <Link
+      href={href}
+      className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-sky-700 hover:border-sky-300 hover:bg-sky-50"
+    >
+      {label}
+    </Link>
   );
 }
 
@@ -33,68 +40,58 @@ export default function DashboardPage() {
   const total = runs?.length ?? 0;
   const locked = runs?.filter((r) => r.workflow_state === "Locked").length ?? 0;
   const inProgress =
-    runs?.filter((r) =>
-      ["Draft", "Calculated", "Under Review", "Approved"].includes(r.workflow_state ?? "Draft"),
-    ).length ?? 0;
+    runs?.filter((r) => IN_PROGRESS.includes(r.workflow_state ?? "Draft")).length ?? 0;
   const submitted =
     runs?.filter((r) => ["Submitted", "Locked"].includes(r.workflow_state ?? "")).length ?? 0;
-
   const latest = (runs ?? []).slice(-6).reverse();
 
-  const quickActions = [
-    { href: "/government-payroll/payroll-runs", label: "دورات الرواتب", show: true },
-    { href: "/government-payroll/reports", label: "التقارير والتصدير", show: true },
-    { href: "/government-payroll/pension", label: "كشف التقاعد", show: true },
-    {
-      href: "/government-payroll/accounting-journal",
-      label: "القيد المحاسبي",
-      show: canExportJournal(roles),
-    },
-  ].filter((a) => a.show);
+  const general = [
+    { href: "/government-payroll/reports", label: "التقارير والتصدير" },
+    { href: "/government-payroll/pension", label: "كشف التقاعد" },
+    { href: "/government-payroll/employees", label: "الموظفون" },
+  ];
+  const management = [
+    canManagePayroll(roles) && { href: "/government-payroll/payroll-runs", label: "إدارة دورات الرواتب" },
+    canExportJournal(roles) && { href: "/government-payroll/accounting-journal", label: "القيد المحاسبي" },
+  ].filter(Boolean) as { href: string; label: string }[];
 
   return (
     <div>
-      <PageHeader
-        title="لوحة التحكم"
-        subtitle="نظرة عامة على رواتب موظفي الدولة العراقية"
-      />
+      <PageHeader title="لوحة التحكم" subtitle="نظرة عامة على رواتب موظفي الدولة العراقية" />
 
-      {error ? (
-        <div className="mb-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-          {error}
-        </div>
-      ) : null}
+      {error ? <div className="mb-6"><ErrorBanner message={error} /></div> : null}
 
       {/* Summary cards */}
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label="إجمالي الدورات" value={total} />
         <StatCard label="قيد الإعداد" value={inProgress} accent="text-amber-600" />
         <StatCard label="مُقدّمة / مقفلة" value={submitted} accent="text-emerald-600" />
-        <StatCard label="مقفلة" value={locked} accent="text-slate-800" />
+        <StatCard label="مقفلة" value={locked} accent="text-slate-800" hint="سجلات نهائية غير قابلة للتعديل" />
       </div>
 
-      {/* Quick actions */}
+      {/* Quick actions, grouped */}
       <h2 className="mb-3 text-sm font-semibold text-slate-900">إجراءات سريعة</h2>
-      <div className="mb-8 flex flex-wrap gap-3">
-        {quickActions.map((a) => (
-          <Link
-            key={a.href}
-            href={a.href}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-sky-700 hover:border-sky-300 hover:bg-sky-50"
-          >
-            {a.label}
-          </Link>
-        ))}
+      <div className="mb-2 text-xs text-slate-400">عام</div>
+      <div className="mb-4 flex flex-wrap gap-3">
+        {general.map((a) => <QuickLink key={a.href} {...a} />)}
       </div>
+      {management.length ? (
+        <>
+          <div className="mb-2 text-xs text-slate-400">إدارة (حسب الصلاحية)</div>
+          <div className="mb-8 flex flex-wrap gap-3">
+            {management.map((a) => <QuickLink key={a.href} {...a} />)}
+          </div>
+        </>
+      ) : (
+        <div className="mb-8" />
+      )}
 
       {/* Latest runs */}
       <h2 className="mb-3 text-sm font-semibold text-slate-900">أحدث دورات الرواتب</h2>
       {runs === null && !error ? (
-        <p className="text-sm text-slate-500">جارٍ التحميل…</p>
+        <Loading />
       ) : latest.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-          لا توجد دورات رواتب بعد.
-        </div>
+        <Empty message="لا توجد دورات رواتب بعد." />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-right text-sm">
@@ -103,6 +100,7 @@ export default function DashboardPage() {
                 <th className="px-4 py-3 font-medium">الدورة</th>
                 <th className="px-4 py-3 font-medium">الفترة</th>
                 <th className="px-4 py-3 font-medium">الحالة</th>
+                <th className="px-4 py-3 font-medium">التنفيذ</th>
                 <th className="px-4 py-3 font-medium">الإقفال</th>
               </tr>
             </thead>
@@ -118,12 +116,11 @@ export default function DashboardPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-slate-800 num">{run.payroll_period ?? ""}</td>
-                  <td className="px-4 py-3">
-                    <StateBadge state={run.workflow_state ?? "Draft"} />
-                  </td>
+                  <td className="px-4 py-3"><StateBadge state={run.workflow_state ?? "Draft"} /></td>
+                  <td className="px-4 py-3 text-xs text-slate-500">{run.run_status ?? "—"}</td>
                   <td className="px-4 py-3">
                     {run.workflow_state === "Locked" ? (
-                      <span className="text-xs font-medium text-slate-700">🔒 مقفلة</span>
+                      <Pill tone="dark">🔒 مقفلة</Pill>
                     ) : (
                       <span className="text-xs text-slate-400">مفتوحة</span>
                     )}

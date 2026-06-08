@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@shared/components/PageHeader";
 import { payrollApi } from "@shared/services/api";
 import { downloadCsv } from "@shared/services/csv";
+import { ExportButtons } from "@shared/components/ExportButtons";
+import { Loading, ErrorBanner } from "@shared/components/States";
 import { useRoles } from "@shared/services/RolesContext";
 import { canExportReports } from "@shared/services/roles";
 import type { PayrollRun } from "@shared/types";
@@ -32,6 +34,16 @@ const REPORT_TYPES = [
 ] as const;
 type ReportKey = (typeof REPORT_TYPES)[number]["key"];
 type RunReportKey = Exclude<ReportKey, "pension">;
+
+const REPORT_DESCRIPTIONS: Record<ReportKey, string> = {
+  summary: "إجماليات الدورة: عدد الموظفين والأساسي والاستحقاقات والاستقطاعات والصافي.",
+  employee: "كشف رواتب الموظفين: صف لكل موظف بالأساسي والمخصصات والاستقطاعات والصافي.",
+  allowances: "تفصيل المخصصات لكل موظف حسب المكوّن.",
+  deductions: "تفصيل الاستقطاعات لكل موظف (التقاعد والضريبة وغيرها).",
+  tax: "ضريبة الدخل لكل موظف مع الدخل الخاضع.",
+  bank: "ملف التحويل البنكي: الصافي وبيانات الحساب؛ الصفوف الناقصة مُعلَّمة لا محذوفة.",
+  pension: "سجل الرواتب التقاعدية من نتائج التقاعد المخزّنة.",
+};
 
 const PENSION_STATUSES = ["", "Draft", "Calculated", "Approved"];
 
@@ -288,73 +300,42 @@ export default function ReportsPage() {
           </label>
         )}
 
-        {mayExport ? (
-          <>
-            <button
-              type="button"
-              onClick={() =>
-                report && downloadCsv(report.csvName, report.rows, report.columns)
-              }
-              disabled={!report || report.rows.length === 0}
-              className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              تنزيل CSV
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                window.open(
-                  payrollApi.exportReportUrl(
-                    EXPORT_NAME[type],
-                    isPension
-                      ? { from_date: fromDate, to_date: toDate, status }
-                      : { run },
-                    "xlsx",
-                  ),
-                  "_blank",
-                )
-              }
-              disabled={!report || report.rows.length === 0}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              تنزيل Excel
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                window.open(
-                  payrollApi.exportReportUrl(
-                    EXPORT_NAME[type],
-                    isPension
-                      ? { from_date: fromDate, to_date: toDate, status }
-                      : { run },
-                    "pdf",
-                  ),
-                  "_blank",
-                )
-              }
-              disabled={!report || report.rows.length === 0}
-              className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              تنزيل PDF
-            </button>
-          </>
-        ) : null}
+        <ExportButtons
+          canExport={mayExport}
+          disabled={!report || report.rows.length === 0}
+          onCsv={() => report && downloadCsv(report.csvName, report.rows, report.columns)}
+          onExcel={() =>
+            window.open(
+              payrollApi.exportReportUrl(
+                EXPORT_NAME[type],
+                isPension ? { from_date: fromDate, to_date: toDate, status } : { run },
+                "xlsx",
+              ),
+              "_blank",
+            )
+          }
+          onPdf={() =>
+            window.open(
+              payrollApi.exportReportUrl(
+                EXPORT_NAME[type],
+                isPension ? { from_date: fromDate, to_date: toDate, status } : { run },
+                "pdf",
+              ),
+              "_blank",
+            )
+          }
+        />
       </div>
 
-      {error ? (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-          {error}
-        </div>
-      ) : null}
+      <p className="mb-6 text-sm text-slate-500">{REPORT_DESCRIPTIONS[type]}</p>
+
+      {error ? <ErrorBanner message={error} /> : null}
 
       {!isPension && !run ? (
         <p className="text-sm text-slate-500">اختر دورة رواتب لعرض التقرير.</p>
       ) : null}
 
-      {loading ? <p className="text-sm text-slate-500">جارٍ التحميل…</p> : null}
+      {loading ? <Loading /> : null}
 
       {report && !loading ? (
         <>

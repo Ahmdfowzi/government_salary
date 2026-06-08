@@ -7,6 +7,9 @@
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@shared/components/PageHeader";
+import { ExportButtons } from "@shared/components/ExportButtons";
+import { Loading, ErrorBanner } from "@shared/components/States";
+import { Pill } from "@shared/components/Pill";
 import { payrollApi } from "@shared/services/api";
 import { downloadCsv } from "@shared/services/csv";
 import { useRoles } from "@shared/services/RolesContext";
@@ -90,9 +93,10 @@ export default function AccountingJournalPage() {
           </select>
         </label>
 
-        <button
-          type="button"
-          onClick={() =>
+        <ExportButtons
+          canExport
+          disabled={!journal || journal.rows.length === 0}
+          onCsv={() =>
             journal &&
             downloadCsv(
               `journal-${run}`,
@@ -100,31 +104,16 @@ export default function AccountingJournalPage() {
               COLUMNS,
             )
           }
-          disabled={!journal || journal.rows.length === 0}
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          تنزيل CSV
-        </button>
-        <button
-          type="button"
-          onClick={() => window.open(payrollApi.journalExportUrl(run), "_blank")}
-          disabled={!journal || journal.rows.length === 0}
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          تنزيل Excel
-        </button>
+          onExcel={() => window.open(payrollApi.journalExportUrl(run), "_blank")}
+        />
       </div>
 
-      {error ? (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-          {error}
-        </div>
-      ) : null}
+      {error ? <ErrorBanner message={error} /> : null}
 
       {!run ? (
         <p className="text-sm text-slate-500">اختر دورة رواتب لعرض القيد المقترح.</p>
       ) : null}
-      {loading ? <p className="text-sm text-slate-500">جارٍ التحميل…</p> : null}
+      {loading ? <Loading /> : null}
 
       {journal && !loading ? (
         <>
@@ -163,11 +152,13 @@ export default function AccountingJournalPage() {
               </tbody>
             </table>
           </div>
-          <p className="mt-3 text-sm font-medium text-slate-700">
-            مدين: <span className="num">{journal.total_debit}</span> | دائن:{" "}
-            <span className="num">{journal.total_credit}</span> —{" "}
-            {journal.balanced ? "متوازن ✓" : "غير متوازن ✗"}
-          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-4 text-sm font-medium text-slate-700">
+            <span>إجمالي المدين: <span className="num">{journal.total_debit}</span></span>
+            <span>إجمالي الدائن: <span className="num">{journal.total_credit}</span></span>
+            <Pill tone={journal.balanced ? "success" : "danger"}>
+              {journal.balanced ? "متوازن ✓" : "غير متوازن ✗"}
+            </Pill>
+          </div>
         </>
       ) : null}
       </>

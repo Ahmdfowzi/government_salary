@@ -5,11 +5,13 @@
 // everything (existence, scope rules, duplicate guard). No workflow or
 // authorization logic lives here.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@shared/components/PageHeader";
 import { StateBadge } from "@shared/components/StateBadge";
+import { SearchInput } from "@shared/components/SearchInput";
+import { Loading, ErrorBanner, Empty } from "@shared/components/States";
 import { FormShell } from "@shared/forms/FormShell";
 import { payrollApi } from "@shared/services/api";
 import { useRoles } from "@shared/services/RolesContext";
@@ -50,6 +52,28 @@ export default function PayrollRunsPage() {
 
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+
+  // List search/filter
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const filtered = useMemo(() => {
+    const items = runs ?? [];
+    const term = q.trim().toLowerCase();
+    return items.filter((r) => {
+      const matchesQ =
+        !term ||
+        [r.name, r.payroll_period].filter(Boolean).some((v) => String(v).toLowerCase().includes(term));
+      const matchesStatus = !statusFilter || (r.workflow_state ?? "Draft") === statusFilter;
+      return matchesQ && matchesStatus;
+    });
+  }, [runs, q, statusFilter]);
+
+  const STATUS_OPTIONS = ["", "Draft", "Calculated", "Under Review", "Approved", "Submitted", "Locked", "Cancelled"];
+  const STATUS_LABELS: Record<string, string> = {
+    "": "كل الحالات", Draft: "مسودة", Calculated: "محتسبة", "Under Review": "قيد المراجعة",
+    Approved: "معتمدة", Submitted: "مُقدّمة", Locked: "مقفلة", Cancelled: "ملغاة",
+  };
 
   function loadRuns() {
     payrollApi
@@ -186,23 +210,26 @@ export default function PayrollRunsPage() {
       ) : null}
 
       {/* List */}
-      {error ? (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-          {error}
-        </div>
-      ) : null}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <SearchInput value={q} onChange={setQ} placeholder="بحث بالدورة أو الفترة…" />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+        >
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+          ))}
+        </select>
+      </div>
+
+      {error ? <ErrorBanner message={error} /> : null}
 
       {runs === null && !error ? (
-        <p className="text-sm text-slate-500">جارٍ التحميل…</p>
-      ) : null}
-
-      {runs && runs.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
-          لا توجد دورات رواتب.
-        </div>
-      ) : null}
-
-      {runs && runs.length > 0 ? (
+        <Loading />
+      ) : filtered.length === 0 ? (
+        <Empty message={runs && runs.length ? "لا توجد نتائج مطابقة." : "لا توجد دورات رواتب."} />
+      ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-right text-sm">
             <thead className="bg-slate-50 text-slate-500">
@@ -210,33 +237,39 @@ export default function PayrollRunsPage() {
                 <th className="px-4 py-3 font-medium">الدورة</th>
                 <th className="px-4 py-3 font-medium">الفترة</th>
                 <th className="px-4 py-3 font-medium">الحالة</th>
-                <th className="px-4 py-3 font-medium">حالة التنفيذ</th>
+                <th className="px-4 py-3 font-medium">التنفيذ</th>
+                <th className="px-4 py-3 font-medium">الإقفال</th>
               </tr>
             </thead>
             <tbody>
-              {runs.map((run) => (
+              {filtered.map((run) => (
                 <tr key={run.name} className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3">
                     <Link
                       href={`/government-payroll/payroll-runs/${encodeURIComponent(run.name)}`}
-                      className="font-medium text-sky-700 hover:underline"
+                      className="font-medium text-sky-700 hover:underline num"
                     >
-                      <span className="num">{run.name}</span>
+                      {run.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-slate-800">
-                    <span className="num">{run.payroll_period ?? ""}</span>
-                  </td>
+                  <td className="px-4 py-3 text-slate-800 num">{run.payroll_period ?? ""}</td>
                   <td className="px-4 py-3">
                     <StateBadge state={run.workflow_state ?? "Draft"} />
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{run.run_status ?? ""}</td>
+                  <td className="px-4 py-3 text-xs text-slate-500">{run.run_status ?? "—"}</td>
+                  <td className="px-4 py-3 text-xs">
+                    {run.workflow_state === "Locked" ? (
+                      <span className="font-medium text-slate-700">🔒 مقفلة</span>
+                    ) : (
+                      <span className="text-slate-400">مفتوحة</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

@@ -113,6 +113,16 @@ export default function PayrollRunDetailPage() {
             </div>
           </section>
 
+          {/* Locked / snapshot explanation */}
+          {gov.workflow_state === "Locked" ? (
+            <div className="rounded-lg border border-slate-300 bg-slate-50 p-4 text-sm text-slate-700">
+              🔒 هذه الدورة <strong>مقفلة</strong> وتُعدّ سجلاً نهائياً غير قابل
+              للتعديل. تُقرأ التقارير والقيود من <strong>اللقطة الثابتة</strong>
+              (Snapshot) لضمان عدم تغيّر الأرقام التاريخية. لا يمكن إعادة الاحتساب أو
+              الحذف؛ ويتطلب فتح القفل صلاحية إدارية.
+            </div>
+          ) : null}
+
           {/* Actions — strictly from allowed_actions */}
           <section className="rounded-xl border border-slate-200 bg-white p-5">
             <h2 className="mb-3 text-sm font-semibold text-slate-900">الإجراءات المتاحة</h2>

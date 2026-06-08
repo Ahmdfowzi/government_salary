@@ -11,7 +11,7 @@ const STATE_STYLES: Record<string, StateStyle> = {
   Draft: { label: "مسودة", className: "bg-slate-100 text-slate-700 ring-slate-200" },
   Calculated: { label: "محتسبة", className: "bg-sky-100 text-sky-700 ring-sky-200" },
   "Under Review": { label: "قيد المراجعة", className: "bg-amber-100 text-amber-800 ring-amber-200" },
-  Approved: { label: "معتمدة", className: "bg-indigo-100 text-indigo-700 ring-indigo-200" },
+  Approved: { label: "معتمدة", className: "bg-blue-100 text-blue-700 ring-blue-200" },
   Submitted: { label: "مُقدّمة", className: "bg-emerald-100 text-emerald-700 ring-emerald-200" },
   Locked: { label: "مقفلة", className: "bg-slate-800 text-white ring-slate-700" },
   Cancelled: { label: "ملغاة", className: "bg-rose-100 text-rose-700 ring-rose-200" },
