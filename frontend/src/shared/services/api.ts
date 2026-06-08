@@ -34,6 +34,7 @@ import type {
   PensionRegisterReport,
   BankTransferReport,
   JournalExport,
+  CurrentUser,
 } from "../types";
 
 const API = "iraqi_government_payroll.iraqi_government_payroll.api.payroll_api";
@@ -74,6 +75,9 @@ export const payrollApi = {
   payrollPeriods: () => getList<PayrollPeriod>("Payroll Period"),
   payrollRuns: () => getList<PayrollRun>("Payroll Run"),
   salarySlips: () => getList<SalarySlip>("Salary Slip"),
+
+  // Session (role-aware UI; backend enforces all restrictions)
+  currentUser: () => callMethod<CurrentUser>(`${API}.current_user`),
 
   // Audit / reproducibility
   snapshots: () => getList<PayrollCalculationSnapshot>("Payroll Calculation Snapshot"),

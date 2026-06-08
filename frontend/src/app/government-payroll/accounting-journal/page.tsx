@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@shared/components/PageHeader";
 import { payrollApi } from "@shared/services/api";
 import { downloadCsv } from "@shared/services/csv";
+import { useRoles } from "@shared/services/RolesContext";
+import { canExportJournal } from "@shared/services/roles";
 import type { PayrollRun, JournalExport } from "@shared/types";
 
 const COLUMNS = [
@@ -19,6 +21,8 @@ const COLUMNS = [
 ];
 
 export default function AccountingJournalPage() {
+  const { roles, loading: rolesLoading } = useRoles();
+  const mayUse = canExportJournal(roles);
   const [runs, setRuns] = useState<PayrollRun[]>([]);
   const [run, setRun] = useState("");
   const [journal, setJournal] = useState<JournalExport | null>(null);
@@ -26,8 +30,9 @@ export default function AccountingJournalPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!mayUse) return;
     payrollApi.payrollRuns().then(setRuns).catch((e: Error) => setError(e.message));
-  }, []);
+  }, [mayUse]);
 
   useEffect(() => {
     if (!run) {
@@ -53,6 +58,21 @@ export default function AccountingJournalPage() {
         subtitle="قيد مقترح متوازن من نتائج الرواتب — للعرض والتصدير فقط (لا ترحيل للقيود)"
       />
 
+      {/* Proposal-only warning */}
+      <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        ⚠️ هذا القيد <strong>مقترح للعرض والتصدير فقط</strong> ولا يتم ترحيله إلى أي
+        دفتر أستاذ (No GL posting). يتطلب ضبط «خريطة الحسابات» في لوحة الإدارة.
+      </div>
+
+      {rolesLoading ? (
+        <p className="text-sm text-slate-500">جارٍ التحميل…</p>
+      ) : !mayUse ? (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          لا تملك صلاحية الوصول إلى القيد المحاسبي. هذه الشاشة متاحة لأدوار المالية
+          وإدارة الرواتب فقط.
+        </div>
+      ) : (
+      <>
       <div className="mb-6 flex flex-wrap items-end gap-4">
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-slate-600">الدورة</span>
@@ -150,6 +170,8 @@ export default function AccountingJournalPage() {
           </p>
         </>
       ) : null}
+      </>
+      )}
     </div>
   );
 }

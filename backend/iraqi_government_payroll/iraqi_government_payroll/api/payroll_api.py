@@ -78,6 +78,16 @@ def run_governance_action(run, action):
 
 
 @frappe.whitelist()
+def current_user():
+	"""The logged-in user + their roles — for role-aware UI only (Phase 5 M2).
+
+	Read-only; the backend remains the source of truth for every restriction.
+	"""
+	user = frappe.session.user
+	return {"user": user, "roles": frappe.get_roles(user)}
+
+
+@frappe.whitelist()
 def get_run_governance(run):
 	"""Read-only governance view of a Payroll Run: current state, the actions the
 	caller may take now, the per-transition audit fields, and the immutable event

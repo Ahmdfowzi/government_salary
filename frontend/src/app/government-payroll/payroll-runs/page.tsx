@@ -12,6 +12,8 @@ import { PageHeader } from "@shared/components/PageHeader";
 import { StateBadge } from "@shared/components/StateBadge";
 import { FormShell } from "@shared/forms/FormShell";
 import { payrollApi } from "@shared/services/api";
+import { useRoles } from "@shared/services/RolesContext";
+import { canManagePayroll } from "@shared/services/roles";
 import type {
   PayrollRun,
   PayrollPeriod,
@@ -29,6 +31,8 @@ const SCOPE_LABELS: Record<string, string> = {
 
 export default function PayrollRunsPage() {
   const router = useRouter();
+  const { roles } = useRoles();
+  const mayManage = canManagePayroll(roles);
 
   const [runs, setRuns] = useState<PayrollRun[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +90,8 @@ export default function PayrollRunsPage() {
         subtitle="سير عمل دورات الرواتب — الاعتماد والتقديم والقفل (Payroll Run)"
       />
 
-      {/* Create form */}
+      {/* Create form — only for roles that may manage payroll */}
+      {mayManage ? (
       <div className="mb-8">
         <FormShell title="إنشاء دورة رواتب" onSubmit={onCreate}>
           {createError ? (
@@ -178,6 +183,7 @@ export default function PayrollRunsPage() {
           </div>
         </FormShell>
       </div>
+      ) : null}
 
       {/* List */}
       {error ? (

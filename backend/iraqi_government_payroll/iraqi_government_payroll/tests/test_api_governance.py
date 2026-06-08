@@ -261,5 +261,25 @@ class TestCreatePayrollRun(unittest.TestCase):
 		self.assertEqual(res["workflow_state"], "Draft")
 
 
+class TestCurrentUser(unittest.TestCase):
+	def test_returns_user_and_roles(self):
+		frappe = types.ModuleType("frappe")
+		frappe.session = types.SimpleNamespace(user="someone@example.com")
+		frappe.get_roles = lambda u: ["Read Only User", "Auditor"]
+
+		def whitelist(*a, **k):
+			def deco(f):
+				return f
+			return deco if not (a and callable(a[0])) else a[0]
+		frappe.whitelist = whitelist
+		sys.modules["frappe"] = frappe
+		import importlib
+		mod = importlib.import_module("iraqi_government_payroll.api.payroll_api")
+		importlib.reload(mod)
+		res = mod.current_user()
+		self.assertEqual(res["user"], "someone@example.com")
+		self.assertEqual(res["roles"], ["Read Only User", "Auditor"])
+
+
 if __name__ == "__main__":
 	unittest.main()

@@ -457,6 +457,12 @@ export interface JournalExport {
   summary: Record<string, number>;
 }
 
+// Phase 5 M2 — logged-in user + roles (role-aware UI only; backend enforces).
+export interface CurrentUser {
+  user: string;
+  roles: string[];
+}
+
 export interface SalarySlipLine {
   component_code?: string;
   component_name?: string;

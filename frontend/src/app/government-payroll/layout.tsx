@@ -1,4 +1,5 @@
 import { Sidebar } from "@shared/layouts/Sidebar";
+import { RolesProvider } from "@shared/services/RolesContext";
 
 export default function GovernmentPayrollLayout({
   children,
@@ -6,9 +7,11 @@ export default function GovernmentPayrollLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 p-8">{children}</main>
-    </div>
+    <RolesProvider>
+      <div className="flex min-h-screen bg-slate-50">
+        <Sidebar />
+        <main className="flex-1 p-6 lg:p-8">{children}</main>
+      </div>
+    </RolesProvider>
   );
 }
