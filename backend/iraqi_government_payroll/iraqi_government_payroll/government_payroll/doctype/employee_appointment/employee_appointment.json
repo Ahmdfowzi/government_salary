@@ -30,7 +30,7 @@
   {"fieldname": "rule_set", "fieldtype": "Link", "label": "Rule Set", "options": "Government Rule Set"},
   {"fieldname": "section_break_grade", "fieldtype": "Section Break", "label": "Grade & Qualification"},
   {"fieldname": "qualification", "fieldtype": "Select", "label": "Qualification", "options": "None\nPrimary\nIntermediate\nSecondary\nDiploma\nHigher Diploma\nBachelor\nMaster\nDoctorate\nTrade / Craft"},
-  {"fieldname": "grade_code", "fieldtype": "Data", "label": "Grade", "description": "Canonical grade key (10..1, SPECIAL_A/B/C)"},
+  {"fieldname": "grade_code", "fieldtype": "Link", "options": "Government Grade", "label": "Grade", "description": "Link to Government Grade (record name == canonical grade code, e.g. 10..1, SPECIAL_A/B/C)"},
   {"fieldname": "stage", "fieldtype": "Int", "label": "Stage"},
   {"fieldname": "section_break_notes", "fieldtype": "Section Break"},
   {"fieldname": "notes", "fieldtype": "Small Text", "label": "Notes"}

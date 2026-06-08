@@ -32,6 +32,22 @@ def fx(name):
 		return json.load(f)
 
 
+DOCTYPE_DIR = os.path.join(HERE, "..", "government_payroll", "doctype")
+
+
+def doctype(name):
+	"""Load a DocType JSON by snake_case folder name."""
+	with open(os.path.join(DOCTYPE_DIR, name, name + ".json"), encoding="utf-8") as f:
+		return json.load(f)
+
+
+def field(dt, fieldname):
+	for f in dt.get("fields", []):
+		if f.get("fieldname") == fieldname:
+			return f
+	return None
+
+
 SCALE_DETAILS = fx("government_salary_scale.json")[0]["details"]
 GRADE_MASTER = fx("government_grade.json")
 
@@ -62,6 +78,61 @@ class TestGradeMaster(unittest.TestCase):
 		by_name = {g["name"]: g for g in GRADE_MASTER}
 		for code in ("SPECIAL_A", "SPECIAL_B", "SPECIAL_C"):
 			self.assertEqual(by_name[code]["grade_type"], "Senior")
+
+	def test_master_rows_active_and_named(self):
+		# M4.2: every fixture grade is active and carries an Arabic name
+		for g in GRADE_MASTER:
+			self.assertEqual(g.get("active"), 1, f"{g['name']} not active")
+			self.assertTrue(g.get("grade_name_ar"), f"{g['name']} missing grade_name_ar")
+
+	def test_master_schema_has_active_and_renamed_labels(self):
+		dt = doctype("government_grade")
+		self.assertEqual(field(dt, "active")["fieldtype"], "Check")
+		self.assertIsNotNone(field(dt, "grade_name_ar"), "grade_name_ar field missing")
+		self.assertIsNone(field(dt, "grade_label_ar"), "old grade_label_ar still present")
+
+
+class TestGradeArchitecture(unittest.TestCase):
+	"""M4.2: grade is a Link -> Government Grade everywhere; stage stays Int; no
+	Government Stage DocType; Government Position owns neither grade nor stage."""
+
+	def _assert_link(self, dt_name, fieldname):
+		f = field(doctype(dt_name), fieldname)
+		self.assertIsNotNone(f, f"{dt_name}.{fieldname} missing")
+		self.assertEqual(f["fieldtype"], "Link", f"{dt_name}.{fieldname} not a Link")
+		self.assertEqual(f["options"], "Government Grade",
+						 f"{dt_name}.{fieldname} not linked to Government Grade")
+
+	def test_grade_links_to_master(self):
+		self._assert_link("government_employee_payroll_profile", "grade")
+		self._assert_link("government_employee_payroll_profile", "appointment_grade_ref")
+		self._assert_link("government_salary_scale_detail", "grade_ref")
+		self._assert_link("qualification_appointment_rule", "starting_grade_ref")
+		self._assert_link("promotion_request", "from_grade_ref")
+		self._assert_link("promotion_request", "to_grade_ref")
+		self._assert_link("annual_increment_request", "current_grade_ref")
+		self._assert_link("promotion_grade_duration", "from_grade")
+		self._assert_link("promotion_grade_duration", "to_grade")
+		self._assert_link("employee_appointment", "grade_code")
+
+	def test_stage_stays_int_no_stage_doctype(self):
+		prof = doctype("government_employee_payroll_profile")
+		for fn in ("current_stage", "appointment_stage"):
+			self.assertEqual(field(prof, fn)["fieldtype"], "Int",
+							 f"{fn} must stay Int (employee-level progression)")
+		# there is NO Government Stage master DocType
+		self.assertFalse(os.path.isdir(os.path.join(DOCTYPE_DIR, "government_stage")),
+						 "Government Stage DocType must not exist")
+
+	def test_position_owns_no_grade_or_stage(self):
+		pos = doctype("government_position")
+		for f in pos.get("fields", []):
+			fn = (f.get("fieldname") or "").lower()
+			self.assertNotIn("grade", fn, f"Position must not own grade field: {fn}")
+			self.assertNotIn("stage", fn, f"Position must not own stage field: {fn}")
+		# the old advisory grade_band is gone; position_type replaces it
+		self.assertIsNone(field(pos, "grade_band"), "grade_band must be removed from Position")
+		self.assertIsNotNone(field(pos, "position_type"), "position_type missing on Position")
 
 
 class TestScaleNormalization(unittest.TestCase):

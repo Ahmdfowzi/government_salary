@@ -11,7 +11,7 @@
   "position_name_en",
   "column_break_main",
   "government_entity",
-  "grade_band",
+  "position_type",
   "is_managerial",
   "section_break_allowance",
   "position_allowance_category",
@@ -54,10 +54,10 @@
    "in_standard_filter": 1
   },
   {
-   "fieldname": "grade_band",
+   "fieldname": "position_type",
    "fieldtype": "Data",
-   "label": "Grade Band",
-   "description": "Eligible grade range for this position (e.g. 5-3)"
+   "label": "Position Type",
+   "description": "Organizational classification of the position (e.g. Director, Officer, Technical). Position is organizational only — it does NOT own salary grade or stage."
   },
   {
    "fieldname": "is_managerial",

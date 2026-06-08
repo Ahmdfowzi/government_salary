@@ -15,6 +15,7 @@
   "approval_status",
   "amended_from",
   "section_break_change",
+  "current_grade_ref",
   "current_grade",
   "current_stage",
   "current_salary",
@@ -86,10 +87,19 @@
    "label": "Increment Detail"
   },
   {
+   "fieldname": "current_grade_ref",
+   "fieldtype": "Link",
+   "label": "Current Grade",
+   "options": "Government Grade",
+   "read_only": 1,
+   "description": "Grade at the time of the increment (Government Grade master). The legacy Int below is a synced mirror. Increments change only the stage, never the grade."
+  },
+  {
    "fieldname": "current_grade",
    "fieldtype": "Int",
-   "label": "Current Grade",
-   "read_only": 1
+   "label": "Current Grade (legacy)",
+   "read_only": 1,
+   "description": "Deprecated legacy Int mirror of Current Grade."
   },
   {
    "fieldname": "current_stage",

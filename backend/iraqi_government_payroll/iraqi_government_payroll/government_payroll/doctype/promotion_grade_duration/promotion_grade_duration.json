@@ -13,17 +13,21 @@
  "fields": [
   {
    "fieldname": "from_grade",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
+   "options": "Government Grade",
    "label": "From Grade",
    "reqd": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "description": "Link to Government Grade (record name == grade code)."
   },
   {
    "fieldname": "to_grade",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
+   "options": "Government Grade",
    "label": "To Grade",
    "reqd": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "description": "Link to Government Grade (record name == grade code)."
   },
   {
    "fieldname": "years",

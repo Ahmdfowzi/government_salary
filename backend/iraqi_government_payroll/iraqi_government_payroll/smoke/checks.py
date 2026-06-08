@@ -719,7 +719,7 @@ def grade_validation():
 		"employee_name": "Grade Test", "approval_status": "Approved",
 		"due_date": "2024-01-01",
 	}).insert()
-	res = repo.apply_promotion(preq)
+	res = repo.apply_promotion(preq)        # mutates preq in memory (caller persists)
 	prof.reload()
 	print("after promotion      : grade=%r grade_code=%r stage=%r (was 7)" %
 		  (prof.grade, prof.grade_code, prof.current_stage))
@@ -729,6 +729,11 @@ def grade_validation():
 	assert (prof.government_position, prof.current_position) == pos_before, \
 		"promotion changed Government Position — grade must not derive from Position"
 	print("position unchanged   :", pos_before, "(grade driven by scale, not Position)")
+	# M4.2: the request records grade transitions as Links to the master
+	print("promotion grade Links: from_grade_ref=%r to_grade_ref=%r" %
+		  (preq.from_grade_ref, preq.to_grade_ref))
+	assert preq.from_grade_ref == "7" and preq.to_grade_ref == prof.grade, \
+		"promotion from/to_grade_ref Links not set to master grades"
 
 	# 5. Increment changes only the employee-level stage, not the grade.
 	grade_after_promo = prof.grade
@@ -738,12 +743,21 @@ def grade_validation():
 		"employee_name": "Grade Test", "approval_status": "Approved",
 		"due_date": "2025-01-01",
 	}).insert()
-	repo.apply_increment(ireq)
+	repo.apply_increment(ireq)              # mutates ireq in memory (caller persists)
 	prof.reload()
-	print("after increment      : grade=%r stage=%r (was %r)" %
-		  (prof.grade, prof.current_stage, stage_before))
+	print("after increment      : grade=%r stage=%r (was %r) | req.current_grade_ref=%r" %
+		  (prof.grade, prof.current_stage, stage_before, ireq.current_grade_ref))
 	assert prof.grade == grade_after_promo, "increment changed the grade — it must not"
 	assert prof.current_stage == stage_before + 1, "increment did not advance the stage by 1"
+	assert ireq.current_grade_ref == grade_after_promo, "increment current_grade_ref Link wrong"
+
+	# 6. Government Position owns NO grade or stage field (organizational only).
+	pos_fields = {f.fieldname for f in frappe.get_meta("Government Position").fields}
+	grade_stage = {f for f in pos_fields if "grade" in f.lower() or "stage" in f.lower()}
+	print("position grade/stage : %s | has position_type: %s" %
+		  (grade_stage or "none", "position_type" in pos_fields))
+	assert not grade_stage, f"Government Position must not own grade/stage: {grade_stage}"
+	assert "position_type" in pos_fields, "position_type missing on Government Position"
 
 	frappe.db.rollback()                         # discard everything; re-runnable
 	print("\nGRADE VALIDATION SMOKE TEST PASSED")

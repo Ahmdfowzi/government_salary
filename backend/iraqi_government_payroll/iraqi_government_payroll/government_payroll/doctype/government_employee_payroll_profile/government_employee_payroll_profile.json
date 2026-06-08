@@ -36,6 +36,7 @@
   "current_stage",
   "basic_salary",
   "column_break_grade",
+  "appointment_grade_ref",
   "appointment_grade",
   "appointment_stage",
   "appointment_date",
@@ -250,9 +251,17 @@
    "fieldtype": "Column Break"
   },
   {
+   "fieldname": "appointment_grade_ref",
+   "fieldtype": "Link",
+   "label": "Appointment Grade",
+   "options": "Government Grade",
+   "description": "Grade at appointment (Government Grade master). Historical reference only; not used by the active-salary engine."
+  },
+  {
    "fieldname": "appointment_grade",
    "fieldtype": "Int",
-   "label": "Appointment Grade"
+   "label": "Appointment Grade (legacy)",
+   "description": "Deprecated legacy Int mirror of Appointment Grade; kept for backward compatibility, synced from the Link."
   },
   {
    "fieldname": "appointment_stage",

@@ -28,5 +28,14 @@ from frappe.model.document import Document
 
 class QualificationAppointmentRule(Document):
 	def validate(self):
+		# Phase 5 M4.2: starting_grade_ref (Link -> Government Grade) is authoritative;
+		# the legacy Int starting_grade is kept as a synced mirror.
+		self._sync_starting_grade()
 		# TODO(Phase 2): enforce V1-V3.
-		pass
+
+	def _sync_starting_grade(self):
+		if self.starting_grade_ref and not self.starting_grade \
+				and str(self.starting_grade_ref).isdigit():
+			self.starting_grade = int(self.starting_grade_ref)
+		elif self.starting_grade and not self.starting_grade_ref:
+			self.starting_grade_ref = str(self.starting_grade)

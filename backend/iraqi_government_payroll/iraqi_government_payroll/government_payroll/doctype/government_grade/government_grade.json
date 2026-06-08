@@ -9,11 +9,12 @@
  "field_order": [
   "grade_code",
   "grade_type",
+  "active",
   "column_break_main",
   "sort_order",
   "section_break_labels",
-  "grade_label_ar",
-  "grade_label_en"
+  "grade_name_ar",
+  "grade_name_en"
  ],
  "fields": [
   {
@@ -34,6 +35,15 @@
    "in_list_view": 1
   },
   {
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Inactive grades are retained for history but excluded from new selections."
+  },
+  {
    "fieldname": "column_break_main",
    "fieldtype": "Column Break"
   },
@@ -49,14 +59,14 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "grade_label_ar",
+   "fieldname": "grade_name_ar",
    "fieldtype": "Data",
-   "label": "Label (Arabic)"
+   "label": "Name (Arabic)"
   },
   {
-   "fieldname": "grade_label_en",
+   "fieldname": "grade_name_en",
    "fieldtype": "Data",
-   "label": "Label (English)"
+   "label": "Name (English)"
   }
  ],
  "links": [],

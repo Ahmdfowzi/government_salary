@@ -57,6 +57,12 @@ class GovernmentEmployeePayrollProfile(Document):
 		code = self.grade or self.grade_code
 		if code and str(code).isdigit():
 			self.current_grade = int(code)
+		# appointment grade: Link is authoritative, legacy Int is a synced mirror
+		if self.appointment_grade_ref and not self.appointment_grade \
+				and str(self.appointment_grade_ref).isdigit():
+			self.appointment_grade = int(self.appointment_grade_ref)
+		elif self.appointment_grade and not self.appointment_grade_ref:
+			self.appointment_grade_ref = str(self.appointment_grade)
 
 	def _validate_scale_placement(self):
 		"""Reject a (grade, stage) that does not exist in the active rule-set scale

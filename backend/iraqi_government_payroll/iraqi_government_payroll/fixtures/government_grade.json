@@ -1,15 +1,15 @@
 [
- {"doctype": "Government Grade", "name": "SPECIAL_A", "grade_code": "SPECIAL_A", "grade_type": "Senior", "sort_order": 1, "grade_label_ar": "الدرجة الخاصة أ", "grade_label_en": "Special Grade A"},
- {"doctype": "Government Grade", "name": "SPECIAL_B", "grade_code": "SPECIAL_B", "grade_type": "Senior", "sort_order": 2, "grade_label_ar": "الدرجة الخاصة ب", "grade_label_en": "Special Grade B"},
- {"doctype": "Government Grade", "name": "SPECIAL_C", "grade_code": "SPECIAL_C", "grade_type": "Senior", "sort_order": 3, "grade_label_ar": "الدرجة الخاصة ج", "grade_label_en": "Special Grade C"},
- {"doctype": "Government Grade", "name": "1", "grade_code": "1", "grade_type": "Regular", "sort_order": 4, "grade_label_ar": "الدرجة الأولى", "grade_label_en": "Grade 1"},
- {"doctype": "Government Grade", "name": "2", "grade_code": "2", "grade_type": "Regular", "sort_order": 5, "grade_label_ar": "الدرجة الثانية", "grade_label_en": "Grade 2"},
- {"doctype": "Government Grade", "name": "3", "grade_code": "3", "grade_type": "Regular", "sort_order": 6, "grade_label_ar": "الدرجة الثالثة", "grade_label_en": "Grade 3"},
- {"doctype": "Government Grade", "name": "4", "grade_code": "4", "grade_type": "Regular", "sort_order": 7, "grade_label_ar": "الدرجة الرابعة", "grade_label_en": "Grade 4"},
- {"doctype": "Government Grade", "name": "5", "grade_code": "5", "grade_type": "Regular", "sort_order": 8, "grade_label_ar": "الدرجة الخامسة", "grade_label_en": "Grade 5"},
- {"doctype": "Government Grade", "name": "6", "grade_code": "6", "grade_type": "Regular", "sort_order": 9, "grade_label_ar": "الدرجة السادسة", "grade_label_en": "Grade 6"},
- {"doctype": "Government Grade", "name": "7", "grade_code": "7", "grade_type": "Regular", "sort_order": 10, "grade_label_ar": "الدرجة السابعة", "grade_label_en": "Grade 7"},
- {"doctype": "Government Grade", "name": "8", "grade_code": "8", "grade_type": "Regular", "sort_order": 11, "grade_label_ar": "الدرجة الثامنة", "grade_label_en": "Grade 8"},
- {"doctype": "Government Grade", "name": "9", "grade_code": "9", "grade_type": "Regular", "sort_order": 12, "grade_label_ar": "الدرجة التاسعة", "grade_label_en": "Grade 9"},
- {"doctype": "Government Grade", "name": "10", "grade_code": "10", "grade_type": "Regular", "sort_order": 13, "grade_label_ar": "الدرجة العاشرة", "grade_label_en": "Grade 10"}
+ {"doctype": "Government Grade", "name": "SPECIAL_A", "grade_code": "SPECIAL_A", "grade_type": "Senior", "sort_order": 1, "grade_name_ar": "الدرجة الخاصة أ", "grade_name_en": "Special Grade A", "active": 1},
+ {"doctype": "Government Grade", "name": "SPECIAL_B", "grade_code": "SPECIAL_B", "grade_type": "Senior", "sort_order": 2, "grade_name_ar": "الدرجة الخاصة ب", "grade_name_en": "Special Grade B", "active": 1},
+ {"doctype": "Government Grade", "name": "SPECIAL_C", "grade_code": "SPECIAL_C", "grade_type": "Senior", "sort_order": 3, "grade_name_ar": "الدرجة الخاصة ج", "grade_name_en": "Special Grade C", "active": 1},
+ {"doctype": "Government Grade", "name": "1", "grade_code": "1", "grade_type": "Regular", "sort_order": 4, "grade_name_ar": "الدرجة الأولى", "grade_name_en": "Grade 1", "active": 1},
+ {"doctype": "Government Grade", "name": "2", "grade_code": "2", "grade_type": "Regular", "sort_order": 5, "grade_name_ar": "الدرجة الثانية", "grade_name_en": "Grade 2", "active": 1},
+ {"doctype": "Government Grade", "name": "3", "grade_code": "3", "grade_type": "Regular", "sort_order": 6, "grade_name_ar": "الدرجة الثالثة", "grade_name_en": "Grade 3", "active": 1},
+ {"doctype": "Government Grade", "name": "4", "grade_code": "4", "grade_type": "Regular", "sort_order": 7, "grade_name_ar": "الدرجة الرابعة", "grade_name_en": "Grade 4", "active": 1},
+ {"doctype": "Government Grade", "name": "5", "grade_code": "5", "grade_type": "Regular", "sort_order": 8, "grade_name_ar": "الدرجة الخامسة", "grade_name_en": "Grade 5", "active": 1},
+ {"doctype": "Government Grade", "name": "6", "grade_code": "6", "grade_type": "Regular", "sort_order": 9, "grade_name_ar": "الدرجة السادسة", "grade_name_en": "Grade 6", "active": 1},
+ {"doctype": "Government Grade", "name": "7", "grade_code": "7", "grade_type": "Regular", "sort_order": 10, "grade_name_ar": "الدرجة السابعة", "grade_name_en": "Grade 7", "active": 1},
+ {"doctype": "Government Grade", "name": "8", "grade_code": "8", "grade_type": "Regular", "sort_order": 11, "grade_name_ar": "الدرجة الثامنة", "grade_name_en": "Grade 8", "active": 1},
+ {"doctype": "Government Grade", "name": "9", "grade_code": "9", "grade_type": "Regular", "sort_order": 12, "grade_name_ar": "الدرجة التاسعة", "grade_name_en": "Grade 9", "active": 1},
+ {"doctype": "Government Grade", "name": "10", "grade_code": "10", "grade_type": "Regular", "sort_order": 13, "grade_name_ar": "الدرجة العاشرة", "grade_name_en": "Grade 10", "active": 1}
 ]

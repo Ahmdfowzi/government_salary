@@ -174,6 +174,8 @@ def apply_increment(request):
 		profile.set(k, v)
 	profile.save()
 
+	# M4.2: record the (unchanged) grade as a Link too; increments never change grade.
+	request.current_grade_ref = str(gc)
 	request.current_stage = res.old_state["current_stage"]
 	request.new_stage = res.new_state["current_stage"]
 	write_payload(build_increment_snapshot_payload(res, employee_profile=profile.name,
@@ -213,6 +215,9 @@ def apply_promotion(request):
 	profile.grade = profile.grade_code
 	profile.save()
 
+	# M4.2: authoritative grade Links (record name == grade code) + legacy Int mirrors.
+	request.from_grade_ref = str(res.old_state["grade_code"])
+	request.to_grade_ref = str(res.to_grade)
 	request.from_grade = res.old_state["grade_code"] if str(res.old_state["grade_code"]).isdigit() else 0
 	request.to_grade = int(res.to_grade) if str(res.to_grade).isdigit() else 0
 	request.proposed_stage = res.new_stage

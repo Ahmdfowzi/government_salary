@@ -50,7 +50,7 @@ class PayrollRunResult:
 
 def employee_input_from_profile(profile, period_date):
 	return EmployeeInput(
-		grade_code=resolve_grade_code(profile.get("grade_code"), profile.get("current_grade")),
+		grade_code=resolve_grade_code(profile.get("grade") or profile.get("grade_code"), profile.get("current_grade")),
 		stage=profile.get("current_stage"),
 		period_date=str(period_date),
 		qualification=profile.get("qualification"),

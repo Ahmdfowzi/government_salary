@@ -63,7 +63,7 @@ export interface GovernmentPosition {
   position_name_ar: string;
   position_name_en?: string;
   government_entity?: string;
-  grade_band?: string;
+  position_type?: string;
   position_allowance_category?: string;
   risk_category?: string;
   is_managerial?: boolean;

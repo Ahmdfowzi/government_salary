@@ -15,10 +15,12 @@
   "approval_status",
   "amended_from",
   "section_break_change",
+  "from_grade_ref",
   "from_grade",
   "from_stage",
   "old_salary",
   "column_break_change",
+  "to_grade_ref",
   "to_grade",
   "proposed_stage",
   "new_salary",
@@ -91,10 +93,19 @@
    "label": "Promotion Detail"
   },
   {
+   "fieldname": "from_grade_ref",
+   "fieldtype": "Link",
+   "label": "From Grade",
+   "options": "Government Grade",
+   "read_only": 1,
+   "description": "Grade before promotion (Government Grade master). Set when the promotion is applied; the legacy Int below is a synced mirror."
+  },
+  {
    "fieldname": "from_grade",
    "fieldtype": "Int",
-   "label": "From Grade",
-   "read_only": 1
+   "label": "From Grade (legacy)",
+   "read_only": 1,
+   "description": "Deprecated legacy Int mirror of From Grade."
   },
   {
    "fieldname": "from_stage",
@@ -114,10 +125,19 @@
    "fieldtype": "Column Break"
   },
   {
+   "fieldname": "to_grade_ref",
+   "fieldtype": "Link",
+   "label": "To Grade",
+   "options": "Government Grade",
+   "read_only": 1,
+   "description": "Grade after promotion (Government Grade master). Set when the promotion is applied; the legacy Int below is a synced mirror."
+  },
+  {
    "fieldname": "to_grade",
    "fieldtype": "Int",
-   "label": "To Grade",
-   "read_only": 1
+   "label": "To Grade (legacy)",
+   "read_only": 1,
+   "description": "Deprecated legacy Int mirror of To Grade."
   },
   {
    "fieldname": "proposed_stage",

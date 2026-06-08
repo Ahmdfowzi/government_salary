@@ -11,6 +11,7 @@
   "specialization",
   "column_break_appointment",
   "study_years_after_secondary",
+  "starting_grade_ref",
   "starting_grade",
   "starting_stage",
   "section_break_allowance",
@@ -55,11 +56,18 @@
    "label": "Study Years After Secondary"
   },
   {
+   "fieldname": "starting_grade_ref",
+   "fieldtype": "Link",
+   "label": "Starting Grade",
+   "options": "Government Grade",
+   "in_list_view": 1,
+   "description": "Grade assigned on appointment for this qualification (Government Grade master). Authoritative; the legacy Int below is a synced mirror."
+  },
+  {
    "fieldname": "starting_grade",
    "fieldtype": "Int",
-   "label": "Starting Grade",
-   "reqd": 1,
-   "in_list_view": 1
+   "label": "Starting Grade (legacy)",
+   "description": "Deprecated legacy Int mirror of Starting Grade; synced from the Link."
   },
   {
    "fieldname": "starting_stage",
