@@ -99,6 +99,11 @@ export const payrollApi = {
 
   // Session (role-aware UI; backend enforces all restrictions)
   currentUser: () => callMethod<CurrentUser>(`${API}.current_user`),
+  // Auth: establish / clear a Frappe session on the frontend origin (via the
+  // same-origin proxy) so credentialed API calls are authenticated. The frontend
+  // has no other way to obtain a session — Frappe enforces all permissions.
+  login: (usr: string, pwd: string) => callMethod<{ message?: string }>(`login`, { usr, pwd }),
+  logout: () => callMethod(`logout`),
 
   // Audit / reproducibility
   snapshots: () => getList<PayrollCalculationSnapshot>("Payroll Calculation Snapshot"),

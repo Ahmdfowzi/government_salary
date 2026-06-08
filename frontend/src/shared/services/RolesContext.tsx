@@ -1,30 +1,54 @@
 "use client";
 
-// Provides the logged-in user's roles to the whole module (fetched once), for
-// role-aware UI. Security is enforced by the backend; this only drives hide/disable.
+// Provides the logged-in user's roles + auth state to the whole module, for
+// role-aware UI and the login gate. Security is enforced by the backend; this
+// only drives hide/disable and whether to show the login form.
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { payrollApi } from "@shared/services/api";
 
 interface RolesState {
   roles: string[];
   user: string;
   loading: boolean;
+  authenticated: boolean;
+  refresh: () => Promise<void>;
 }
 
-const RolesCtx = createContext<RolesState>({ roles: [], user: "", loading: true });
+const RolesCtx = createContext<RolesState>({
+  roles: [],
+  user: "",
+  loading: true,
+  authenticated: false,
+  refresh: async () => {},
+});
 
 export function RolesProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<RolesState>({ roles: [], user: "", loading: true });
+  const [state, setState] = useState<Omit<RolesState, "refresh">>({
+    roles: [],
+    user: "",
+    loading: true,
+    authenticated: false,
+  });
 
-  useEffect(() => {
-    payrollApi
-      .currentUser()
-      .then((r) => setState({ roles: r.roles ?? [], user: r.user ?? "", loading: false }))
-      .catch(() => setState({ roles: [], user: "", loading: false }));
+  // current_user is whitelisted but NOT allow_guest, so it 403s until the user
+  // has a session — which is exactly how we detect "not logged in".
+  const refresh = useCallback(async () => {
+    setState((s) => ({ ...s, loading: true }));
+    try {
+      const r = await payrollApi.currentUser();
+      const authenticated = !!r.user && r.user !== "Guest";
+      setState({ roles: r.roles ?? [], user: r.user ?? "", loading: false, authenticated });
+    } catch {
+      setState({ roles: [], user: "", loading: false, authenticated: false });
+    }
   }, []);
 
-  return <RolesCtx.Provider value={state}>{children}</RolesCtx.Provider>;
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return <RolesCtx.Provider value={{ ...state, refresh }}>{children}</RolesCtx.Provider>;
 }
 
 export function useRoles(): RolesState {
