@@ -36,7 +36,11 @@
   {"role": "HR User", "read": 1, "write": 1, "create": 1, "report": 1},
   {"role": "Payroll Officer", "read": 1, "report": 1},
   {"role": "Finance User", "read": 1, "report": 1},
-  {"role": "Auditor", "read": 1, "report": 1, "print": 1}
+  {"role": "Auditor", "read": 1, "report": 1, "print": 1},
+  {"role": "Government Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "export": 1, "print": 1, "report": 1, "share": 1},
+  {"role": "Read Only User", "read": 1, "report": 1, "print": 1},
+  {"role": "HR Officer", "read": 1, "report": 1, "print": 1, "write": 1, "create": 1},
+  {"role": "Finance Officer", "read": 1, "report": 1, "print": 1, "export": 1}
  ],
  "sort_field": "modified",
  "sort_order": "DESC",

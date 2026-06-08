@@ -15,6 +15,7 @@ import frappe
 from iraqi_government_payroll.api.reports_api import _rows_for
 from iraqi_government_payroll.services.accounting import journal_service as js
 from iraqi_government_payroll.services.reports import xlsx_export
+from iraqi_government_payroll.services.security import access
 
 _MAPPING_FIELDS = [
 	"salary_expense_account", "allowance_expense_account", "employee_payable_account",
@@ -27,6 +28,16 @@ _JOURNAL_COLUMNS = [
 	("debit", "مدين"),
 	("credit", "دائن"),
 ]
+
+
+def _ensure_export_allowed():
+	"""Sensitive action: only payroll/finance roles may export the journal.
+	Read Only User, Auditor and HR are denied (Phase 5 M1)."""
+	try:
+		access.ensure_allowed(
+			"export_accounting_journal", frappe.get_roles(frappe.session.user))
+	except access.AccessDenied as exc:
+		frappe.throw(str(exc))
 
 
 def _mapping():
@@ -51,12 +62,14 @@ def _build(run):
 @frappe.whitelist()
 def journal_export(run):
 	"""Read-only balanced journal proposal for a payroll run. No GL posting."""
+	_ensure_export_allowed()
 	return {"run": run, **_build(run)}
 
 
 @frappe.whitelist()
 def export_journal(run, fmt="xlsx"):
 	"""Download the journal proposal as a file (xlsx). No GL posting."""
+	_ensure_export_allowed()
 	if fmt != "xlsx":
 		frappe.throw(f"Unsupported export format: {fmt}")
 	data = _build(run)

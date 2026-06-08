@@ -13,6 +13,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.excel_export
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.pdf_export
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.accounting_journal
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.security
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
 so the first failed assertion raises, aborts the run with a non-zero exit code,
@@ -597,3 +598,63 @@ def accounting_journal():
 
 	frappe.db.rollback()                        # discard everything; no posting, re-runnable
 	print("\nACCOUNTING JOURNAL SMOKE TEST PASSED")
+
+
+def security():
+	"""Phase 5 M1 — RBAC: roles exist; Payroll Run permissions enforce read-only
+	for Read Only User / Auditor and full for the admin; and the sensitive
+	accounting-journal export is denied to Read Only User but allowed to Finance.
+	"""
+	from iraqi_government_payroll.api import accounting_api as acc
+
+	ROLES = ["Government Payroll Administrator", "HR Officer", "Finance Officer", "Read Only User"]
+	for r in ROLES:
+		assert frappe.db.exists("Role", r), f"missing role: {r}"
+	print("roles exist          :", ROLES)
+
+	perms = {p.role: p for p in frappe.get_meta("Payroll Run").permissions}
+	ro, ga, fo, au = (perms["Read Only User"], perms["Government Payroll Administrator"],
+					  perms["Finance Officer"], perms["Auditor"])
+	assert ro.read and not ro.write and not ro.create and not ro.delete and not (ro.export or 0), \
+		"Read Only User is not read-only"
+	assert ga.read and ga.write and ga.create and ga.delete, "Government Payroll Administrator not full"
+	assert fo.read and fo.export and not fo.write, "Finance Officer permissions wrong"
+	assert not au.write and not au.create and not au.delete, "Auditor is not read-only"
+	print("Payroll Run perms    : ReadOnly read-only · GovAdmin full · Finance read+export · Auditor read-only")
+
+	def ensure_user(email, roles):
+		if not frappe.db.exists("User", email):
+			frappe.get_doc({"doctype": "User", "email": email, "send_welcome_email": 0,
+							"first_name": email.split("@")[0]}).insert(ignore_permissions=True)
+		u = frappe.get_doc("User", email)
+		have = {r.role for r in u.roles}
+		for r in roles:
+			if r not in have:
+				u.append("roles", {"role": r})
+		u.save(ignore_permissions=True)
+		return email
+
+	ro_user = ensure_user("sec_readonly@test.local", ["Read Only User"])
+	fin_user = ensure_user("sec_finance@test.local", ["Finance Officer"])
+	frappe.db.commit()
+
+	# Live permission layer
+	assert frappe.has_permission("Payroll Run", "read", user=ro_user), "Read Only User cannot read"
+	assert not frappe.has_permission("Payroll Run", "write", user=ro_user), "Read Only User can WRITE"
+	print("Read Only User (live): read=yes write=no")
+
+	# Sensitive-action gate via the real endpoint (set_user)
+	frappe.set_user(ro_user)
+	ro_denied = _blocked(lambda: acc.journal_export("NO-SUCH-RUN"))
+	frappe.set_user("Administrator")
+	assert ro_denied, "Read Only User was ALLOWED to export the accounting journal"
+	print("journal export gate  : Read Only User denied")
+
+	frappe.set_user(fin_user)
+	fin_result = acc.journal_export("NO-SUCH-RUN")     # gate passes; empty run -> balanced
+	frappe.set_user("Administrator")
+	assert fin_result["balanced"], "Finance Officer export failed"
+	print("journal export gate  : Finance Officer allowed (empty balanced)")
+
+	frappe.db.rollback()
+	print("\nSECURITY SMOKE TEST PASSED")

@@ -23,8 +23,14 @@ WORKFLOW_STATES = [DRAFT, CALCULATED, UNDER_REVIEW, APPROVED, SUBMITTED, LOCKED,
 PAYROLL_OFFICER = "Payroll Officer"
 PAYROLL_MANAGER = "Payroll Manager"
 PAYROLL_ADMINISTRATOR = "Payroll Administrator"
+# Full-access administrative role (Phase 5 M1) — bypasses governance RBAC like
+# System Manager, so it can lock/unlock and drive any transition.
+GOVERNMENT_PAYROLL_ADMINISTRATOR = "Government Payroll Administrator"
 # Frappe superuser — always permitted (escape hatch, matches the M3 unlock guard).
 SYSTEM_MANAGER = "System Manager"
+
+# Roles that bypass the segregation-of-duties matrix (full governance access).
+_GOVERNANCE_SUPERUSERS = frozenset({SYSTEM_MANAGER, GOVERNMENT_PAYROLL_ADMINISTRATOR})
 
 # Segregation of duties: which roles may perform each governance action.
 # The Officer prepares a run (calculate / submit_for_review) but may NOT approve,
@@ -114,7 +120,7 @@ def role_allowed(action, user_roles):
 	if action not in REQUIRED_ROLES:
 		return False
 	roles = set(user_roles or ())
-	if SYSTEM_MANAGER in roles:
+	if roles & _GOVERNANCE_SUPERUSERS:
 		return True
 	return bool(REQUIRED_ROLES[action] & roles)
 

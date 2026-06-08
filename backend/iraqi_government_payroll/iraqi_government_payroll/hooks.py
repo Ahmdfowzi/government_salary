@@ -19,11 +19,15 @@ app_license = "MIT"
 fixtures = [
 	{"dt": "Role", "filters": [["role_name", "in", [
 		"Payroll Administrator",
+		"Government Payroll Administrator",
 		"Payroll Manager",
 		"Payroll Officer",
 		"HR User",
+		"HR Officer",
 		"Finance User",
+		"Finance Officer",
 		"Auditor",
+		"Read Only User",
 	]]]},
 	"Government Rule Set",
 	"Government Salary Scale",

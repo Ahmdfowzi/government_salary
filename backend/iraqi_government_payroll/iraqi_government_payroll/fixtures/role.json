@@ -1,8 +1,12 @@
 [
  {"doctype": "Role", "name": "Payroll Administrator", "role_name": "Payroll Administrator", "desk_access": 1, "is_custom": 1},
+ {"doctype": "Role", "name": "Government Payroll Administrator", "role_name": "Government Payroll Administrator", "desk_access": 1, "is_custom": 1},
  {"doctype": "Role", "name": "Payroll Manager", "role_name": "Payroll Manager", "desk_access": 1, "is_custom": 1},
  {"doctype": "Role", "name": "Payroll Officer", "role_name": "Payroll Officer", "desk_access": 1, "is_custom": 1},
  {"doctype": "Role", "name": "HR User", "role_name": "HR User", "desk_access": 1, "is_custom": 1},
+ {"doctype": "Role", "name": "HR Officer", "role_name": "HR Officer", "desk_access": 1, "is_custom": 1},
  {"doctype": "Role", "name": "Finance User", "role_name": "Finance User", "desk_access": 1, "is_custom": 1},
- {"doctype": "Role", "name": "Auditor", "role_name": "Auditor", "desk_access": 1, "is_custom": 1}
+ {"doctype": "Role", "name": "Finance Officer", "role_name": "Finance Officer", "desk_access": 1, "is_custom": 1},
+ {"doctype": "Role", "name": "Auditor", "role_name": "Auditor", "desk_access": 1, "is_custom": 1},
+ {"doctype": "Role", "name": "Read Only User", "role_name": "Read Only User", "desk_access": 1, "is_custom": 1}
 ]

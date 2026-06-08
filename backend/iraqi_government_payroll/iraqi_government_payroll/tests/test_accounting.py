@@ -117,6 +117,8 @@ class TestAccountingApi(unittest.TestCase):
 		frappe.throw = lambda msg, *a, **k: _raise(msg)
 		frappe._ = lambda s, *a, **k: s
 		frappe.response = {}
+		frappe.session = types.SimpleNamespace(user="Administrator")
+		frappe.get_roles = lambda *a, **k: ["System Manager"]   # superuser -> export allowed
 		frappe.db = types.SimpleNamespace(get_value=lambda dt, name, field: workflow_state)
 		frappe.get_single = lambda dt: types.SimpleNamespace(get=lambda f: mapping.get(f))
 

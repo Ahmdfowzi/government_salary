@@ -25,9 +25,11 @@ V3. Computed fields are server-set; reject client tampering.
 V4. on_submit -> apply to profile + write Payroll Calculation Snapshot; no double-apply.
 """
 
+import frappe
 from frappe.model.document import Document
 
 from iraqi_government_payroll.services.payroll_engine import repository
+from iraqi_government_payroll.services.security import access
 
 
 class AnnualIncrementRequest(Document):
@@ -36,5 +38,10 @@ class AnnualIncrementRequest(Document):
 		pass
 
 	def on_submit(self):
+		# Phase 5 M1: increment approval (submit) is a restricted action.
+		try:
+			access.ensure_allowed("approve_increment", frappe.get_roles(frappe.session.user))
+		except access.AccessDenied as exc:
+			frappe.throw(str(exc))
 		# M6: apply the increment to the employee profile + write an immutable snapshot.
 		repository.apply_increment(self)
