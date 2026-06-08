@@ -16,6 +16,7 @@ import frappe
 from iraqi_government_payroll.services.reports import report_service as rs
 from iraqi_government_payroll.services.reports import report_columns as rc
 from iraqi_government_payroll.services.reports import xlsx_export
+from iraqi_government_payroll.services.reports import pdf_export
 from iraqi_government_payroll.services.payroll_engine import governance
 
 _LINE_FIELDS = ["line_type", "component_code", "component_name", "amount", "basis_amount", "rate"]
@@ -305,12 +306,35 @@ def render_report_xlsx(report, run=None, from_date=None, to_date=None, status=No
 		spec["title"], spec["columns"], spec["rows"](data), spec["totals"](data))
 
 
+def render_report_html(report, run=None, from_date=None, to_date=None, status=None):
+	"""Return the report's RTL HTML (no PDF conversion). Testable without a bench."""
+	if report not in rc.REPORT_SPECS:
+		frappe.throw(f"Unknown report: {report}")
+	spec = rc.REPORT_SPECS[report]
+	data = _report_data(report, run, from_date, to_date, status)
+	return pdf_export.build_html(
+		spec["title"], spec["columns"], spec["rows"](data), spec["totals"](data))
+
+
+def render_report_pdf(report, run=None, from_date=None, to_date=None, status=None):
+	"""Return PDF bytes for a report. Testable core of export_report(fmt=pdf)."""
+	return pdf_export.render_pdf(
+		render_report_html(report, run, from_date, to_date, status))
+
+
+_EXPORT = {
+	"xlsx": (render_report_xlsx, "xlsx"),
+	"pdf": (render_report_pdf, "pdf"),
+}
+
+
 @frappe.whitelist()
 def export_report(report, fmt="xlsx", run=None, from_date=None, to_date=None, status=None):
-	"""Download a report as a file. Only xlsx is supported in M13."""
-	if fmt != "xlsx":
+	"""Download a report as a file (xlsx [M13] or pdf [M14])."""
+	if fmt not in _EXPORT:
 		frappe.throw(f"Unsupported export format: {fmt}")
-	content = render_report_xlsx(report, run, from_date, to_date, status)
-	frappe.response["filename"] = f"{report}.xlsx"
+	render, ext = _EXPORT[fmt]
+	content = render(report, run, from_date, to_date, status)
+	frappe.response["filename"] = f"{report}.{ext}"
 	frappe.response["filecontent"] = content
 	frappe.response["type"] = "binary"

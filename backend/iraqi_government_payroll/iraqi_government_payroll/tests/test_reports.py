@@ -490,5 +490,113 @@ class TestExportDispatch(unittest.TestCase):
 			api.export_report("employee_register", fmt="pdf", run="R1")
 
 
+class TestPdfHtml(unittest.TestCase):
+	"""Pure build_html assertions — no frappe, no wkhtmltopdf."""
+
+	def _pdf(self):
+		from iraqi_government_payroll.services.reports import pdf_export
+		return pdf_export
+
+	def test_structure_title_rtl_font_rows_totals(self):
+		cols = [("employee_name", "الاسم"), ("net", "الصافي")]
+		rows = [{"employee_name": "علي", "net": 371487},
+				{"employee_name": "سارة", "net": 200000}]
+		html = self._pdf().build_html("كشف الرواتب", cols, rows, totals={"net": 571487})
+		self.assertIsInstance(html, str)
+		self.assertIn("<!DOCTYPE html", html)
+		self.assertIn('dir="rtl"', html)
+		self.assertIn("@font-face", html)              # bundled Amiri embedded
+		self.assertIn("base64,", html)
+		self.assertIn("كشف الرواتب", html)             # report title
+		self.assertIn("الاسم", html)                   # Arabic header label
+		self.assertIn("الصافي", html)
+		self.assertIn("الإجمالي", html)                # totals row label
+		self.assertEqual(html.count("<tr>"), 4)        # header + 2 data + totals
+		self.assertIn("371487", html)
+
+	def test_empty_rows_still_valid_html(self):
+		html = self._pdf().build_html("فارغ", [("employee_name", "الاسم")], [])
+		self.assertIn("<!DOCTYPE html", html)
+		self.assertIn("الاسم", html)                   # header still rendered
+		self.assertEqual(html.count("<tr>"), 1)        # header only, no data rows
+		self.assertTrue(html.rstrip().endswith("</html>"))
+
+	def test_escaping_bool_and_list(self):
+		cols = [("name", "الاسم"), ("complete", "مكتمل"), ("missing", "النواقص")]
+		rows = [{"name": "A & B <x>", "complete": False,
+				 "missing": ["bank_account", "net"]}]
+		html = self._pdf().build_html("t", cols, rows)
+		self.assertIn("A &amp; B &lt;x&gt;", html)     # HTML-escaped (render-safe)
+		self.assertIn("لا", html)                      # bool False -> لا
+		self.assertIn("bank_account، net", html)       # list joined, incomplete kept
+
+
+class TestPdfDispatch(unittest.TestCase):
+	"""render_report_html / render_report_pdf through the real aggregator+spec,
+	with frappe (and wkhtmltopdf) faked."""
+
+	def _load_api(self, *, pdf_bytes=b"%PDF-1.4 fake-bytes", workflow_state="Calculated"):
+		frappe = types.ModuleType("frappe")
+		frappe.throw = lambda msg, *a, **k: _raise(msg)
+		frappe._ = lambda s, *a, **k: s
+		frappe.response = {}
+		frappe.db = types.SimpleNamespace(get_value=lambda dt, name, field: workflow_state)
+
+		def get_all(dt, filters=None, fields=None, **k):
+			if dt == "Salary Slip" and fields and "basic_salary" in fields:
+				return [{"name": "S1", "employee_profile": "E1", "employee_name": "علي",
+						 "grade_code": "7", "stage": 1, "basic_salary": 296000,
+						 "total_earnings": 429200, "total_deductions": 57713, "net_salary": 371487}]
+			return []
+		frappe.get_all = get_all
+
+		# fake frappe.utils.pdf.get_pdf (no wkhtmltopdf on the host)
+		utils = types.ModuleType("frappe.utils")
+		pdf_mod = types.ModuleType("frappe.utils.pdf")
+		pdf_mod.get_pdf = lambda html, options=None: pdf_bytes
+		utils.pdf = pdf_mod
+		frappe.utils = utils
+
+		def whitelist(*a, **k):
+			def deco(f):
+				return f
+			return deco if not (a and callable(a[0])) else a[0]
+		frappe.whitelist = whitelist
+		sys.modules["frappe"] = frappe
+		sys.modules["frappe.utils"] = utils
+		sys.modules["frappe.utils.pdf"] = pdf_mod
+		import importlib
+		mod = importlib.import_module("iraqi_government_payroll.api.reports_api")
+		importlib.reload(mod)
+		return mod, frappe
+
+	def test_html_uses_shared_report_columns(self):
+		from iraqi_government_payroll.services.reports import report_columns as rc
+		api, _ = self._load_api()
+		html = api.render_report_html("employee_register", run="R1")
+		for _key, header in rc.REPORT_SPECS["employee_register"]["columns"]:
+			self.assertIn(header, html)                # every shared header present
+		self.assertIn(rc.REPORT_SPECS["employee_register"]["title"], html)
+
+	def test_pdf_returns_bytes(self):
+		api, _ = self._load_api()
+		pdf = api.render_report_pdf("employee_register", run="R1")
+		self.assertTrue(pdf.startswith(b"%PDF"))
+
+	def test_export_report_pdf_sets_response(self):
+		api, frappe = self._load_api()
+		api.export_report("employee_register", fmt="pdf", run="R1")
+		self.assertEqual(frappe.response["filename"], "employee_register.pdf")
+		self.assertTrue(frappe.response["filecontent"].startswith(b"%PDF"))
+
+	def test_xlsx_still_works_and_unknown_format_rejected(self):
+		api, frappe = self._load_api()
+		api.export_report("employee_register", fmt="xlsx", run="R1")
+		self.assertEqual(frappe.response["filename"], "employee_register.xlsx")
+		self.assertTrue(frappe.response["filecontent"][:2] == b"PK")   # xlsx unchanged
+		with self.assertRaises(Exception):
+			api.export_report("employee_register", fmt="csv", run="R1")
+
+
 if __name__ == "__main__":
 	unittest.main()

@@ -11,6 +11,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.pension_report
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.bank_transfer
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.excel_export
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.pdf_export
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
 so the first failed assertion raises, aborts the run with a non-zero exit code,
@@ -477,3 +478,53 @@ def excel_export():
 
 	frappe.db.rollback()                        # discard the run; re-runnable
 	print("\nEXCEL EXPORT SMOKE TEST PASSED")
+
+
+def pdf_export():
+	"""Phase 4 M14 — PDF export renders a real (wkhtmltopdf) PDF for every report,
+	with bundled Arabic font. Builds a one-employee run, renders each of the 7
+	reports to PDF bytes, plus an EMPTY report (no records) still yields a valid
+	PDF, then rolls back.
+	"""
+	from iraqi_government_payroll.api import reports_api as rep
+
+	EMP = "PDF1"
+	if not frappe.db.exists("Government Employee Payroll Profile", EMP):
+		frappe.get_doc({
+			"doctype": "Government Employee Payroll Profile",
+			"employee_number": EMP, "employee_name": "PDF Test",
+			"rule_set": "IRAQ-2015", "grade_code": "7", "current_grade": 7,
+			"current_stage": 1, "qualification": "Bachelor", "status": "Active",
+			"employment_status": "Active", "bank_account": "99001122",
+		}).insert()
+		frappe.db.commit()
+	if not frappe.db.exists("Payroll Period", {"year": 2015, "month": 6}):
+		frappe.get_doc({"doctype": "Payroll Period", "year": 2015, "month": 6,
+						"start_date": "2015-06-01", "end_date": "2015-06-30",
+						"status": "Open"}).insert()
+		frappe.db.commit()
+	period = frappe.get_value("Payroll Period", {"year": 2015, "month": 6}, "name")
+
+	run = frappe.get_doc({"doctype": "Payroll Run", "payroll_period": period,
+						  "rule_set": "IRAQ-2015", "scope": "Employee",
+						  "scope_reference": EMP}).insert()
+	run.calculate_run(); run.reload()
+
+	run_reports = ["run_summary", "employee_register", "allowances_register",
+				   "deductions_register", "tax_register", "bank_transfer"]
+	for report in run_reports:
+		pdf = rep.render_report_pdf(report, run=run.name)
+		assert pdf[:5] == b"%PDF-", f"{report}: not a PDF"
+		assert len(pdf) > 1000, f"{report}: PDF too small ({len(pdf)})"
+	pen = rep.render_report_pdf("pension_register", from_date="2015-01-01", to_date="2015-12-31")
+	assert pen[:5] == b"%PDF-", "pension: not a PDF"
+	print("rendered            : 7 reports -> valid PDF bytes")
+
+	# EMPTY report data still produces a valid PDF (no records in this range)
+	empty = rep.render_report_pdf("pension_register", from_date="1990-01-01", to_date="1990-12-31")
+	assert empty[:5] == b"%PDF-", "empty: not a PDF"
+	assert len(empty) > 1000, "empty PDF too small"
+	print("empty report        : valid PDF (%d bytes)" % len(empty))
+
+	frappe.db.rollback()                        # discard the run; re-runnable
+	print("\nPDF EXPORT SMOKE TEST PASSED")

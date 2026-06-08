@@ -116,11 +116,12 @@ export const payrollApi = {
     }),
   reportBankTransfer: (run: string) =>
     callMethod<BankTransferReport>(`${REPORTS}.bank_transfer`, { run }),
-  // URL for the Excel (.xlsx) download — the browser fetches it directly.
+  // URL for a report file download (xlsx or pdf) — the browser fetches it directly.
   exportReportUrl: (
     report: string,
     params: { run?: string; from_date?: string; to_date?: string; status?: string },
-  ) => methodUrl(`${REPORTS}.export_report`, { report, fmt: "xlsx", ...params }),
+    fmt: "xlsx" | "pdf" = "xlsx",
+  ) => methodUrl(`${REPORTS}.export_report`, { report, fmt, ...params }),
 
   // Calculation triggers — backend only (implemented in later milestones).
   calculateActiveSalary: (profile: string, period_date: string) =>

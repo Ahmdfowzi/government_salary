@@ -304,6 +304,7 @@ export default function ReportsPage() {
                 isPension
                   ? { from_date: fromDate, to_date: toDate, status }
                   : { run },
+                "xlsx",
               ),
               "_blank",
             )
@@ -312,6 +313,26 @@ export default function ReportsPage() {
           className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           تنزيل Excel
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            window.open(
+              payrollApi.exportReportUrl(
+                EXPORT_NAME[type],
+                isPension
+                  ? { from_date: fromDate, to_date: toDate, status }
+                  : { run },
+                "pdf",
+              ),
+              "_blank",
+            )
+          }
+          disabled={!report || report.rows.length === 0}
+          className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          تنزيل PDF
         </button>
       </div>
 
