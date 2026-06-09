@@ -1,0 +1,173 @@
+# Copyright (c) 2026, Iraqi Government Payroll
+"""Whitelisted endpoints to GENERATE and PRINT the Government Payroll Slip.
+
+The slip is assembled AFTER payroll calculation from the immutable Payroll
+Calculation Snapshot (source of truth); if a slip is still a draft and has no
+snapshot yet, it falls back to the calculated Salary Slip doc (same stored
+values). No payroll recalculation happens here — the engine is never touched.
+"""
+
+import frappe
+
+from iraqi_government_payroll.services.slip.slip_builder import build_slip
+from iraqi_government_payroll.services.reports.slip_pdf import build_slip_html, render_slip_pdf
+
+_SCALAR_FIELDS = (
+	"list_sequence", "payroll_date", "payment_officer", "payment_number",
+	"entity_name", "department_name", "payroll_month", "payroll_year",
+	"employee_name", "employee_number", "unified_national_id", "grade", "stage",
+	"promotion_year", "years_of_service", "leave_balance_annual", "leave_balance_sick",
+	"base_salary", "adjustment_amount", "total_allowances", "total_rewards",
+	"total_entitlement", "total_deductions", "total_misc_deductions", "net_pay",
+	"amount_before_rounding", "amount_after_rounding",
+)
+
+
+def _entity_names(profile):
+	"""(entity_name = root ministry, department_name = immediate unit) for a profile."""
+	code = profile.get("current_entity") or profile.get("government_entity")
+	if not code or not frappe.db.exists("Government Entity", code):
+		return None, None
+	dept = frappe.db.get_value("Government Entity", code, "entity_name_ar")
+	# walk to the root (top ministry/company)
+	root = code
+	seen = set()
+	while root and root not in seen:
+		seen.add(root)
+		parent = frappe.db.get_value("Government Entity", root, "parent_government_entity")
+		if not parent:
+			break
+		root = parent
+	ministry = frappe.db.get_value("Government Entity", root, "entity_name_ar") if root else dept
+	return ministry, dept
+
+
+def _source_view(slip):
+	"""Return the snapshot-shaped source dict for a Salary Slip — preferring the
+	immutable Payroll Calculation Snapshot, falling back to the slip doc itself."""
+	import json
+
+	snap_name = frappe.db.get_value(
+		"Payroll Calculation Snapshot",
+		{"salary_slip": slip.name, "calculation_type": "Salary Slip"}, "name") \
+		or frappe.db.get_value(
+		"Payroll Calculation Snapshot", {"salary_slip": slip.name}, "name")
+	if snap_name:
+		snap = frappe.get_doc("Payroll Calculation Snapshot", snap_name)
+		try:
+			output = json.loads(snap.output_snapshot or "{}")
+		except (ValueError, TypeError):
+			output = {}
+		lines = snap.lines
+		return snap.name, {
+			"grade_code": snap.grade_code, "stage": snap.stage,
+			"gross_amount": snap.gross_amount, "total_deductions": snap.total_deductions,
+			"net_amount": snap.net_amount, "output": output,
+			"lines": [_line(l) for l in lines],
+		}
+	# fallback: the calculated Salary Slip doc (same post-calc values)
+	return None, {
+		"grade_code": slip.grade_code, "stage": slip.stage,
+		"gross_amount": slip.total_earnings, "total_deductions": slip.total_deductions,
+		"net_amount": slip.net_salary, "output": {"basic_salary": slip.basic_salary},
+		"lines": [_line(l) for l in slip.lines],
+	}
+
+
+def _line(l):
+	return {
+		"component_code": l.component_code, "component_name": l.component_name,
+		"line_type": l.line_type, "amount": l.amount,
+		"basis_amount": l.basis_amount, "rate": l.rate,
+	}
+
+
+def _list_sequence(slip):
+	if not slip.payroll_run:
+		return 1
+	names = frappe.get_all("Salary Slip", filters={"payroll_run": slip.payroll_run},
+						   order_by="employee_profile asc", pluck="name")
+	return (names.index(slip.name) + 1) if slip.name in names else 1
+
+
+@frappe.whitelist()
+def generate_payroll_slip(salary_slip):
+	"""Create/refresh the Government Payroll Slip for a Salary Slip and return its name.
+	DocType create/write permission is enforced by Frappe (no ignore_permissions)."""
+	slip = frappe.get_doc("Salary Slip", salary_slip)
+	profile = frappe.get_doc(
+		"Government Employee Payroll Profile", slip.employee_profile).as_dict()
+	period = frappe.get_doc("Payroll Period", slip.payroll_period).as_dict() if slip.payroll_period else {}
+	ministry, dept = _entity_names(profile)
+	snap_name, source = _source_view(slip)
+
+	data = build_slip(
+		source, profile=profile, period=period,
+		org={"entity_name": ministry, "department_name": dept},
+		meta={"list_sequence": _list_sequence(slip), "payroll_date": period.get("end_date")},
+	)
+
+	existing = frappe.db.get_value("Government Payroll Slip", {"salary_slip": slip.name}, "name")
+	doc = frappe.get_doc("Government Payroll Slip", existing) if existing else frappe.new_doc("Government Payroll Slip")
+	doc.salary_slip = slip.name
+	doc.snapshot = snap_name
+	doc.payroll_run = slip.payroll_run
+	doc.employee_profile = slip.employee_profile
+	for f in _SCALAR_FIELDS:
+		doc.set(f, data.get(f))
+	for table, key in (("allowance_lines", "allowance_lines"),
+					   ("deduction_lines", "deduction_lines"),
+					   ("misc_deduction_lines", "misc_deduction_lines")):
+		doc.set(table, [])
+		for row in data.get(key) or []:
+			doc.append(table, row)
+	doc.save()
+	frappe.db.commit()
+	return {"name": doc.name, "salary_slip": slip.name, "net_pay": doc.net_pay,
+			"snapshot": snap_name, "source": "snapshot" if snap_name else "salary_slip"}
+
+
+@frappe.whitelist()
+def payroll_slip(name):
+	"""Read a generated Government Payroll Slip (incl. child tables)."""
+	return frappe.get_doc("Government Payroll Slip", name).as_dict()
+
+
+def _render_pdf_response(slip_doc):
+	html = build_slip_html(slip_doc.as_dict())
+	frappe.response["filename"] = f"payroll-slip-{slip_doc.employee_number or slip_doc.name}.pdf"
+	frappe.response["filecontent"] = render_slip_pdf(html)
+	frappe.response["type"] = "binary"
+
+
+@frappe.whitelist()
+def render_payroll_slip_pdf(salary_slip=None, name=None):
+	"""Stream the slip PDF. Pass an existing slip `name`, or a `salary_slip` to
+	generate-then-print in one call."""
+	if not name:
+		name = generate_payroll_slip(salary_slip)["name"]
+	_render_pdf_response(frappe.get_doc("Government Payroll Slip", name))
+
+
+@frappe.whitelist()
+def generate_latest_slip(employee):
+	"""Generate (write) the payroll slip for an employee's most recent Salary Slip
+	and return its name. Use POST; the PDF is then fetched read-only by name."""
+	slip = frappe.db.get_value(
+		"Salary Slip", {"employee_profile": employee}, "name", order_by="modified desc")
+	if not slip:
+		frappe.throw("لا توجد قسيمة راتب محتسبة لهذا الموظف.")
+	return generate_payroll_slip(slip)
+
+
+@frappe.whitelist()
+def latest_slip_pdf(employee):
+	"""One-click print: find the employee's most recent Salary Slip, generate the
+	payroll slip and stream its PDF."""
+	slip = frappe.db.get_value(
+		"Salary Slip", {"employee_profile": employee}, "name",
+		order_by="modified desc")
+	if not slip:
+		frappe.throw("لا توجد قسيمة راتب محتسبة لهذا الموظف.")
+	name = generate_payroll_slip(slip)["name"]
+	_render_pdf_response(frappe.get_doc("Government Payroll Slip", name))

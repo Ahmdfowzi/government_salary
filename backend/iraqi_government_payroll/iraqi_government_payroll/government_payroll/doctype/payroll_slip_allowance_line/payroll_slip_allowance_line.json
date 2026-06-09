@@ -1,0 +1,31 @@
+{
+ "actions": [],
+ "creation": "2026-06-09 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "istable": 1,
+ "editable_grid": 1,
+ "field_order": [
+  "allowance_name",
+  "percentage",
+  "base_amount",
+  "adjustment_amount",
+  "amount"
+ ],
+ "fields": [
+  {"fieldname": "allowance_name", "fieldtype": "Data", "label": "Allowance Name", "in_list_view": 1, "columns": 4},
+  {"fieldname": "percentage", "fieldtype": "Percent", "label": "Percentage", "in_list_view": 1},
+  {"fieldname": "base_amount", "fieldtype": "Currency", "label": "Base Amount", "options": "IQD", "in_list_view": 1},
+  {"fieldname": "adjustment_amount", "fieldtype": "Currency", "label": "Adjustment", "options": "IQD", "in_list_view": 1},
+  {"fieldname": "amount", "fieldtype": "Currency", "label": "Amount", "options": "IQD", "in_list_view": 1}
+ ],
+ "links": [],
+ "modified": "2026-06-09 00:00:00",
+ "module": "Government Payroll",
+ "name": "Payroll Slip Allowance Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": []
+}

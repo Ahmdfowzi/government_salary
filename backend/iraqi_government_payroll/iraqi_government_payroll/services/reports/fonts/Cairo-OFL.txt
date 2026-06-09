@@ -1,0 +1,4 @@
+Cairo (Cairo_400Regular.ttf) — Copyright The Cairo Project Authors
+(https://github.com/google/fonts/tree/main/ofl/cairo)
+Licensed under the SIL Open Font License, Version 1.1 — see OFL.txt.
+Bundled for server-side PDF rendering (wkhtmltopdf) of the Government Payroll Slip.

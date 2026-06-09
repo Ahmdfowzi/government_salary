@@ -14,16 +14,30 @@ import { DataTable, type Column } from "@shared/tables/DataTable";
 import { payrollApi } from "@shared/services/api";
 import { loadScales, type ScaleData } from "@shared/services/salary";
 import { useRoles } from "@shared/services/RolesContext";
-import { canWriteProfiles } from "@shared/services/roles";
+import { canWriteProfiles, canManagePayroll } from "@shared/services/roles";
 import type { GovernmentEmployeePayrollProfile } from "@shared/types";
 
 export default function EmployeesPage() {
   const { roles } = useRoles();
   const mayWrite = canWriteProfiles(roles);
+  const mayPrintSlip = canManagePayroll(roles);
   const [list, setList] = useState<GovernmentEmployeePayrollProfile[] | null>(null);
   const [scale, setScale] = useState<ScaleData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [slipBusy, setSlipBusy] = useState<string | null>(null);
   const [q, setQ] = useState("");
+
+  async function onPrintSlip(employee: string) {
+    setSlipBusy(employee);
+    try {
+      const { name } = await payrollApi.generateLatestSlip(employee);
+      window.open(payrollApi.slipPdfUrl(name), "_blank");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSlipBusy(null);
+    }
+  }
 
   useEffect(() => {
     payrollApi.employees().then(setList).catch((e: Error) => setError(e.message));
@@ -59,17 +73,28 @@ export default function EmployeesPage() {
     {
       key: "actions",
       header: "",
-      render: (e) =>
-        mayWrite ? (
-          <Link
-            href={`/government-payroll/employees/${encodeURIComponent(e.name)}/edit`}
-            className="text-sky-700 hover:underline"
-          >
-            تعديل
-          </Link>
-        ) : (
-          <span className="text-slate-300">—</span>
-        ),
+      render: (e) => (
+        <span className="flex gap-3">
+          {mayWrite ? (
+            <Link
+              href={`/government-payroll/employees/${encodeURIComponent(e.name)}/edit`}
+              className="text-sky-700 hover:underline"
+            >
+              تعديل
+            </Link>
+          ) : null}
+          {mayPrintSlip ? (
+            <button
+              onClick={() => onPrintSlip(e.name)}
+              disabled={slipBusy === e.name}
+              className="text-slate-600 hover:text-sky-700 hover:underline disabled:opacity-50"
+            >
+              {slipBusy === e.name ? "…" : "قسيمة"}
+            </button>
+          ) : null}
+          {!mayWrite && !mayPrintSlip ? <span className="text-slate-300">—</span> : null}
+        </span>
+      ),
     },
   ];
 

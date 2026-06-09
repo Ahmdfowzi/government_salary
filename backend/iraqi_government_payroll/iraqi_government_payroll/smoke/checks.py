@@ -16,6 +16,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.security
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.grade_validation
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.employee_profile_api
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.payroll_slip
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.demo
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
@@ -762,6 +763,56 @@ def grade_validation():
 
 	frappe.db.rollback()                         # discard everything; re-runnable
 	print("\nGRADE VALIDATION SMOKE TEST PASSED")
+
+
+def payroll_slip():
+	"""Phase 5 M6 — generate the Government Payroll Slip from a post-calc snapshot
+	(source of truth) and render its RTL Arabic PDF. Idempotent; cleans up the
+	generated slip so it is re-runnable. No payroll recalculation.
+	"""
+	from iraqi_government_payroll.api import slip_api
+	from iraqi_government_payroll.services.reports.slip_pdf import build_slip_html, render_slip_pdf
+
+	# A snapshot of a calculated Salary Slip = the source of truth for the amounts.
+	snap = frappe.db.get_value(
+		"Payroll Calculation Snapshot", {"calculation_type": "Salary Slip"},
+		["name", "salary_slip", "net_amount"], as_dict=True)
+	assert snap and snap.salary_slip, "no calculated Salary Slip snapshot found"
+	slip = frappe.get_doc("Salary Slip", snap.salary_slip)
+
+	res = slip_api.generate_payroll_slip(snap.salary_slip)
+	print("generated            :", res)
+	assert res["source"] == "snapshot", res
+	doc = frappe.get_doc("Government Payroll Slip", res["name"])
+
+	# Net comes straight from the snapshot/slip — never recomputed here.
+	print("net (slip/snapshot)  :", doc.net_pay, "/", slip.net_salary)
+	assert doc.net_pay == slip.net_salary, (doc.net_pay, slip.net_salary)
+	assert doc.snapshot == snap.name
+	# Entitlement = base + allowances (+ print-only adjustment/rewards, default 0)
+	calc_ent = doc.base_salary + doc.total_allowances + (doc.adjustment_amount or 0) + (doc.total_rewards or 0)
+	assert doc.total_entitlement == calc_ent, (doc.total_entitlement, calc_ent)
+	assert doc.amount_before_rounding == doc.net_pay
+	assert (doc.amount_after_rounding or 0) % 250 == 0, doc.amount_after_rounding
+	# allowance lines exclude the basic salary; deduction lines come from the snapshot
+	assert all(a.amount for a in doc.allowance_lines), "empty allowance line"
+	print("lines                : allowances=%d deductions=%d misc=%d" %
+		  (len(doc.allowance_lines), len(doc.deduction_lines), len(doc.misc_deduction_lines)))
+	print("identity             : %s | grade %s/%s | %s years service" %
+		  (doc.employee_number, doc.grade, doc.stage, doc.years_of_service))
+
+	# Printable RTL PDF
+	pdf = render_slip_pdf(build_slip_html(doc.as_dict()))
+	print("pdf                  :", pdf[:5], len(pdf), "bytes")
+	assert pdf[:5] == b"%PDF-" and len(pdf) > 1000, "invalid slip PDF"
+
+	# Idempotent regenerate (upsert, one slip per Salary Slip)
+	res2 = slip_api.generate_payroll_slip(snap.salary_slip)
+	assert res2["name"] == res["name"], "generation is not idempotent"
+
+	frappe.delete_doc("Government Payroll Slip", res["name"], force=True)
+	frappe.db.commit()
+	print("\nPAYROLL SLIP SMOKE TEST PASSED")
 
 
 def employee_profile_api():

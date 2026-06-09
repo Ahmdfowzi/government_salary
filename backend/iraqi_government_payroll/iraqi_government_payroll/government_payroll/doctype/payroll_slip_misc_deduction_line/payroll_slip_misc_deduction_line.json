@@ -1,0 +1,25 @@
+{
+ "actions": [],
+ "creation": "2026-06-09 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "istable": 1,
+ "editable_grid": 1,
+ "field_order": [
+  "description",
+  "amount"
+ ],
+ "fields": [
+  {"fieldname": "description", "fieldtype": "Data", "label": "Description", "in_list_view": 1, "columns": 8},
+  {"fieldname": "amount", "fieldtype": "Currency", "label": "Amount", "options": "IQD", "in_list_view": 1}
+ ],
+ "links": [],
+ "modified": "2026-06-09 00:00:00",
+ "module": "Government Payroll",
+ "name": "Payroll Slip Misc Deduction Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": []
+}

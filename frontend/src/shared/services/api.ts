@@ -47,6 +47,7 @@ import type {
 const API = "iraqi_government_payroll.api.payroll_api";
 const REPORTS = "iraqi_government_payroll.api.reports_api";
 const ACCT = "iraqi_government_payroll.api.accounting_api";
+const SLIP = "iraqi_government_payroll.api.slip_api";
 
 export const payrollApi = {
   // Versioning spine + rule members
@@ -157,6 +158,15 @@ export const payrollApi = {
     params: { run?: string; from_date?: string; to_date?: string; status?: string },
     fmt: "xlsx" | "pdf" = "xlsx",
   ) => methodUrl(`${REPORTS}.export_report`, { report, fmt, ...params }),
+
+  // Government Payroll Slip (مفردات راتب): generate from the post-calc snapshot
+  // (POST/write), then fetch the printable PDF read-only by name (GET).
+  generateLatestSlip: (employee: string) =>
+    callMethod<{ name: string; net_pay: number; source: string }>(
+      `${SLIP}.generate_latest_slip`,
+      { employee },
+    ),
+  slipPdfUrl: (name: string) => methodUrl(`${SLIP}.render_payroll_slip_pdf`, { name }),
 
   // Accounting journal (proposal only — no GL posting).
   journalExport: (run: string) =>
