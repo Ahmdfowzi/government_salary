@@ -11,7 +11,12 @@
   "default_payroll_day",
   "section_break_behaviour",
   "enable_cap_enforcement",
-  "block_submit_on_violation"
+  "block_submit_on_violation",
+  "section_break_family",
+  "dependent_child_max_age",
+  "dependent_student_max_age",
+  "column_break_family",
+  "dependent_income_threshold"
  ],
  "fields": [
   {
@@ -54,6 +59,36 @@
    "fieldtype": "Check",
    "label": "Block Submit on Validation Violation",
    "default": "1"
+  },
+  {
+   "fieldname": "section_break_family",
+   "fieldtype": "Section Break",
+   "label": "Dependent Eligibility Thresholds",
+   "description": "Configurable age / income thresholds used to recompute dependent eligibility. No legal AMOUNTS are stored here — allowance values live in Allowance Rule / Tax Rule."
+  },
+  {
+   "fieldname": "dependent_child_max_age",
+   "fieldtype": "Int",
+   "label": "Child Max Age",
+   "default": "18"
+  },
+  {
+   "fieldname": "dependent_student_max_age",
+   "fieldtype": "Int",
+   "label": "Student Max Age",
+   "default": "24"
+  },
+  {
+   "fieldname": "column_break_family",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dependent_income_threshold",
+   "fieldtype": "Currency",
+   "label": "Dependent Income Threshold (IQD)",
+   "options": "IQD",
+   "default": "0",
+   "description": "An employed dependent earning above this is treated as self-supporting (excluded)."
   }
  ],
  "links": [],

@@ -56,6 +56,17 @@
   "geographic_area",
   "risk_allowance_applicable",
   "risk_category",
+  "section_break_dependents",
+  "spouse_count",
+  "children_count",
+  "dependents_count",
+  "eligible_dependents_count",
+  "column_break_dependents",
+  "disabled_dependents_count",
+  "employed_dependents_count",
+  "student_dependents_count",
+  "section_break_family_table",
+  "family_members",
   "section_break_protection",
   "protected_salary_difference"
  ],
@@ -343,7 +354,9 @@
    "fieldname": "eligible_children_count",
    "fieldtype": "Int",
    "label": "Eligible Children Count",
-   "default": "0"
+   "default": "0",
+   "read_only": 1,
+   "description": "Computed from Family Members (eligible children) — drives the children family allowance."
   },
   {
    "fieldname": "column_break_family",
@@ -366,6 +379,17 @@
    "label": "Risk Category",
    "depends_on": "risk_allowance_applicable"
   },
+  {"fieldname": "section_break_dependents", "fieldtype": "Section Break", "label": "Dependents Summary", "description": "Computed from the Family Members table; recorded into the payroll snapshot so historical payroll is unaffected by later changes."},
+  {"fieldname": "spouse_count", "fieldtype": "Int", "label": "Spouse Count", "read_only": 1, "default": "0"},
+  {"fieldname": "children_count", "fieldtype": "Int", "label": "Children Count", "read_only": 1, "default": "0"},
+  {"fieldname": "dependents_count", "fieldtype": "Int", "label": "Dependents Count", "read_only": 1, "default": "0"},
+  {"fieldname": "eligible_dependents_count", "fieldtype": "Int", "label": "Eligible Dependents Count", "read_only": 1, "default": "0"},
+  {"fieldname": "column_break_dependents", "fieldtype": "Column Break"},
+  {"fieldname": "disabled_dependents_count", "fieldtype": "Int", "label": "Disabled Dependents Count", "read_only": 1, "default": "0"},
+  {"fieldname": "employed_dependents_count", "fieldtype": "Int", "label": "Employed Dependents Count", "read_only": 1, "default": "0"},
+  {"fieldname": "student_dependents_count", "fieldtype": "Int", "label": "Student Dependents Count", "read_only": 1, "default": "0"},
+  {"fieldname": "section_break_family_table", "fieldtype": "Section Break", "label": "Family Members / Dependents"},
+  {"fieldname": "family_members", "fieldtype": "Table", "label": "Family Members", "options": "Family Member Dependent"},
   {
    "fieldname": "section_break_protection",
    "fieldtype": "Section Break",

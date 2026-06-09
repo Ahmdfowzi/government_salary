@@ -11,6 +11,19 @@ from .engine import DataContext, EmployeeInput, calculate_active_salary
 from .scale_resolver import resolve_grade_code, get_active_scale
 from .net_salary import compute_net_salary
 
+_FAMILY_SUMMARY_FIELDS = (
+	"spouse_count", "children_count", "eligible_children_count", "dependents_count",
+	"eligible_dependents_count", "disabled_dependents_count",
+	"employed_dependents_count", "student_dependents_count",
+)
+
+
+def _family_summary(profile):
+	"""Snapshot of the profile's computed dependent counts (Frappe doc or dict).
+	Recorded into the snapshot input so historical payroll is immutable."""
+	get = profile.get if hasattr(profile, "get") else (lambda k: getattr(profile, k, None))
+	return {f: (get(f) or 0) for f in _FAMILY_SUMMARY_FIELDS}
+
 
 def load_context() -> "DataContext":
 	import frappe
@@ -70,6 +83,7 @@ def calculate_for_profile(profile_name, period_date):
 		risk_category=p.risk_category,
 		spouse_eligible=(p.marital_status == "Married"),
 		children_count=p.eligible_children_count or 0,
+		family_summary=_family_summary(p),
 	)
 	return calculate_active_salary(load_context(), emp)
 
@@ -86,6 +100,7 @@ def _employee_input_from_profile(profile, period_date):
 		risk_category=profile.get("risk_category"),
 		spouse_eligible=(profile.get("marital_status") == "Married"),
 		children_count=profile.get("eligible_children_count") or 0,
+		family_summary=_family_summary(profile),
 	)
 
 

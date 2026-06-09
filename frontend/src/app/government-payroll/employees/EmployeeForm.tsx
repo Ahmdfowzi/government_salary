@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FormShell } from "@shared/forms/FormShell";
 import { payrollApi } from "@shared/services/api";
+import { FamilyMembersEditor } from "./FamilyMembersEditor";
 import type {
   GovernmentEmployeePayrollProfile,
   GovernmentGradeOption,
@@ -18,6 +19,7 @@ import type {
   GovernmentPosition,
   GovernmentRuleSet,
   SalaryPreview,
+  FamilyMemberDependent,
 } from "@shared/types";
 
 const QUALIFICATIONS = [
@@ -25,6 +27,7 @@ const QUALIFICATIONS = [
   "Higher Diploma", "Master", "Doctorate", "Trade / Craft",
 ];
 const STATUSES = ["Active", "Suspended", "Retired", "Transferred"];
+const MARITAL = ["Single", "Married", "Divorced", "Widowed"];
 
 // Editable string-keyed field state (numbers are parsed at submit time).
 type FormState = Record<string, string>;
@@ -32,8 +35,8 @@ type FormState = Record<string, string>;
 const FIELDS: (keyof GovernmentEmployeePayrollProfile)[] = [
   "employee_number", "employee_name", "status", "rule_set",
   "government_entity", "government_position", "grade", "current_stage",
-  "qualification", "appointment_date", "appointment_grade_ref", "appointment_stage",
-  "bank_account", "bank_name", "iban", "national_id",
+  "qualification", "marital_status", "appointment_date", "appointment_grade_ref",
+  "appointment_stage", "bank_account", "bank_name", "iban", "national_id",
 ];
 
 function fromProfile(p?: GovernmentEmployeePayrollProfile): FormState {
@@ -54,6 +57,10 @@ export function EmployeeForm({
 
   const [form, setForm] = useState<FormState>(() => fromProfile(initial));
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const [tab, setTab] = useState<"basic" | "family">("basic");
+  const [members, setMembers] = useState<FamilyMemberDependent[]>(
+    () => initial?.family_members ?? [],
+  );
 
   // Master data
   const [grades, setGrades] = useState<GovernmentGradeOption[]>([]);
@@ -119,10 +126,12 @@ export function EmployeeForm({
         appointment_date: form.appointment_date || undefined,
         appointment_grade_ref: form.appointment_grade_ref || undefined,
         appointment_stage: form.appointment_stage ? Number(form.appointment_stage) : undefined,
+        marital_status: (form.marital_status as GovernmentEmployeePayrollProfile["marital_status"]) || undefined,
         bank_account: form.bank_account || undefined,
         bank_name: form.bank_name || undefined,
         iban: form.iban || undefined,
         national_id: form.national_id || undefined,
+        family_members: members.filter((m) => m.full_name.trim()),
       };
       if (mode === "create") payload.employee_number = form.employee_number;
       const saved = await payrollApi.saveEmployeeProfile(
@@ -149,7 +158,24 @@ export function EmployeeForm({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-slate-200">
+        {([["basic", "البيانات الأساسية"], ["family", "العائلة والمعالون"]] as const).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${
+              tab === id ? "border-sky-600 text-sky-700" : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {label}
+            {id === "family" && members.length ? <span className="num mr-1 text-xs text-slate-400"> ({members.length})</span> : null}
+          </button>
+        ))}
+      </div>
+
+      <div className={tab === "basic" ? "grid grid-cols-1 gap-4 sm:grid-cols-2" : "hidden"}>
         {/* Identity */}
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-slate-600">الرقم الوظيفي *</span>
@@ -218,6 +244,13 @@ export function EmployeeForm({
             {QUALIFICATIONS.map((q) => (<option key={q} value={q}>{q}</option>))}
           </select>
         </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-slate-600">الحالة الاجتماعية</span>
+          <select value={form.marital_status} onChange={(e) => set("marital_status", e.target.value)} className={inputCls}>
+            <option value="">— بدون —</option>
+            {MARITAL.map((mstat) => (<option key={mstat} value={mstat}>{mstat}</option>))}
+          </select>
+        </label>
 
         {/* Appointment */}
         <label className="flex flex-col gap-1 text-sm">
@@ -261,8 +294,13 @@ export function EmployeeForm({
         </label>
       </div>
 
+      {/* Family & Dependents tab */}
+      {tab === "family" ? (
+        <FamilyMembersEditor members={members} onChange={setMembers} />
+      ) : null}
+
       {/* Salary preview / placement validity */}
-      {preview ? (
+      {tab === "basic" && preview ? (
         preview.valid ? (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
             الراتب الأساسي للدرجة والمرحلة المختارة:{" "}

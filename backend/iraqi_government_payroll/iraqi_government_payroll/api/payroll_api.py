@@ -195,7 +195,8 @@ _PROFILE_WRITABLE = (
 	"grade", "current_stage", "qualification", "specialization",
 	"employment_type", "appointment_date", "appointment_grade_ref", "appointment_stage",
 	"bank_account", "bank_name", "iban", "national_id",
-	"status",
+	"status", "marital_status", "geographic_area",
+	"risk_allowance_applicable", "risk_category",
 )
 
 
@@ -281,11 +282,11 @@ def save_employee_profile(payload, name=None):
 	if name:
 		doc = frappe.get_doc("Government Employee Payroll Profile", name)
 		doc.update(clean)
-		doc.save()
 	else:
 		clean["doctype"] = "Government Employee Payroll Profile"
 		doc = frappe.get_doc(clean)
-		doc.insert()
+	_set_family_members(doc, data)
+	doc.save() if name else doc.insert()
 	frappe.db.commit()
 
 	basic = None
@@ -295,4 +296,31 @@ def save_employee_profile(payload, name=None):
 		"name": doc.name, "employee_number": doc.employee_number,
 		"employee_name": doc.employee_name, "grade": doc.grade,
 		"current_stage": doc.current_stage, "basic_salary": basic,
+		"family_summary": {f: doc.get(f) for f in (
+			"spouse_count", "children_count", "eligible_children_count", "dependents_count",
+			"eligible_dependents_count", "disabled_dependents_count",
+			"employed_dependents_count", "student_dependents_count")},
 	}
+
+
+# Family-member fields a client may set. `age` and `eligible_for_family_allowance`
+# are computed by the controller and are NEVER accepted from the client.
+_FAMILY_WRITABLE = (
+	"full_name", "relation", "gender", "date_of_birth", "marital_status",
+	"is_alive", "financially_dependent", "legal_guardianship",
+	"is_employed", "employment_type", "employer_name", "monthly_income",
+	"is_student", "education_level", "has_disability", "disability_type",
+	"allowance_start_date", "allowance_end_date", "notes",
+)
+
+
+def _set_family_members(doc, data):
+	"""Replace the family_members child table from the payload (whitelisted fields
+	only). Omitted -> table left untouched. The controller recomputes the summary."""
+	if "family_members" not in data:
+		return
+	doc.set("family_members", [])
+	for m in data.get("family_members") or []:
+		row = {k: m.get(k) for k in _FAMILY_WRITABLE if m.get(k) not in (None, "")}
+		if row.get("full_name"):
+			doc.append("family_members", row)

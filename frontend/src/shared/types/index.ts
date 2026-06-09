@@ -133,6 +133,53 @@ export interface GovernmentEmployeePayrollProfile {
   geographic_area?: string;
   risk_allowance_applicable?: boolean;
   protected_salary_difference?: number;
+  // Phase 5 M7 — family & dependents (child table + computed summary counts)
+  family_members?: FamilyMemberDependent[];
+  spouse_count?: number;
+  children_count?: number;
+  dependents_count?: number;
+  eligible_dependents_count?: number;
+  disabled_dependents_count?: number;
+  employed_dependents_count?: number;
+  student_dependents_count?: number;
+}
+
+export type FamilyRelation = "Spouse" | "Son" | "Daughter" | "Father" | "Mother" | "Other";
+
+export interface FamilyMemberDependent {
+  name?: string;
+  full_name: string;
+  relation: FamilyRelation;
+  gender?: "" | "Male" | "Female";
+  date_of_birth?: string;
+  age?: number;
+  marital_status?: string;
+  is_alive?: boolean | number;
+  financially_dependent?: boolean | number;
+  legal_guardianship?: boolean | number;
+  eligible_for_family_allowance?: boolean | number;
+  is_employed?: boolean | number;
+  employment_type?: "None" | "Government" | "Private" | "Contract";
+  employer_name?: string;
+  monthly_income?: number;
+  is_student?: boolean | number;
+  education_level?: string;
+  has_disability?: boolean | number;
+  disability_type?: string;
+  allowance_start_date?: string;
+  allowance_end_date?: string;
+  notes?: string;
+}
+
+export interface FamilySummary {
+  spouse_count: number;
+  children_count: number;
+  eligible_children_count: number;
+  dependents_count: number;
+  eligible_dependents_count: number;
+  disabled_dependents_count: number;
+  employed_dependents_count: number;
+  student_dependents_count: number;
 }
 
 /** A row from payroll_api.list_grades — the Government Grade master picker source. */

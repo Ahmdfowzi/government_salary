@@ -17,6 +17,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.grade_validation
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.employee_profile_api
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.payroll_slip
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.family_dependents
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.demo
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
@@ -763,6 +764,76 @@ def grade_validation():
 
 	frappe.db.rollback()                         # discard everything; re-runnable
 	print("\nGRADE VALIDATION SMOKE TEST PASSED")
+
+
+def family_dependents():
+	"""Phase 5 M7 — Family & Dependents: the API saves dependents, the controller
+	recomputes ages/eligibility/counts, the engine reads eligible_children_count to
+	scale the configurable Family/Child allowance, and the family state is recorded
+	into the snapshot input. Re-runnable (deletes its employee).
+	"""
+	from iraqi_government_payroll.api import payroll_api as papi
+	from iraqi_government_payroll.services.payroll_engine import repository as repo
+	from iraqi_government_payroll.services.audit.audit_service import build_snapshot_payload
+
+	EMP = "FAM1"
+	if frappe.db.exists("Government Employee Payroll Profile", EMP):
+		frappe.delete_doc("Government Employee Payroll Profile", EMP, force=True)
+		frappe.db.commit()
+
+	today = frappe.utils.nowdate()
+	def yago(n):
+		return frappe.utils.add_years(today, -n)
+
+	papi.save_employee_profile({
+		"employee_number": EMP, "employee_name": "Family Test",
+		"rule_set": "IRAQ-2015", "grade": "7", "current_stage": 1,
+		"qualification": "Bachelor", "status": "Active", "marital_status": "Married",
+		"family_members": [
+			{"full_name": "Zawja", "relation": "Spouse", "date_of_birth": yago(35)},
+			{"full_name": "Child A", "relation": "Son", "date_of_birth": yago(10)},
+			{"full_name": "Child B", "relation": "Son", "date_of_birth": yago(25)},
+			{"full_name": "Child C", "relation": "Daughter", "date_of_birth": yago(20), "is_student": 1},
+			{"full_name": "Child D", "relation": "Son", "date_of_birth": yago(30),
+			 "is_employed": 1, "employment_type": "Government", "monthly_income": 500000},
+		],
+	})
+	p = frappe.get_doc("Government Employee Payroll Profile", EMP)
+	print("counts               : spouse=%d children=%d eligible_children=%d employed=%d student=%d eligible_dep=%d" %
+		  (p.spouse_count, p.children_count, p.eligible_children_count,
+		   p.employed_dependents_count, p.student_dependents_count, p.eligible_dependents_count))
+	assert p.spouse_count == 1, p.spouse_count
+	assert p.children_count == 4, p.children_count          # A,B,C,D
+	assert p.eligible_children_count == 2, p.eligible_children_count  # A(10) + C(20 student); B(25), D(employed) excluded
+	assert p.employed_dependents_count == 1, p.employed_dependents_count
+	assert p.student_dependents_count == 1, p.student_dependents_count
+	assert p.eligible_dependents_count == 3, p.eligible_dependents_count  # spouse + A + C
+
+	# ages + per-member eligibility written back
+	by = {m.full_name: m for m in p.family_members}
+	assert by["Child A"].age == 10 and by["Child A"].eligible_for_family_allowance == 1
+	assert by["Child D"].eligible_for_family_allowance == 0, "employed dependent must be ineligible"
+
+	# engine reads eligible_children_count -> Family/Child allowance scales with it
+	res = repo.calculate_for_profile(EMP, "2020-06-01")
+	lines = {l.component_code: l.amount for l in res.allowance_lines}
+	fam_child_unit = frappe.db.get_value("Allowance Rule", "FAM_CHILD", "fixed_amount")
+	print("family allowances    : FAM_CHILD=%s FAM_SPOUSE=%s (unit=%s)" %
+		  (lines.get("FAM_CHILD"), lines.get("FAM_SPOUSE"), fam_child_unit))
+	assert lines.get("FAM_CHILD") == fam_child_unit * min(p.eligible_children_count, 4)
+	assert lines.get("FAM_SPOUSE"), "married -> spouse allowance expected"
+
+	# family state recorded into the snapshot input (immutable history)
+	emp_input = repo._employee_input_from_profile(p.as_dict(), "2020-06-01")
+	snap = build_snapshot_payload(res, employee_input=emp_input, employee_profile=EMP)
+	import json as _json
+	fs = _json.loads(snap["input_snapshot"]).get("family_summary") or {}
+	print("snapshot family_summary:", fs)
+	assert fs.get("eligible_children_count") == 2, fs
+
+	frappe.delete_doc("Government Employee Payroll Profile", EMP, force=True)
+	frappe.db.commit()
+	print("\nFAMILY DEPENDENTS SMOKE TEST PASSED")
 
 
 def payroll_slip():

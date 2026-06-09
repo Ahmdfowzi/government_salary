@@ -35,6 +35,10 @@ class EmployeeInput:
 	risk_category: Optional[str] = None
 	spouse_eligible: bool = False
 	children_count: int = 0
+	# Phase 5 M7: full dependents summary, recorded into the snapshot's
+	# input_snapshot (via asdict) so historical payroll stays immutable when family
+	# data changes later. The math still uses children_count / spouse_eligible.
+	family_summary: Optional[dict] = None
 
 
 @dataclass

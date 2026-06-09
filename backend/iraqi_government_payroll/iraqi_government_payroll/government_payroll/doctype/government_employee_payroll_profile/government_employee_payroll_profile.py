@@ -34,6 +34,13 @@ from frappe.model.document import Document
 from iraqi_government_payroll.services.payroll_engine.scale_resolver import (
 	scale_has_grade_stage,
 )
+from iraqi_government_payroll.services.family import family_service
+
+_FAMILY_SUMMARY_FIELDS = (
+	"spouse_count", "children_count", "eligible_children_count", "dependents_count",
+	"eligible_dependents_count", "disabled_dependents_count",
+	"employed_dependents_count", "student_dependents_count",
+)
 
 
 class GovernmentEmployeePayrollProfile(Document):
@@ -42,6 +49,37 @@ class GovernmentEmployeePayrollProfile(Document):
 		# mirror in sync, and validate that (grade, stage) exists in the active scale.
 		self._sync_grade_fields()
 		self._validate_scale_placement()
+		# Phase 5 M7: recompute dependent ages / eligibility / summary counts so they
+		# are current whenever family data changes (and ready to snapshot at payroll).
+		self._recompute_family()
+
+	def _family_config(self):
+		"""Eligibility thresholds from Government Payroll Settings (configurable;
+		no legal AMOUNTS — those live in Allowance Rule / Tax Rule)."""
+		cfg = {}
+		try:
+			s = frappe.get_single("Government Payroll Settings")
+			if s.get("dependent_child_max_age"):
+				cfg["child_max_age"] = int(s.dependent_child_max_age)
+			if s.get("dependent_student_max_age"):
+				cfg["student_max_age"] = int(s.dependent_student_max_age)
+			if s.get("dependent_income_threshold") is not None:
+				cfg["dependent_income_threshold"] = float(s.dependent_income_threshold)
+		except Exception:
+			pass            # fall back to family_service defaults
+		return cfg
+
+	def _recompute_family(self):
+		members = [m.as_dict() for m in (self.get("family_members") or [])]
+		today = frappe.utils.nowdate() if hasattr(frappe.utils, "nowdate") else None
+		result = family_service.summarize(members, as_of=today, config=self._family_config())
+		# write computed age + eligibility back onto each child row (read-only fields)
+		for row, enriched in zip(self.get("family_members") or [], result["members"]):
+			row.age = enriched["age"]
+			row.eligible_for_family_allowance = enriched["eligible_for_family_allowance"]
+		# write the summary counts onto the profile
+		for field in _FAMILY_SUMMARY_FIELDS:
+			self.set(field, result["summary"][field])
 
 	def _sync_grade_fields(self):
 		"""Grade (Link) is authoritative; grade_code (deprecated) mirrors it so
