@@ -26,6 +26,8 @@ Inputs are plain dicts (the caller in api/slip_api wires them from Frappe docs):
 
 from datetime import date, datetime
 
+from .component_labels import arabic_component
+
 # Smallest circulating Iraqi banknote — net pay is displayed rounded to this for
 # cash disbursement. PRINT-ONLY: it never changes the engine's stored net amount.
 DEFAULT_CASH_ROUNDING_STEP = 250
@@ -87,24 +89,28 @@ def build_slip(snapshot, profile=None, period=None, org=None, meta=None):
 			_num(l.get("amount")) for l in lines
 			if str(l.get("component_code", "")).upper() in BASIC_CODES)
 
-	# allowance lines = Earning lines that are NOT the basic salary
+	# allowance lines = Earning lines that are NOT the basic salary. The display
+	# name is Arabic; the internal component_code is preserved unchanged.
 	allowance_lines = []
 	for l in lines:
 		if l.get("line_type") != "Earning":
 			continue
-		if str(l.get("component_code", "")).upper() in BASIC_CODES:
+		code = l.get("component_code", "")
+		if str(code).upper() in BASIC_CODES:
 			continue
 		allowance_lines.append({
-			"allowance_name": l.get("component_name") or l.get("component_code"),
+			"component_code": code,
+			"allowance_name": arabic_component(code, l.get("component_name")),
 			"percentage": _num(l.get("rate")),
 			"base_amount": _num(l.get("basis_amount")),
 			"adjustment_amount": 0.0,
 			"amount": _num(l.get("amount")),
 		})
 
-	# deduction lines = Deduction lines
+	# deduction lines = Deduction lines (Arabic display, internal code preserved)
 	deduction_lines = [
-		{"deduction_name": l.get("component_name") or l.get("component_code"),
+		{"component_code": l.get("component_code", ""),
+		 "deduction_name": arabic_component(l.get("component_code"), l.get("component_name")),
 		 "amount": _num(l.get("amount"))}
 		for l in lines if l.get("line_type") == "Deduction"
 	]
@@ -130,7 +136,11 @@ def build_slip(snapshot, profile=None, period=None, org=None, meta=None):
 	rounding_step = meta.get("cash_rounding_step", DEFAULT_CASH_ROUNDING_STEP)
 
 	payroll_date = meta.get("payroll_date") or period.get("end_date")
-	promo = _parse_date(profile.get("last_promotion_date"))
+	# Promotion year: last promotion, else the date the current grade started.
+	promo = _parse_date(profile.get("last_promotion_date")) \
+		or _parse_date(profile.get("current_grade_date"))
+	# Service: from appointment date, else the recorded service-start date.
+	service_start = profile.get("appointment_date") or profile.get("retirement_service_start_date")
 
 	return {
 		# links / metadata
@@ -141,16 +151,20 @@ def build_slip(snapshot, profile=None, period=None, org=None, meta=None):
 		# entity
 		"entity_name": org.get("entity_name"),
 		"department_name": org.get("department_name"),
+		"position_title": org.get("position_title"),
 		"payroll_month": period.get("month"),
 		"payroll_year": period.get("year"),
 		# employee
 		"employee_name": profile.get("employee_name"),
 		"employee_number": profile.get("employee_number"),
 		"unified_national_id": profile.get("national_id"),
+		"qualification": profile.get("qualification"),
+		"marital_status": profile.get("marital_status"),
+		"appointment_date": profile.get("appointment_date"),
 		"grade": str(snapshot.get("grade_code") or ""),
 		"stage": snapshot.get("stage"),
 		"promotion_year": promo.year if promo else (meta.get("promotion_year") or ""),
-		"years_of_service": _years_between(profile.get("appointment_date"), payroll_date),
+		"years_of_service": _years_between(service_start, payroll_date),
 		# leave (print-only)
 		"leave_balance_annual": meta.get("leave_balance_annual") or 0,
 		"leave_balance_sick": meta.get("leave_balance_sick") or 0,

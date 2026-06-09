@@ -15,7 +15,21 @@ APP_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, APP_ROOT)
 
 from iraqi_government_payroll.services.slip.slip_builder import build_slip  # noqa: E402
+from iraqi_government_payroll.services.slip.component_labels import arabic_component  # noqa: E402
 from iraqi_government_payroll.services.reports.slip_pdf import build_slip_html  # noqa: E402
+
+
+class TestComponentLabels(unittest.TestCase):
+	def test_arabic_display_names(self):
+		self.assertEqual(arabic_component("CERT_ACT_BACHELOR"), "مخصصات الشهادة")
+		self.assertEqual(arabic_component("RISK_DEFAULT"), "مخصصات الخطورة")
+		self.assertEqual(arabic_component("POS_DEPT_MANAGER"), "مخصصات المنصب")
+		self.assertEqual(arabic_component("INCOME_TAX"), "ضريبة الدخل")
+		self.assertEqual(arabic_component("DED_PENSION"), "التوقيفات التقاعدية")
+		self.assertEqual(arabic_component("FAM_SPOUSE"), "مخصصات الزوجية")
+
+	def test_unknown_code_falls_back(self):
+		self.assertEqual(arabic_component("XYZ_NEW", "Fallback"), "Fallback")
 
 
 def sample_snapshot():
@@ -55,12 +69,16 @@ class TestBuildSlip(unittest.TestCase):
 		self.assertEqual(a["amount"], 144000)
 		self.assertEqual(a["percentage"], 45)
 		self.assertEqual(a["base_amount"], 320000)
+		# Arabic display name; internal component_code preserved unchanged
+		self.assertEqual(a["allowance_name"], "مخصصات الشهادة")
+		self.assertEqual(a["component_code"], "CERT_ACT_BACHELOR")
 
 	def test_deduction_lines(self):
 		s = built()
 		self.assertEqual(len(s["deduction_lines"]), 1)
 		self.assertEqual(s["deduction_lines"][0]["amount"], 5833)
-		self.assertEqual(s["deduction_lines"][0]["deduction_name"], "Income Tax")
+		self.assertEqual(s["deduction_lines"][0]["deduction_name"], "ضريبة الدخل")
+		self.assertEqual(s["deduction_lines"][0]["component_code"], "INCOME_TAX")
 
 	def test_totals_from_snapshot_not_recomputed(self):
 		s = built()

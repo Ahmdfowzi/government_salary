@@ -14,13 +14,22 @@ from iraqi_government_payroll.services.reports.slip_pdf import build_slip_html, 
 
 _SCALAR_FIELDS = (
 	"list_sequence", "payroll_date", "payment_officer", "payment_number",
-	"entity_name", "department_name", "payroll_month", "payroll_year",
-	"employee_name", "employee_number", "unified_national_id", "grade", "stage",
+	"entity_name", "department_name", "position_title", "payroll_month", "payroll_year",
+	"employee_name", "employee_number", "unified_national_id", "qualification",
+	"marital_status", "appointment_date", "grade", "stage",
 	"promotion_year", "years_of_service", "leave_balance_annual", "leave_balance_sick",
 	"base_salary", "adjustment_amount", "total_allowances", "total_rewards",
 	"total_entitlement", "total_deductions", "total_misc_deductions", "net_pay",
 	"amount_before_rounding", "amount_after_rounding",
 )
+
+
+def _position_title(profile):
+	"""Arabic position title from the employee's (current) Government Position."""
+	pos = profile.get("current_position") or profile.get("government_position")
+	if pos and frappe.db.exists("Government Position", pos):
+		return frappe.db.get_value("Government Position", pos, "position_name_ar")
+	return None
 
 
 def _entity_names(profile):
@@ -103,7 +112,8 @@ def generate_payroll_slip(salary_slip):
 
 	data = build_slip(
 		source, profile=profile, period=period,
-		org={"entity_name": ministry, "department_name": dept},
+		org={"entity_name": ministry, "department_name": dept,
+			 "position_title": _position_title(profile)},
 		meta={"list_sequence": _list_sequence(slip), "payroll_date": period.get("end_date")},
 	)
 
@@ -147,6 +157,75 @@ def render_payroll_slip_pdf(salary_slip=None, name=None):
 	if not name:
 		name = generate_payroll_slip(salary_slip)["name"]
 	_render_pdf_response(frappe.get_doc("Government Payroll Slip", name))
+
+
+# field -> where its value comes from (for the data-completeness audit).
+_FIELD_SOURCES = {
+	"entity_name": "Government Entity (root ministry)",
+	"department_name": "Government Entity (employee unit)",
+	"position_title": "Government Position.position_name_ar",
+	"employee_name": "Employee Profile", "employee_number": "Employee Profile",
+	"unified_national_id": "Employee Profile.national_id",
+	"qualification": "Employee Profile", "marital_status": "Employee Profile",
+	"appointment_date": "Employee Profile",
+	"grade": "Payroll Calculation Snapshot", "stage": "Payroll Calculation Snapshot",
+	"base_salary": "Snapshot output (basic_salary)",
+	"total_allowances": "Snapshot earning lines",
+	"total_deductions": "Snapshot (total_deductions)",
+	"total_entitlement": "Derived (base + allowances)",
+	"net_pay": "Snapshot (net_amount)",
+	"amount_before_rounding": "Derived (= net)",
+	"amount_after_rounding": "Derived (net rounded to 250 IQD, print-only)",
+	"years_of_service": "Derived (appointment/service date -> payroll date)",
+	"promotion_year": "Derived (last_promotion_date / current_grade_date)",
+	"payroll_month": "Payroll Period", "payroll_year": "Payroll Period",
+	"payroll_date": "Payroll Period (end_date)",
+	"list_sequence": "Derived (employee order within the run)",
+	"adjustment_amount": "Employee Profile.protected_salary_difference",
+	"total_misc_deductions": "Manual misc deductions on the slip",
+	"payment_officer": "Manual / not captured",
+	"payment_number": "Manual / not captured",
+	"leave_balance_annual": "Leave module — not implemented",
+	"leave_balance_sick": "Leave module — not implemented",
+	"total_rewards": "Rewards/bonus input — not captured",
+}
+_NEEDS = {
+	"payment_officer": "Add a payment-officer (أمين الصرف) field to the Payroll Run or Settings.",
+	"payment_number": "Add a disbursement-order number (رقم أمر الصرف) to the Payroll Run.",
+	"leave_balance_annual": "Requires a leave/attendance module storing annual-leave balances.",
+	"leave_balance_sick": "Requires a leave/attendance module storing sick-leave balances.",
+	"total_rewards": "Requires a rewards/bonus input feeding the slip.",
+	"position_title": "Set the employee's Government Position (current_position).",
+	"qualification": "Set the employee's qualification on the profile.",
+	"marital_status": "Set marital status on the profile.",
+	"appointment_date": "Set the appointment date on the profile.",
+	"unified_national_id": "Set the national ID on the profile.",
+	"promotion_year": "Set last_promotion_date or current_grade_date on the profile.",
+}
+
+
+@frappe.whitelist()
+def slip_field_audit(name=None, salary_slip=None):
+	"""Audit every slip field: which are populated, which are empty/default, the
+	source of each, and what data is needed to fill the empty ones."""
+	if not name:
+		name = generate_payroll_slip(salary_slip)["name"]
+	doc = frappe.get_doc("Government Payroll Slip", name)
+	populated, empty = [], []
+	for f, src in _FIELD_SOURCES.items():
+		v = doc.get(f)
+		row = {"field": f, "value": v, "source": src}
+		if v in (None, "", 0):
+			row["reason"] = ("No source value for this employee/run."
+							 if f not in _NEEDS else "Default/empty.")
+			row["needs"] = _NEEDS.get(f, "Provide the value in the source record above.")
+			empty.append(row)
+		else:
+			populated.append(row)
+	return {"slip": name, "populated": populated, "empty": empty,
+			"counts": {"populated": len(populated), "empty": len(empty),
+					   "allowance_lines": len(doc.allowance_lines),
+					   "deduction_lines": len(doc.deduction_lines)}}
 
 
 @frappe.whitelist()

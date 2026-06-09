@@ -7,10 +7,12 @@
  "editable_grid": 1,
  "field_order": [
   "deduction_name",
+  "component_code",
   "amount"
  ],
  "fields": [
-  {"fieldname": "deduction_name", "fieldtype": "Data", "label": "Deduction Name", "in_list_view": 1, "columns": 8},
+  {"fieldname": "deduction_name", "fieldtype": "Data", "label": "Deduction Name (Arabic)", "in_list_view": 1, "columns": 6},
+  {"fieldname": "component_code", "fieldtype": "Data", "label": "Component Code", "read_only": 1, "description": "Internal identifier — unchanged."},
   {"fieldname": "amount", "fieldtype": "Currency", "label": "Amount", "options": "IQD", "in_list_view": 1}
  ],
  "links": [],
