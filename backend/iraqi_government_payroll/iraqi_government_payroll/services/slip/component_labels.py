@@ -49,3 +49,33 @@ def arabic_component(code, fallback=None):
 		if c.startswith(prefix):
 			return label
 	return fallback or str(code)
+
+
+# ---------------------------------------------------------------------------
+# Arabic DISPLAY values for stored English option fields. Internal stored values
+# are NEVER changed — these map them to Arabic only for printing.
+# ---------------------------------------------------------------------------
+MARITAL_AR = {
+	"Single": "أعزب", "Married": "متزوّج", "Divorced": "مطلّق", "Widowed": "أرمل",
+}
+QUALIFICATION_AR = {
+	"None": "بدون", "Primary": "ابتدائية", "Intermediate": "متوسطة",
+	"Secondary": "إعدادية", "Diploma": "دبلوم", "Higher Diploma": "دبلوم عالٍ",
+	"Bachelor": "بكالوريوس", "Master": "ماجستير", "Doctorate": "دكتوراه",
+	"Trade / Craft": "مهني / حرفي",
+}
+STATUS_AR = {
+	"Active": "على الملاك", "Suspended": "موقوف", "Retired": "متقاعد",
+	"Transferred": "منقول",
+}
+EMPLOYMENT_TYPE_AR = {
+	"Government": "حكومي", "Private": "قطاع خاص", "Contract": "عقد", "None": "لا يعمل",
+}
+GENDER_AR = {"Male": "ذكر", "Female": "أنثى"}
+
+
+def display_value(mapping, value):
+	"""Arabic display for a stored option value; unchanged if no mapping. Empty -> None."""
+	if value in (None, ""):
+		return None
+	return mapping.get(str(value), str(value))

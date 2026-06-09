@@ -127,7 +127,9 @@ class TestSlipHtml(unittest.TestCase):
 	def test_rtl_arabic_layout_with_font_and_values(self):
 		html = build_slip_html(built())
 		self.assertIn('dir="rtl"', html)
-		self.assertIn("@font-face", html)
+		# Cairo weights resolved via fontconfig (unique family names), not DejaVu
+		self.assertIn("CairoReg", html)
+		self.assertIn("CairoBold", html)
 		for label in ("مفردات راتب", "الاستحقاقات", "الاستقطاعات", "صافي الراتب",
 					  "الرقم الوطني الموحد", "سنوات الخدمة"):
 			self.assertIn(label, html)

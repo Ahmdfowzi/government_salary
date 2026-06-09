@@ -143,8 +143,27 @@ def payroll_slip(name):
 	return frappe.get_doc("Government Payroll Slip", name).as_dict()
 
 
+def _logo_data_uri():
+	"""Base64 data URI for the configured government/ministry logo, or None."""
+	import base64
+	logo = frappe.db.get_single_value("Government Payroll Settings", "government_logo")
+	if not logo:
+		return None
+	try:
+		fname = logo.split("/files/")[-1]
+		fdoc = frappe.get_all("File", filters={"file_name": fname}, fields=["name"], limit=1) \
+			or frappe.get_all("File", filters={"file_url": logo}, fields=["name"], limit=1)
+		content = frappe.get_doc("File", fdoc[0]["name"]).get_content()
+		mime = "image/png" if logo.lower().endswith("png") else "image/jpeg"
+		return f"data:{mime};base64," + base64.b64encode(content).decode("ascii")
+	except Exception:
+		return None
+
+
 def _render_pdf_response(slip_doc):
-	html = build_slip_html(slip_doc.as_dict())
+	data = slip_doc.as_dict()
+	data["logo_uri"] = _logo_data_uri()
+	html = build_slip_html(data)
 	frappe.response["filename"] = f"payroll-slip-{slip_doc.employee_number or slip_doc.name}.pdf"
 	frappe.response["filecontent"] = render_slip_pdf(html)
 	frappe.response["type"] = "binary"
@@ -222,10 +241,22 @@ def slip_field_audit(name=None, salary_slip=None):
 			empty.append(row)
 		else:
 			populated.append(row)
-	return {"slip": name, "populated": populated, "empty": empty,
+	# completeness warnings (critical fields that should not be blank on a real slip)
+	critical = ("employee_name", "employee_number", "unified_national_id", "grade",
+				"stage", "base_salary", "net_pay", "entity_name")
+	warnings = [f"حقل ناقص: {f}" for f in critical if doc.get(f) in (None, "", 0)]
+	return {"slip": name, "populated": populated, "empty": empty, "warnings": warnings,
 			"counts": {"populated": len(populated), "empty": len(empty),
 					   "allowance_lines": len(doc.allowance_lines),
 					   "deduction_lines": len(doc.deduction_lines)}}
+
+
+@frappe.whitelist()
+def font_debug():
+	"""Font diagnostic: bundled paths, install status, and fontconfig Cairo matches."""
+	from iraqi_government_payroll.services.reports import slip_pdf
+	slip_pdf._ensure_fonts_installed()
+	return slip_pdf.font_debug()
 
 
 @frappe.whitelist()

@@ -26,7 +26,9 @@ Inputs are plain dicts (the caller in api/slip_api wires them from Frappe docs):
 
 from datetime import date, datetime
 
-from .component_labels import arabic_component
+from .component_labels import (
+	arabic_component, display_value, MARITAL_AR, QUALIFICATION_AR,
+)
 
 # Smallest circulating Iraqi banknote — net pay is displayed rounded to this for
 # cash disbursement. PRINT-ONLY: it never changes the engine's stored net amount.
@@ -158,8 +160,9 @@ def build_slip(snapshot, profile=None, period=None, org=None, meta=None):
 		"employee_name": profile.get("employee_name"),
 		"employee_number": profile.get("employee_number"),
 		"unified_national_id": profile.get("national_id"),
-		"qualification": profile.get("qualification"),
-		"marital_status": profile.get("marital_status"),
+		# Arabic display values; internal stored option values are unchanged.
+		"qualification": display_value(QUALIFICATION_AR, profile.get("qualification")),
+		"marital_status": display_value(MARITAL_AR, profile.get("marital_status")),
 		"appointment_date": profile.get("appointment_date"),
 		"grade": str(snapshot.get("grade_code") or ""),
 		"stage": snapshot.get("stage"),

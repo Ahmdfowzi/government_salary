@@ -16,7 +16,9 @@
   "dependent_child_max_age",
   "dependent_student_max_age",
   "column_break_family",
-  "dependent_income_threshold"
+  "dependent_income_threshold",
+  "section_break_branding",
+  "government_logo"
  ],
  "fields": [
   {
@@ -89,6 +91,17 @@
    "options": "IQD",
    "default": "0",
    "description": "An employed dependent earning above this is treated as self-supporting (excluded)."
+  },
+  {
+   "fieldname": "section_break_branding",
+   "fieldtype": "Section Break",
+   "label": "Document Branding"
+  },
+  {
+   "fieldname": "government_logo",
+   "fieldtype": "Attach Image",
+   "label": "Government / Ministry Logo",
+   "description": "Shown at the top of the printable payroll slip when set."
   }
  ],
  "links": [],
