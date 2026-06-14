@@ -19,6 +19,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.payroll_slip
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.data_integrity
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.transaction_forms
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.uat_demo_cycle
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.financial_wiring
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.family_dependents
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.demo
@@ -767,6 +768,156 @@ def grade_validation():
 
 	frappe.db.rollback()                         # discard everything; re-runnable
 	print("\nGRADE VALIDATION SMOKE TEST PASSED")
+
+
+def uat_demo_cycle():
+	"""UAT Demo Cycle — exercise the system as a real payroll user across personas.
+
+	Creates clearly-marked UAT-* demo employees (committed, idempotent), then runs
+	the full cycle: profiles, salary (single/married/family), invalid-profile
+	rejection, increment/promotion eligibility (apply), pension service-year sweep,
+	a Draft->Review->Approve->Lock payroll run with totals from the snapshot and
+	lock immutability, and locked-run reports from the snapshot. The transactional
+	steps roll back, so the personas persist but nothing else does (re-runnable).
+	"""
+	from iraqi_government_payroll.services.payroll_engine import repository as repo
+	from iraqi_government_payroll.services.pension.pension_service import (
+		compute_retirement_pension, RetirementPensionInput)
+	from iraqi_government_payroll.api import reports_api as rep
+
+	today = frappe.utils.nowdate()
+	yago = lambda n: frappe.utils.add_years(today, -n)
+	ENT = "UAT-ENTITY"
+
+	# ---- 1. Personas (committed, idempotent) ----
+	if not frappe.db.exists("Government Entity", ENT):
+		frappe.get_doc({"doctype": "Government Entity", "entity_code": ENT,
+						"entity_name_ar": "دائرة الاختبار (UAT)", "entity_type": "Ministry"}
+					   ).insert(ignore_permissions=True)
+
+	def persona(num, name, grade, stage, qual, marital, *, stage_date=None,
+				grade_date=None, appoint=None, children=0):
+		if frappe.db.exists("Government Employee Payroll Profile", num):
+			return
+		doc = {"doctype": "Government Employee Payroll Profile", "employee_number": num,
+			   "employee_name": name, "rule_set": "IRAQ-2015", "grade": grade,
+			   "current_stage": stage, "qualification": qual, "status": "Active",
+			   "employment_status": "Active", "government_entity": ENT,
+			   "marital_status": marital, "appointment_date": appoint or yago(5),
+			   "current_stage_date": stage_date or yago(1), "current_grade_date": grade_date or yago(2),
+			   "national_id": "199" + num.replace("UAT-", "").replace("-", "")[:9].ljust(9, "0")}
+		if children:
+			doc["family_members"] = [
+				{"full_name": f"ابن {i}", "relation": "Son", "date_of_birth": yago(8 + i),
+				 "is_alive": 1, "financially_dependent": 1} for i in range(children)]
+		frappe.get_doc(doc).insert()
+
+	persona("UAT-01-SINGLE", "أعزب (UAT)", "7", 1, "Bachelor", "Single")
+	persona("UAT-02-MARRIED", "متزوج (UAT)", "7", 1, "Bachelor", "Married")
+	persona("UAT-03-FAMILY", "متزوج بأطفال (UAT)", "7", 1, "Bachelor", "Married", children=3)
+	persona("UAT-04-INCR-Y", "علاوة مستحقة (UAT)", "7", 2, "Bachelor", "Single", stage_date=yago(2))
+	persona("UAT-05-INCR-N", "علاوة غير مستحقة (UAT)", "7", 3, "Bachelor", "Single", stage_date=today)
+	persona("UAT-06-PROMO-Y", "ترفيع مستحق (UAT)", "7", 1, "Bachelor", "Single", grade_date=yago(5))
+	persona("UAT-07-PROMO-N", "ترفيع غير مستحق (UAT)", "7", 1, "Bachelor", "Single", grade_date=today)
+	persona("UAT-08-RETIRE", "قرب التقاعد (UAT)", "3", 5, "Master", "Married", appoint=yago(38))
+	frappe.db.commit()
+	print("personas             : 8 UAT employees + entity ready")
+
+	# ---- 2. Profile UAT ----
+	p3 = frappe.get_doc("Government Employee Payroll Profile", "UAT-03-FAMILY")
+	assert p3.government_entity == ENT and p3.grade == "7" and p3.current_stage == 1
+	assert p3.marital_status == "Married" and p3.eligible_children_count == 3, p3.eligible_children_count
+	print("profile UAT          : entity/grade/stage/marital/children verified (family=%d)" % p3.eligible_children_count)
+
+	# ---- 3. Salary preview + invalid-profile rejection (Arabic) ----
+	from iraqi_government_payroll.api import payroll_api as papi
+	prev = papi.salary_preview("IRAQ-2015", "7", 1)
+	assert prev["valid"] and prev["basic_salary"] == 296000
+	bad = papi.salary_preview("IRAQ-2015", "7", 99)
+	assert not bad["valid"] and "سلم الرواتب" in bad["message"]
+	def _bad_profile():
+		frappe.get_doc({"doctype": "Government Employee Payroll Profile",
+						"employee_number": "UAT-BAD", "employee_name": "x", "rule_set": "IRAQ-2015",
+						"grade": "7", "current_stage": 99, "status": "Active"}).insert()
+	assert _blocked(_bad_profile), "invalid profile was accepted"
+	print("salary/invalid       : preview 296000; invalid stage 99 rejected (Arabic)")
+
+	# ---- 4. Increment eligibility (apply via engine; rolled back) ----
+	def _apply_increment(emp):
+		req = frappe.get_doc({"doctype": "Annual Increment Request", "employee_profile": emp,
+							  "approval_status": "Draft"}).insert()
+		repo.apply_increment(req)
+		return frappe.db.get_value("Government Employee Payroll Profile", emp, "current_stage")
+	new_stage = _apply_increment("UAT-04-INCR-Y")
+	print("increment eligible   : UAT-04 stage 2 ->", new_stage)
+	assert new_stage == 3, f"eligible increment did not advance the stage ({new_stage})"
+	assert _blocked(lambda: _apply_increment("UAT-05-INCR-N")), "not-eligible increment applied"
+	frappe.db.rollback()
+
+	# ---- 5. Promotion eligibility (apply via engine; rolled back) ----
+	def _apply_promotion(emp):
+		req = frappe.get_doc({"doctype": "Promotion Request", "employee_profile": emp,
+							  "approval_status": "Draft"}).insert()
+		repo.apply_promotion(req)
+		return frappe.db.get_value("Government Employee Payroll Profile", emp, "grade")
+	new_grade = _apply_promotion("UAT-06-PROMO-Y")
+	print("promotion eligible   : UAT-06 grade 7 ->", new_grade)
+	assert new_grade == "6", f"eligible promotion did not change the grade ({new_grade})"
+	assert _blocked(lambda: _apply_promotion("UAT-07-PROMO-N")), "not-eligible promotion applied"
+	frappe.db.rollback()
+
+	# ---- 6. Pension service-year sweep (pure engine) ----
+	pr, certs, brackets = repo.load_pension_rule_data("IRAQ-2015")
+	def _pension(years):
+		return compute_retirement_pension(RetirementPensionInput(
+			avg36=1000000, service_years=years, last_functional_salary=1000000,
+			last_full_salary=1000000, qualification="Master",
+			cost_of_living_method="Fixed Percentage", cost_of_living_value=30), pr, certs, brackets)
+	pens = {y: _pension(y) for y in (15, 20, 30, 35)}
+	print("pension sweep        : approved", {y: pens[y].approved_pension for y in pens})
+	assert [pens[y].approved_pension for y in (15, 20, 30, 35)] == sorted(pens[y].approved_pension for y in (15, 20, 30, 35))
+	assert pens[15].end_of_service_bonus == 0 and pens[30].end_of_service_bonus == 12000000
+	assert all(pens[y].certificate_allowance > 0 and pens[y].cost_of_living > 0 and pens[y].net_pension > 0 for y in pens)
+
+	# ---- 7. Payroll Run: Draft -> Review -> Approve -> Lock (rolled back) ----
+	if not frappe.db.exists("Payroll Period", {"year": 2027, "month": 6}):
+		frappe.get_doc({"doctype": "Payroll Period", "year": 2027, "month": 6,
+						"start_date": "2027-06-01", "end_date": "2027-06-30", "status": "Open"}).insert()
+		frappe.db.commit()
+	period = frappe.get_value("Payroll Period", {"year": 2027, "month": 6}, "name")
+	run = frappe.get_doc({"doctype": "Payroll Run", "payroll_period": period, "rule_set": "IRAQ-2015",
+						  "scope": "Government Entity", "scope_reference": ENT}).insert()
+	run.calculate_run(); run.reload()
+	assert run.workflow_state == "Calculated" and run.total_employees == 8, (run.workflow_state, run.total_employees)
+	# salary correctness across personas (single < married < family)
+	def _net(emp):
+		return frappe.db.get_value("Salary Slip", {"payroll_run": run.name, "employee_profile": emp}, "net_salary")
+	n1, n2, n3 = _net("UAT-01-SINGLE"), _net("UAT-02-MARRIED"), _net("UAT-03-FAMILY")
+	print("salary run           : single=%s married=%s family=%s" % (n1, n2, n3))
+	assert n1 < n2 < n3, "family allowances did not raise net (single<married<family)"
+	assert frappe.db.get_value("Salary Slip", {"payroll_run": run.name, "employee_profile": "UAT-01-SINGLE"}, "basic_salary") == 296000
+	# submit slips (write immutable snapshots) then drive governance to Locked
+	for sl in frappe.get_all("Salary Slip", filters={"payroll_run": run.name, "docstatus": 0}, pluck="name"):
+		frappe.get_doc("Salary Slip", sl).submit()
+	run.submit_for_review(); run.approve_run(); run.submit_run(); run.lock_run(); run.reload()
+	assert run.workflow_state == "Locked"
+	# totals from the immutable snapshot; lock prevents recalculation
+	summary = rep.run_summary(run.name)
+	assert summary["employees"] == 8 and summary["total_net"] > 0
+	assert _blocked(lambda: run.calculate_run()), "locked run was recalculated"
+	print("payroll run          : 8 employees, locked, total_net=%s, recalc blocked" % summary["total_net"])
+
+	# ---- 8. Reports from the immutable snapshot (locked run) ----
+	er = rep.employee_register(run.name)
+	bt = rep.bank_transfer(run.name)
+	from iraqi_government_payroll.api import accounting_api as acc
+	jr = acc.journal_export(run.name)
+	assert len(er["rows"]) == 8 and len(bt["rows"]) == 8 and jr["balanced"]
+	assert er["totals"]["net"] == summary["total_net"], "report net != summary net (snapshot)"
+	print("reports (locked)     : register/bank 8 rows from snapshot, journal balanced")
+
+	frappe.db.rollback()                      # discard run/slips/snapshots; personas persist
+	print("\nUAT DEMO CYCLE SMOKE TEST PASSED")
 
 
 def transaction_forms():
