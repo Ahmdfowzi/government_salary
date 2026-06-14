@@ -17,6 +17,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.grade_validation
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.employee_profile_api
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.payroll_slip
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.data_integrity
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.financial_wiring
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.family_dependents
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.demo
@@ -765,6 +766,69 @@ def grade_validation():
 
 	frappe.db.rollback()                         # discard everything; re-runnable
 	print("\nGRADE VALIDATION SMOKE TEST PASSED")
+
+
+def data_integrity():
+	"""Backend functional — Data Integrity (item 1): active rule set, grade master,
+	salary-scale coverage, grade/stage validation, profile required fields, and
+	position/entity linkage. Read-only + rolled back (re-runnable)."""
+	# Active rule set
+	active_rs = frappe.get_all("Government Rule Set", filters={"status": "Active"}, pluck="name")
+	print("active rule sets     :", active_rs)
+	assert "IRAQ-2015" in active_rs, "no active IRAQ-2015 rule set"
+
+	# Government grades master
+	grades = frappe.get_all("Government Grade", filters={"active": 1}, pluck="name")
+	assert len(grades) == 13, f"expected 13 active grades, got {len(grades)}"
+
+	# Salary scale coverage: an active scale exists and every grade/stage has a basic
+	scale = frappe.db.get_value("Government Salary Scale", {"rule_set": "IRAQ-2015", "is_active": 1}, "name") \
+		or frappe.db.get_value("Government Salary Scale", {"rule_set": "IRAQ-2015"}, "name")
+	assert scale, "no salary scale for IRAQ-2015"
+	details = frappe.get_all("Government Salary Scale Detail", filters={"parent": scale},
+							 fields=["grade_code", "stage", "basic_salary"])
+	assert len(details) >= 130, f"thin scale coverage: {len(details)} rows"
+	assert all(d.basic_salary and d.basic_salary > 0 for d in details), "scale row with no basic salary"
+	print("scale coverage       :", len(details), "grade/stage rows, all priced")
+
+	# Grade/stage validation: an invalid placement is rejected with an Arabic message
+	EMP = "DI1"
+	if frappe.db.exists("Government Employee Payroll Profile", EMP):
+		frappe.delete_doc("Government Employee Payroll Profile", EMP, force=True)
+	def _bad_stage():
+		frappe.get_doc({"doctype": "Government Employee Payroll Profile",
+						"employee_number": EMP, "employee_name": "DI", "rule_set": "IRAQ-2015",
+						"grade": "7", "current_stage": 99, "status": "Active"}).insert()
+	assert _blocked(_bad_stage), "invalid (grade, stage) was accepted"
+
+	# Profile required fields: grade is mandatory
+	def _missing_grade():
+		frappe.get_doc({"doctype": "Government Employee Payroll Profile",
+						"employee_number": EMP, "employee_name": "DI",
+						"rule_set": "IRAQ-2015", "current_stage": 1, "status": "Active"}).insert()
+	assert _blocked(_missing_grade), "profile without a grade was accepted"
+	print("validation           : invalid stage + missing grade both rejected")
+
+	# Position + Entity linkage: link both on a profile and resolve their names.
+	from iraqi_government_payroll.api.slip_api import _position_title
+	if not frappe.db.exists("Government Position", "POS-DI"):
+		frappe.get_doc({"doctype": "Government Position", "position_code": "POS-DI",
+						"position_name_ar": "مدير القسم (تجريبي)", "position_type": "Director"}
+					   ).insert(ignore_permissions=True)
+	ent = frappe.db.get_value("Government Entity", {}, "name")
+	assert ent, "no Government Entity exists"
+	prof = frappe.get_doc({"doctype": "Government Employee Payroll Profile",
+						   "employee_number": EMP, "employee_name": "DI", "rule_set": "IRAQ-2015",
+						   "grade": "7", "current_stage": 1, "status": "Active",
+						   "government_position": "POS-DI", "government_entity": ent}).insert()
+	title = _position_title(prof.as_dict())
+	ent_ar = frappe.db.get_value("Government Entity", ent, "entity_name_ar")
+	print("linkage              : position->%s | entity %s->%s" % (title, ent, ent_ar))
+	assert title == "مدير القسم (تجريبي)", f"position link not resolved: {title}"
+	assert ent_ar, "Government Entity has no Arabic name"
+
+	frappe.db.rollback()
+	print("\nDATA INTEGRITY SMOKE TEST PASSED")
 
 
 def financial_wiring():
