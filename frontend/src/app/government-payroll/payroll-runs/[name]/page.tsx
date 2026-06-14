@@ -46,6 +46,7 @@ export default function PayrollRunDetailPage() {
   const [gov, setGov] = useState<RunGovernance | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
 
   const load = useCallback(() => {
     return payrollApi
@@ -65,13 +66,51 @@ export default function PayrollRunDetailPage() {
     setBusy(action);
     setError(null);
     try {
-      await payrollApi.runAction(name, action);
+      if (action === "calculate") {
+        // Large runs are calculated by a background worker so they never hit the
+        // HTTP timeout; enqueue then poll until the run leaves Queued/Processing.
+        await runCalculationAsync();
+      } else {
+        await payrollApi.runAction(name, action);
+      }
       await load(); // dynamic re-fetch — never derive workflow state locally
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(null);
+      setProgress(null);
     }
+  }
+
+  // Enqueue the calculation and poll its status. The backend is authoritative; we
+  // only display progress and surface a Failed run. Capped so the UI never hangs
+  // (if the worker is slow the run keeps processing in the background).
+  async function runCalculationAsync() {
+    await payrollApi.enqueueCalculation(name);
+    setProgress("تم إرسال الاحتساب إلى المعالجة في الخلفية…");
+    const MAX_POLLS = 400; // ~10 min at 1.5s; then defer to a manual refresh
+    for (let i = 0; i < MAX_POLLS; i++) {
+      await new Promise((r) => setTimeout(r, 1500));
+      const s = await payrollApi.calculationStatus(name);
+      if (s.done) {
+        if (s.failed) {
+          throw new Error("فشل احتساب الرواتب. راجع سجل الأخطاء في الدورة.");
+        }
+        return;
+      }
+      if (
+        typeof s.processed_count === "number" &&
+        typeof s.total_employees === "number" &&
+        s.total_employees > 0
+      ) {
+        setProgress(`جارٍ الاحتساب… (${s.processed_count}/${s.total_employees})`);
+      } else {
+        setProgress("جارٍ الاحتساب في الخلفية…");
+      }
+    }
+    setProgress(
+      "ما زال الاحتساب قيد المعالجة في الخلفية. يمكنك تحديث الصفحة لاحقاً لمتابعة الحالة.",
+    );
   }
 
   return (
@@ -126,6 +165,11 @@ export default function PayrollRunDetailPage() {
           {/* Actions — strictly from allowed_actions */}
           <section className="rounded-xl border border-slate-200 bg-white p-5">
             <h2 className="mb-3 text-sm font-semibold text-slate-900">الإجراءات المتاحة</h2>
+            {progress ? (
+              <div className="mb-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800">
+                {progress}
+              </div>
+            ) : null}
             {gov.allowed_actions.length === 0 ? (
               <p className="text-sm text-slate-400">لا توجد إجراءات متاحة في هذه الحالة.</p>
             ) : (

@@ -438,6 +438,20 @@ export interface RunGovernance {
   events: GovernanceEvent[];
 }
 
+// Progress of an asynchronous (queued) payroll calculation — polled by the UI
+// after enqueueCalculation. The backend remains authoritative for state.
+export interface CalculationStatus {
+  name: string;
+  run_status: string;
+  workflow_state: WorkflowState;
+  total_employees?: number;
+  processed_count?: number;
+  error_count?: number;
+  done: boolean;
+  failed: boolean;
+  allowed_actions: string[];
+}
+
 // Phase 4 M10 — read-only payroll report models (api.reports_api).
 export interface RunSummaryReport {
   run: string;

@@ -80,6 +80,42 @@ def run_governance_action(run, action):
 
 
 @frappe.whitelist()
+def enqueue_calculation(run):
+	"""Queue a Payroll Run's calculation as a background job (for large runs).
+
+	Thin surface over `PayrollRun.calculate_run_async`, which enforces role +
+	the calculable-state guard synchronously and then enqueues the identical
+	calculation path. Returns the job/run identifiers; poll `calculation_status`.
+	"""
+	doc = frappe.get_doc("Payroll Run", run)
+	return doc.calculate_run_async()
+
+
+@frappe.whitelist()
+def calculation_status(run):
+	"""Read-only progress of a (possibly queued) Payroll Run calculation.
+
+	Used by the frontend to poll after `enqueue_calculation`. `done` is true once
+	the run is no longer queued/processing. Requires read permission on the run.
+	"""
+	doc = frappe.get_doc("Payroll Run", run)
+	doc.check_permission("read")
+	run_status = doc.get("run_status") or "Draft"
+	return {
+		"name": doc.name,
+		"run_status": run_status,
+		"workflow_state": doc.workflow_state,
+		"total_employees": doc.get("total_employees"),
+		"processed_count": doc.get("processed_count"),
+		"error_count": doc.get("error_count"),
+		"done": run_status not in ("Queued", "Processing"),
+		"failed": run_status == "Failed",
+		"allowed_actions": governance.available_actions(
+			doc.workflow_state, frappe.get_roles(frappe.session.user)),
+	}
+
+
+@frappe.whitelist()
 def current_user():
 	"""The logged-in user + their roles — for role-aware UI only (Phase 5 M2).
 

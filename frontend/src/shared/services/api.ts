@@ -27,6 +27,7 @@ import type {
   EmployeeMonthlySalary,
   PayrollCalculationSnapshot,
   RunGovernance,
+  CalculationStatus,
   RunSummaryReport,
   EmployeeRegisterReport,
   ComponentRegisterReport,
@@ -141,6 +142,15 @@ export const payrollApi = {
       `${API}.run_governance_action`,
       { run, action },
     ),
+  // Async calculation (large runs): enqueue a background job, then poll status.
+  // Avoids the HTTP/gunicorn timeout that a synchronous calculate hits at scale.
+  enqueueCalculation: (run: string) =>
+    callMethod<{ status: string; run: string; run_status: string; job_id: string | null }>(
+      `${API}.enqueue_calculation`,
+      { run },
+    ),
+  calculationStatus: (run: string) =>
+    callMethod<CalculationStatus>(`${API}.calculation_status`, { run }),
   createRun: (
     period: string,
     rule_set: string,

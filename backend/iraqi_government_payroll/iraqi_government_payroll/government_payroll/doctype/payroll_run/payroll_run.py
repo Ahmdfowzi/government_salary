@@ -61,10 +61,13 @@ class PayrollRun(Document):
 
 	# --- Governance workflow (server-side only) --- #
 
-	@frappe.whitelist()
-	def calculate_run(self):
-		"""Run the batch (build draft slips) and move to Calculated."""
-		self._ensure_role("calculate")
+	def _perform_calculation(self):
+		"""Core calculation body shared by the synchronous and queued paths.
+
+		Identical engine call + governance transition + audit event in both cases —
+		no calculation logic lives here (it is `repository.run_payroll`). The caller
+		is responsible for the role check; this assumes it is already authorized.
+		"""
 		from_state = self.workflow_state
 		target = governance.ensure_can_calculate(self.workflow_state)
 		repository.run_payroll(self)            # sets run_status + counts (+saves)
@@ -74,6 +77,46 @@ class PayrollRun(Document):
 		self.save()
 		self._log_event("calculate", from_state)
 		return self.workflow_state
+
+	@frappe.whitelist()
+	def calculate_run(self):
+		"""Run the batch synchronously (build draft slips) and move to Calculated.
+
+		Kept for small runs and programmatic use. Large runs should use
+		`calculate_run_async` so they do not exceed the HTTP/gunicorn timeout.
+		"""
+		self._ensure_role("calculate")
+		return self._perform_calculation()
+
+	@frappe.whitelist()
+	def calculate_run_async(self):
+		"""Queue the calculation as a background job (`frappe.enqueue`).
+
+		The role check and the calculable-state guard run synchronously so the caller
+		gets an immediate error (e.g. on a locked/approved run) instead of a silent
+		background failure. The run is marked Queued and the identical calculation
+		logic runs in the worker via `jobs.run_calculation_job`. Poll
+		`calculation_status` for progress. Immutable-snapshot behaviour is unchanged —
+		the worker takes the same `repository.run_payroll` path as the sync method.
+		"""
+		self._ensure_role("calculate")
+		# Validate the transition is allowed NOW (raises if locked/approved/etc.).
+		governance.ensure_can_calculate(self.workflow_state)
+		self.db_set("run_status", "Queued", update_modified=False)
+		job = frappe.enqueue(
+			"iraqi_government_payroll.services.payroll_engine.jobs.run_calculation_job",
+			queue="long",
+			timeout=7200,
+			enqueue_after_commit=True,
+			run_name=self.name,
+			user=frappe.session.user,
+		)
+		return {
+			"status": "queued",
+			"run": self.name,
+			"run_status": "Queued",
+			"job_id": getattr(job, "id", None),
+		}
 
 	@frappe.whitelist()
 	def submit_for_review(self):

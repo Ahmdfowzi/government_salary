@@ -116,8 +116,11 @@ docker compose -f docker/docker-compose.yml exec frappe \
   payroll history is recoverable bit-for-bit.
 
 ## 7. Production hardening checklist (NOT done by this dev compose)
-This compose is a **disposable dev bench**, not a production deployment. Before going
-live, address (see `../PRODUCTION-READINESS-AUDIT.md`):
+This compose is a **disposable dev bench**, not a production deployment. A hardened
+deployment that addresses the items below — TLS, secrets, async runs, automated
+backups, auto-start + healthchecks, monitoring — is provided in
+**[`production/`](production/README.md)** (compose override + nginx + scripts +
+go-live gate). Before going live, address (see `../PRODUCTION-READINESS-AUDIT.md`):
 - Change the DB root + Administrator passwords; move secrets to a secret store / env file.
 - Put Frappe behind nginx with **HTTPS/TLS**; run gunicorn (not `bench serve`) with a
   worker count and an increased timeout (payroll runs are long).

@@ -22,6 +22,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.uat_demo_cycle
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.financial_wiring
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.family_dependents
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.async_payroll_run
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.demo
 
 Why `bench execute`: each check runs in one process with a proper Frappe context,
@@ -1137,6 +1138,102 @@ def family_dependents():
 	frappe.delete_doc("Government Employee Payroll Profile", EMP, force=True)
 	frappe.db.commit()
 	print("\nFAMILY DEPENDENTS SMOKE TEST PASSED")
+
+
+def async_payroll_run():
+	"""Production blocker H1 — asynchronous (queued) payroll calculation.
+
+	Proves, without changing any calculation logic:
+	  1. the synchronous calculate_run still works (small run);
+	  2. calculate_run_async marks the run Queued and enqueues a background job;
+	  3. the queued worker path (jobs.run_calculation_job) produces an IDENTICAL
+	     immutable result (same engine path, same net, error-isolation tally intact);
+	  4. a locked run cannot be recalculated via the async entry point.
+
+	Per-employee failure isolation itself is unchanged (the job reuses
+	repository.run_payroll -> run_payroll_batch) and is covered by the host test
+	test_payroll_run.test_mixed_error_completed_with_warnings.
+	Cleans up its runs/slips (re-runnable).
+	"""
+	from iraqi_government_payroll.services.payroll_engine import jobs, governance
+
+	EMP = "ASYNC1"
+	if not frappe.db.exists("Government Employee Payroll Profile", EMP):
+		frappe.get_doc({
+			"doctype": "Government Employee Payroll Profile",
+			"employee_number": EMP, "employee_name": "Async Run Test",
+			"rule_set": "IRAQ-2015", "grade": "7", "current_stage": 1,
+			"qualification": "Bachelor", "status": "Active", "employment_status": "Active",
+		}).insert()
+		frappe.db.commit()
+	if not frappe.db.exists("Payroll Period", {"year": 2028, "month": 6}):
+		frappe.get_doc({"doctype": "Payroll Period", "year": 2028, "month": 6,
+						"start_date": "2028-06-01", "end_date": "2028-06-30", "status": "Open"}).insert()
+		frappe.db.commit()
+	period = frappe.get_value("Payroll Period", {"year": 2028, "month": 6}, "name")
+
+	def _new_run():
+		return frappe.get_doc({"doctype": "Payroll Run", "payroll_period": period,
+							   "rule_set": "IRAQ-2015", "scope": "Employee",
+							   "scope_reference": EMP}).insert()
+
+	created_runs = []
+
+	# 1) Synchronous path still works (small run).
+	sync_run = _new_run(); created_runs.append(sync_run.name)
+	sync_run.calculate_run(); sync_run.reload()
+	assert sync_run.workflow_state == "Calculated", sync_run.workflow_state
+	sync_net = frappe.db.get_value(
+		"Salary Slip", {"payroll_run": sync_run.name, "employee_profile": EMP}, "net_salary")
+	print("sync run            :", sync_run.workflow_state, "| net:", sync_net)
+	assert sync_net and sync_net > 0, sync_net
+
+	# 2) Async path: enqueue -> Queued + a background job is scheduled.
+	async_run = _new_run(); created_runs.append(async_run.name)
+	res = async_run.calculate_run_async()
+	async_run.reload()
+	print("enqueue result      :", res, "| run_status:", async_run.run_status)
+	assert res.get("status") == "queued", res
+	assert async_run.run_status == "Queued", async_run.run_status
+	assert async_run.workflow_state == "Draft", async_run.workflow_state  # not yet calculated
+	# Don't let the deferred (after-commit) enqueue hit RQ in this test process.
+	frappe.flags.enqueue_after_commit = []
+
+	# 3) Run the worker entry point directly -> identical immutable result.
+	jobs.run_calculation_job(async_run.name, frappe.session.user)
+	async_run.reload()
+	async_net = frappe.db.get_value(
+		"Salary Slip", {"payroll_run": async_run.name, "employee_profile": EMP}, "net_salary")
+	print("worker result       :", async_run.workflow_state, "| run_status:",
+		  async_run.run_status, "| net:", async_net,
+		  "| success/err:", async_run.success_count, async_run.error_count)
+	assert async_run.workflow_state == "Calculated", async_run.workflow_state
+	assert async_run.run_status in ("Completed", "Completed With Warnings"), async_run.run_status
+	assert async_net == sync_net, (async_net, sync_net)       # queued == sync, no logic drift
+	# Isolation tally intact: the one employee was processed with no blocking error
+	# (a non-blocking warning is fine — the run is still produced).
+	assert (async_run.error_count or 0) == 0, async_run.error_count
+	assert (async_run.processed_count or 0) == 1, async_run.processed_count
+	assert ((async_run.success_count or 0) + (async_run.warning_count or 0)) == 1, \
+		(async_run.success_count, async_run.warning_count)
+
+	# 4) A locked run cannot be recalculated via the async entry point (same
+	#    governance.ensure_can_calculate guard as the sync path).
+	locked_guard = _new_run()
+	locked_guard.workflow_state = governance.LOCKED            # in-memory; the guard reads it
+	blocked = _blocked(lambda: locked_guard.calculate_run_async())
+	print("locked async block  :", blocked)
+	assert blocked, "calculate_run_async must refuse a locked run"
+	assert locked_guard.run_status != "Queued", "locked run must not be marked Queued"
+
+	# Cleanup: delete draft slips + runs (no snapshot yet — slips are draft).
+	for rn in created_runs:
+		for sl in frappe.get_all("Salary Slip", filters={"payroll_run": rn}, pluck="name"):
+			frappe.delete_doc("Salary Slip", sl, force=True)
+		if frappe.db.exists("Payroll Run", rn):
+			frappe.delete_doc("Payroll Run", rn, force=True)
+	frappe.db.commit()
+	print("\nASYNC PAYROLL RUN SMOKE TEST PASSED")
 
 
 def payroll_slip():

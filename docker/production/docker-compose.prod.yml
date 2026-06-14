@@ -1,0 +1,108 @@
+# docker-compose.prod.yml — PRODUCTION OVERRIDE for the payroll stack.
+#
+# Layer it on top of the base dev compose; the base file's volumes/networks are
+# reused and these settings are merged on top:
+#
+#   docker compose -f docker/docker-compose.yml \
+#                  -f docker/production/docker-compose.prod.yml \
+#                  --env-file docker/production/.env.production up -d
+#
+# What this override adds (vs. the disposable dev compose):
+#   * restart: unless-stopped on every service  (survives reboots/crashes)
+#   * healthchecks on db / redis / frappe        (orchestrator sees real health)
+#   * frappe AUTO-STARTS web + workers + scheduler (replaces `sleep infinity`)
+#   * an nginx service terminating TLS            (HTTPS in front of everything)
+#   * a frontend (Next.js) service                (production hosting of the UI)
+#   * secrets come from --env-file, NOT hardcoded
+#
+# This is a template — review image tags, the frontend build, and cert paths for
+# your environment, and run production/go-live-check.sh before serving real data.
+
+services:
+  mariadb:
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env.production}"
+    # base file already defines a healthcheck
+
+  redis-cache:
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis-queue:
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  frappe:
+    restart: unless-stopped
+    # Auto-start the full runtime (web + workers + scheduler) instead of sleeping.
+    command: ["bash", "/mnt/scripts/production/start-production.sh"]
+    environment:
+      SHELL: /bin/bash
+      FRAPPE_SITE: "${FRAPPE_SITE:?set FRAPPE_SITE}"
+      GUNICORN_WORKERS: "${GUNICORN_WORKERS:-4}"
+      GUNICORN_TIMEOUT: "${GUNICORN_TIMEOUT:-300}"
+      ENCRYPTION_KEY: "${ENCRYPTION_KEY:?set ENCRYPTION_KEY}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:?set ADMIN_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}"
+      BACKUP_DEST: "/backups"
+      BACKUP_RETENTION_DAYS: "${BACKUP_RETENTION_DAYS:-30}"
+    volumes:
+      - backups-data:/backups          # durable, separate from the bench volume
+    # Do NOT publish 8000 to the host in prod — only nginx is exposed.
+    ports: !reset []
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/method/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  frontend:
+    image: node:20-alpine
+    restart: unless-stopped
+    working_dir: /app
+    command: ["sh", "-lc", "npm ci && npm run build && npm start -- -p 3000"]
+    environment:
+      FRAPPE_PROXY_TARGET: "${FRAPPE_PROXY_TARGET:-http://frappe:8000}"
+      NODE_ENV: "production"
+    volumes:
+      - ../../frontend:/app:cached
+    depends_on:
+      frappe:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot-www:/var/www/certbot
+      - certbot-conf:/etc/letsencrypt
+    depends_on:
+      - frappe
+      - frontend
+
+  certbot:
+    image: certbot/certbot:latest
+    # One-shot issuance/renewal; run on demand (see production/README.md §TLS).
+    entrypoint: ["sh", "-c", "trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done"]
+    volumes:
+      - certbot-www:/var/www/certbot
+      - certbot-conf:/etc/letsencrypt
+
+volumes:
+  backups-data:
+  certbot-www:
+  certbot-conf:
