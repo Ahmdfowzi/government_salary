@@ -17,6 +17,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.grade_validation
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.employee_profile_api
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.payroll_slip
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.financial_wiring
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.family_dependents
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.demo
 
@@ -764,6 +765,55 @@ def grade_validation():
 
 	frappe.db.rollback()                         # discard everything; re-runnable
 	print("\nGRADE VALIDATION SMOKE TEST PASSED")
+
+
+def financial_wiring():
+	"""Backend financial-wiring check: a real payroll calculation reconciles
+	net = earnings − deductions from the slip, and the pre-calc guard blocks a run
+	with no eligible employees. Rolls back the runs (re-runnable)."""
+	EMP = "FW1"
+	if not frappe.db.exists("Government Employee Payroll Profile", EMP):
+		frappe.get_doc({
+			"doctype": "Government Employee Payroll Profile",
+			"employee_number": EMP, "employee_name": "Financial Wiring Test",
+			"rule_set": "IRAQ-2015", "grade": "7", "current_stage": 1,
+			"qualification": "Bachelor", "status": "Active", "employment_status": "Active",
+		}).insert()
+		frappe.db.commit()
+	if not frappe.db.exists("Payroll Period", {"year": 2021, "month": 6}):
+		frappe.get_doc({"doctype": "Payroll Period", "year": 2021, "month": 6,
+						"start_date": "2021-06-01", "end_date": "2021-06-30", "status": "Open"}).insert()
+		frappe.db.commit()
+	period = frappe.get_value("Payroll Period", {"year": 2021, "month": 6}, "name")
+
+	run = frappe.get_doc({"doctype": "Payroll Run", "payroll_period": period,
+						  "rule_set": "IRAQ-2015", "scope": "Employee", "scope_reference": EMP}).insert()
+	run.calculate_run(); run.reload()
+	assert run.workflow_state == "Calculated", run.workflow_state
+	slip = frappe.get_doc("Salary Slip", frappe.db.get_value(
+		"Salary Slip", {"payroll_run": run.name, "employee_profile": EMP}, "name"))
+	print("basic/earnings/deductions/net:", slip.basic_salary, slip.total_earnings,
+		  slip.total_deductions, slip.net_salary)
+	assert slip.basic_salary == 296000, slip.basic_salary              # g7s1 Bachelor anchor
+	assert slip.total_earnings == slip.basic_salary + slip.total_capped_allowances + slip.total_non_capped_allowances
+	assert slip.net_salary == slip.total_earnings - slip.total_deductions, "net != earnings - deductions"
+	assert slip.net_salary > 0
+
+	# Pre-calc guard (item 11): a rule set with no active salary scale is blocked
+	# with a clear message — not per-employee failures.
+	if not frappe.db.exists("Government Rule Set", "FW-NOSCALE"):
+		frappe.get_doc({"doctype": "Government Rule Set", "rule_set_code": "FW-NOSCALE",
+						"rule_set_name": "No Scale (test)", "year": 2099,
+						"effective_from": "2099-01-01", "status": "Draft"}).insert(ignore_permissions=True)
+		frappe.db.commit()
+	bad = frappe.get_doc({"doctype": "Payroll Run", "payroll_period": period,
+						  "rule_set": "FW-NOSCALE", "scope": "All"}).insert()
+	blocked = _blocked(lambda: bad.calculate_run())
+	print("no-scale guard       : blocked =", blocked)
+	assert blocked, "pre-calc guard did not block a rule set with no active salary scale"
+
+	frappe.db.rollback()                          # discard the runs/slips; re-runnable
+	print("\nFINANCIAL WIRING SMOKE TEST PASSED")
 
 
 def family_dependents():

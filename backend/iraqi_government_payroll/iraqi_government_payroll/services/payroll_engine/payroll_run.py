@@ -48,6 +48,13 @@ class PayrollRunResult:
 		return asdict(self)
 
 
+_FAMILY_SUMMARY_FIELDS = (
+	"spouse_count", "children_count", "eligible_children_count", "dependents_count",
+	"eligible_dependents_count", "disabled_dependents_count",
+	"employed_dependents_count", "student_dependents_count",
+)
+
+
 def employee_input_from_profile(profile, period_date):
 	return EmployeeInput(
 		grade_code=resolve_grade_code(profile.get("grade") or profile.get("grade_code"), profile.get("current_grade")),
@@ -59,6 +66,8 @@ def employee_input_from_profile(profile, period_date):
 		risk_category=profile.get("risk_category"),
 		spouse_eligible=(profile.get("marital_status") == "Married"),
 		children_count=profile.get("eligible_children_count") or 0,
+		# record the full dependents summary into the run's snapshot (immutable history)
+		family_summary={f: (profile.get(f) or 0) for f in _FAMILY_SUMMARY_FIELDS},
 	)
 
 

@@ -270,11 +270,52 @@ class FrappeSlipStore:
 		return doc.name, True
 
 
+def _has_active_scale(rule_set):
+	import frappe
+	return bool(frappe.db.exists("Government Salary Scale", {"rule_set": rule_set, "is_active": 1})
+				or frappe.db.exists("Government Salary Scale", {"rule_set": rule_set}))
+
+
+def _eligible_filters(run):
+	filters = {"employment_status": "Active"}
+	if run.scope == "Employee" and run.scope_reference:
+		filters["name"] = run.scope_reference
+	elif run.scope == "Government Entity" and run.scope_reference:
+		filters["government_entity"] = run.scope_reference
+	if run.rule_set:
+		filters["rule_set"] = run.rule_set
+	return filters
+
+
+def ensure_calculable(run):
+	"""Block a payroll run before it starts if the financial CONFIG needed to
+	calculate is missing (rule set / active salary scale), with one clear message
+	instead of per-employee failures. Item 11 guard.
+
+	An empty employee scope is NOT an error — it produces an empty run (0 slips);
+	per-employee grade/stage validity is enforced at profile save and isolated per
+	row during the batch."""
+	import frappe
+
+	if run.rule_set and not frappe.db.exists("Government Rule Set", run.rule_set):
+		frappe.throw(f"تعذّر الاحتساب: مجموعة القواعد «{run.rule_set}» غير موجودة. "
+					 f"(Cannot calculate: rule set '{run.rule_set}' does not exist.)")
+	if run.rule_set:
+		if not _has_active_scale(run.rule_set):
+			frappe.throw(f"تعذّر الاحتساب: لا يوجد سلم رواتب فعّال لمجموعة القواعد «{run.rule_set}». "
+						 f"(Cannot calculate: rule set '{run.rule_set}' has no active salary scale.)")
+	elif not (frappe.db.exists("Government Salary Scale", {"is_active": 1})
+			  or frappe.db.exists("Government Salary Scale", {})):
+		frappe.throw("تعذّر الاحتساب: لا يوجد سلم رواتب مُعدّ. "
+					 "(Cannot calculate: no salary scale is configured.)")
+
+
 def run_payroll(run):
 	"""Execute a Payroll Run: build draft slips for eligible profiles + tally results."""
 	import frappe
 	from .payroll_run import run_payroll_batch, STATUS_PROCESSING
 
+	ensure_calculable(run)                  # fail fast with a clear message (item 11)
 	run.run_status = STATUS_PROCESSING
 	run.started_at = frappe.utils.now()
 	run.save()
@@ -282,19 +323,13 @@ def run_payroll(run):
 	rule_set = run.rule_set
 	# Lifecycle integration: only Active employees participate in payroll
 	# (retired / terminated / on-leave-without-salary are excluded).
-	filters = {"employment_status": "Active"}
-	if run.scope == "Employee" and run.scope_reference:
-		filters["name"] = run.scope_reference
-	elif run.scope == "Government Entity" and run.scope_reference:
-		filters["government_entity"] = run.scope_reference
-	if rule_set:
-		filters["rule_set"] = rule_set
+	filters = _eligible_filters(run)
 
 	profiles = frappe.get_all(
 		"Government Employee Payroll Profile", filters=filters,
-		fields=["name", "grade_code", "current_grade", "current_stage", "qualification",
-				"risk_allowance_applicable", "risk_category", "marital_status",
-				"eligible_children_count", "rule_set"])
+		fields=["name", "grade", "grade_code", "current_grade", "current_stage",
+				"qualification", "risk_allowance_applicable", "risk_category",
+				"marital_status", "rule_set", *_FAMILY_SUMMARY_FIELDS])
 
 	period_date = frappe.db.get_value("Payroll Period", run.payroll_period, "start_date") \
 		or frappe.utils.today()
