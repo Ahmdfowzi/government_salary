@@ -18,6 +18,7 @@ Run each as a single process via `bench execute` (NOT `bench console`):
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.employee_profile_api
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.payroll_slip
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.data_integrity
+    bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.transaction_forms
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.financial_wiring
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.family_dependents
     bench --site payroll.localhost execute iraqi_government_payroll.smoke.checks.demo
@@ -766,6 +767,43 @@ def grade_validation():
 
 	frappe.db.rollback()                         # discard everything; re-runnable
 	print("\nGRADE VALIDATION SMOKE TEST PASSED")
+
+
+def transaction_forms():
+	"""Phase 5 M8 — the frontend transaction-create endpoints: increment/promotion
+	drafts and a pension calculation (computed by the existing engine). Cleans up
+	the created records (re-runnable)."""
+	from iraqi_government_payroll.api import payroll_api as papi
+
+	emp = frappe.db.get_value("Government Employee Payroll Profile",
+							  {"employee_number": ["like", "DEMO-EMP-%"]}, "name") \
+		or frappe.db.get_value("Government Employee Payroll Profile", {}, "name")
+	assert emp, "no employee profile to test with"
+
+	inc = papi.create_increment_request(emp, due_date="2025-01-01", remarks="smoke")
+	print("increment draft      :", inc)
+	assert inc["approval_status"] == "Draft" and frappe.db.exists("Annual Increment Request", inc["name"])
+
+	promo = papi.create_promotion_request(emp, vacancy_available=1, direct_manager_recommendation=1,
+										  committee_decision="موافقة", remarks="smoke")
+	print("promotion draft      :", promo)
+	assert promo["approval_status"] == "Draft" and frappe.db.exists("Promotion Request", promo["name"])
+
+	pen = papi.create_pension_calculation(emp, service_years=30, average_36_months=1000000,
+										  last_functional_salary=1000000, last_full_salary=1000000)
+	print("pension calc         : net=%s gross=%s approved=%s eos=%s" %
+		  (pen["net_pension"], pen["gross_pension"], pen["approved_pension"], pen["end_of_service_bonus"]))
+	assert pen["net_pension"] > 0 and pen["gross_pension"] >= pen["approved_pension"]
+	assert pen["end_of_service_bonus"] == 1000000 * 12, "EOS at 30 years = last salary x 12"
+	pdoc = frappe.get_doc("Pension Calculation", pen["name"])
+	assert pdoc.net_pension == pen["net_pension"], "stored net != computed net"
+
+	# cleanup (drafts are deletable)
+	frappe.delete_doc("Annual Increment Request", inc["name"], force=True)
+	frappe.delete_doc("Promotion Request", promo["name"], force=True)
+	frappe.delete_doc("Pension Calculation", pen["name"], force=True)
+	frappe.db.commit()
+	print("\nTRANSACTION FORMS SMOKE TEST PASSED")
 
 
 def data_integrity():

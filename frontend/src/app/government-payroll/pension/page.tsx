@@ -4,13 +4,14 @@
 // status. CSV/Excel/PDF exports are shown only to roles allowed to export.
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@shared/components/PageHeader";
 import { ExportButtons } from "@shared/components/ExportButtons";
 import { Loading, ErrorBanner } from "@shared/components/States";
 import { payrollApi } from "@shared/services/api";
 import { downloadCsv } from "@shared/services/csv";
 import { useRoles } from "@shared/services/RolesContext";
-import { canExportReports } from "@shared/services/roles";
+import { canExportReports, canManagePayroll } from "@shared/services/roles";
 import type { PensionRegisterReport } from "@shared/types";
 
 const COLUMNS = [
@@ -76,6 +77,12 @@ export default function PensionPage() {
   return (
     <div>
       <PageHeader title="كشف التقاعد" subtitle="سجل الرواتب التقاعدية — للعرض والتصدير فقط" />
+
+      {canManagePayroll(roles) ? (
+        <div className="mb-4">
+          <Link href="/government-payroll/pension/new" className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">+ احتساب تقاعد</Link>
+        </div>
+      ) : null}
 
       <div className="mb-6 flex flex-wrap items-end gap-4">
         <label className="flex flex-col gap-1 text-sm">

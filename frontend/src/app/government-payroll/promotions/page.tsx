@@ -4,12 +4,15 @@
 // Government Grade Links (from → to); promotion advances grade + stage.
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@shared/components/PageHeader";
 import { Pill } from "@shared/components/Pill";
 import { SearchInput } from "@shared/components/SearchInput";
 import { Loading, ErrorBanner, Empty } from "@shared/components/States";
 import { DataTable, type Column } from "@shared/tables/DataTable";
 import { payrollApi } from "@shared/services/api";
+import { useRoles } from "@shared/services/RolesContext";
+import { canManagePayroll } from "@shared/services/roles";
 import type { PromotionRequest } from "@shared/types";
 
 function statusTone(s: string): "success" | "danger" | "neutral" | "warn" {
@@ -36,6 +39,7 @@ const columns: Column<PromotionRequest>[] = [
 ];
 
 export default function PromotionsPage() {
+  const { roles } = useRoles();
   const [list, setList] = useState<PromotionRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -56,8 +60,11 @@ export default function PromotionsPage() {
   return (
     <div>
       <PageHeader title="الترفيعات" subtitle="طلبات الترفيع (Promotion Request)" />
-      <div className="mb-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <SearchInput value={q} onChange={setQ} placeholder="بحث بالموظف أو الطلب…" />
+        {canManagePayroll(roles) ? (
+          <Link href="/government-payroll/promotions/new" className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">+ إضافة ترفيع</Link>
+        ) : null}
       </div>
       {error ? <ErrorBanner message={error} /> : null}
       {list === null && !error ? (

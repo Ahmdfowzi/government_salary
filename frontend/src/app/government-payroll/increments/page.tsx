@@ -4,12 +4,15 @@
 // the Government Grade Link; increments advance only the stage.
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@shared/components/PageHeader";
 import { Pill } from "@shared/components/Pill";
 import { SearchInput } from "@shared/components/SearchInput";
 import { Loading, ErrorBanner, Empty } from "@shared/components/States";
 import { DataTable, type Column } from "@shared/tables/DataTable";
 import { payrollApi } from "@shared/services/api";
+import { useRoles } from "@shared/services/RolesContext";
+import { canManagePayroll } from "@shared/services/roles";
 import type { AnnualIncrementRequest } from "@shared/types";
 
 function statusTone(s: string): "success" | "danger" | "neutral" | "warn" {
@@ -37,6 +40,7 @@ const columns: Column<AnnualIncrementRequest>[] = [
 ];
 
 export default function IncrementsPage() {
+  const { roles } = useRoles();
   const [list, setList] = useState<AnnualIncrementRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -57,8 +61,11 @@ export default function IncrementsPage() {
   return (
     <div>
       <PageHeader title="العلاوات السنوية" subtitle="طلبات العلاوة السنوية (Annual Increment Request)" />
-      <div className="mb-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <SearchInput value={q} onChange={setQ} placeholder="بحث بالموظف أو الطلب…" />
+        {canManagePayroll(roles) ? (
+          <Link href="/government-payroll/increments/new" className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">+ إضافة علاوة</Link>
+        ) : null}
       </div>
       {error ? <ErrorBanner message={error} /> : null}
       {list === null && !error ? (

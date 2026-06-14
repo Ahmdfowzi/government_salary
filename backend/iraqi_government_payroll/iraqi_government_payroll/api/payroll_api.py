@@ -324,3 +324,110 @@ def _set_family_members(doc, data):
 		row = {k: m.get(k) for k in _FAMILY_WRITABLE if m.get(k) not in (None, "")}
 		if row.get("full_name"):
 			doc.append("family_members", row)
+
+
+# ---------------------------------------------------------------------------
+# Phase 5 M8 — create the transaction requests from the frontend. These are
+# data-entry CREATE endpoints; permission is enforced by Frappe (no
+# ignore_permissions). They DO NOT change any calculation logic:
+#   * increment / promotion requests are created as DRAFTS — the computed grade/
+#     stage/salary are filled by the engine on the request's on_submit (apply_*).
+#   * the pension calculation runs the EXISTING pension service and stores its
+#     result; it adds no new math.
+# ---------------------------------------------------------------------------
+
+
+def _require_profile(employee_profile):
+	if not (employee_profile and frappe.db.exists(
+			"Government Employee Payroll Profile", employee_profile)):
+		frappe.throw("اختر موظفاً صحيحاً. (Select a valid employee profile.)")
+
+
+@frappe.whitelist()
+def create_increment_request(employee_profile, due_date=None, remarks=None):
+	"""Create a DRAFT Annual Increment Request. The stage/salary are computed by the
+	increment engine when the request is approved/applied — never here."""
+	_require_profile(employee_profile)
+	doc = frappe.get_doc({
+		"doctype": "Annual Increment Request", "employee_profile": employee_profile,
+		"approval_status": "Draft", "due_date": due_date or None, "remarks": remarks or None,
+	}).insert()
+	frappe.db.commit()
+	return {"name": doc.name, "employee_profile": doc.employee_profile,
+			"approval_status": doc.approval_status, "due_date": str(doc.due_date or "")}
+
+
+@frappe.whitelist()
+def create_promotion_request(employee_profile, vacancy_available=0,
+							 direct_manager_recommendation=0, committee_decision=None,
+							 remarks=None):
+	"""Create a DRAFT Promotion Request. The target grade/stage/salary are computed
+	by the promotion engine when the request is approved/applied — never here."""
+	_require_profile(employee_profile)
+	doc = frappe.get_doc({
+		"doctype": "Promotion Request", "employee_profile": employee_profile,
+		"approval_status": "Draft",
+		"vacancy_available": 1 if int(vacancy_available or 0) else 0,
+		"direct_manager_recommendation": 1 if int(direct_manager_recommendation or 0) else 0,
+		"committee_decision": committee_decision or None, "remarks": remarks or None,
+	}).insert()
+	frappe.db.commit()
+	return {"name": doc.name, "employee_profile": doc.employee_profile,
+			"approval_status": doc.approval_status}
+
+
+@frappe.whitelist()
+def create_pension_calculation(employee_profile, service_years, average_36_months,
+							   last_functional_salary, last_full_salary=0,
+							   extra_months=0, other_deductions=0,
+							   calculation_date=None, remarks=None):
+	"""Compute a retirement pension via the EXISTING pension service and store the
+	result as a Pension Calculation record. No new math is added here."""
+	from iraqi_government_payroll.services.pension.pension_service import (
+		compute_retirement_pension, RetirementPensionInput)
+	from iraqi_government_payroll.services.payroll_engine.repository import load_pension_rule_data
+
+	_require_profile(employee_profile)
+	prof = frappe.get_doc("Government Employee Payroll Profile", employee_profile)
+	if not prof.rule_set:
+		frappe.throw("لا توجد مجموعة قواعد للموظف. (Employee has no rule set.)")
+	try:
+		pension_rule, cert_rules, brackets = load_pension_rule_data(prof.rule_set)
+	except Exception:
+		frappe.throw(f"لا توجد قاعدة تقاعد لمجموعة القواعد «{prof.rule_set}». "
+					 f"(No Pension Rule for rule set '{prof.rule_set}'.)")
+
+	pin = RetirementPensionInput(
+		avg36=float(average_36_months or 0), service_years=int(service_years or 0),
+		extra_months=int(extra_months or 0),
+		last_functional_salary=float(last_functional_salary or 0),
+		last_full_salary=float(last_full_salary or 0),
+		qualification=prof.qualification, other_deductions=float(other_deductions or 0),
+		rule_set=prof.rule_set,
+		cost_of_living_method=pension_rule.get("cost_of_living_method"),
+		cost_of_living_value=pension_rule.get("cost_of_living_value"))
+	res = compute_retirement_pension(pin, pension_rule, cert_rules, brackets)
+
+	doc = frappe.get_doc({
+		"doctype": "Pension Calculation", "employee_profile": employee_profile,
+		"employee_name": prof.employee_name, "rule_set": prof.rule_set,
+		"calculation_date": calculation_date or frappe.utils.today(), "status": "Calculated",
+		"service_years": int(service_years or 0), "extra_months": int(extra_months or 0),
+		"average_36_months": float(average_36_months or 0),
+		"last_functional_salary": float(last_functional_salary or 0),
+		"last_full_salary": float(last_full_salary or 0),
+		"other_deductions": float(other_deductions or 0), "remarks": remarks or None,
+		"accrual_rate": pension_rule.get("accrual_rate"),
+		"initial_pension": res.initial_pension, "approved_pension": res.approved_pension,
+		"certificate_allowance": res.certificate_allowance, "cost_of_living": res.cost_of_living,
+		"gross_pension": res.gross_pension, "taxable_income": res.taxable_income,
+		"legal_allowances": res.legal_allowances, "annual_tax": res.annual_tax,
+		"monthly_tax": res.monthly_tax, "net_pension": res.net_pension,
+		"end_of_service_bonus": res.end_of_service_bonus,
+	}).insert()
+	frappe.db.commit()
+	return {"name": doc.name, "employee_name": doc.employee_name,
+			"approved_pension": res.approved_pension, "certificate_allowance": res.certificate_allowance,
+			"cost_of_living": res.cost_of_living, "gross_pension": res.gross_pension,
+			"monthly_tax": res.monthly_tax, "net_pension": res.net_pension,
+			"end_of_service_bonus": res.end_of_service_bonus, "warnings": res.warnings}

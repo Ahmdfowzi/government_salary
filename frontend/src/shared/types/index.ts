@@ -198,6 +198,20 @@ export interface SalaryPreview {
   message: string;
 }
 
+/** Result of payroll_api.create_pension_calculation (computed by the pension engine). */
+export interface PensionCalcResult {
+  name: string;
+  employee_name?: string;
+  approved_pension: number;
+  certificate_allowance: number;
+  cost_of_living: number;
+  gross_pension: number;
+  monthly_tax: number;
+  net_pension: number;
+  end_of_service_bonus: number;
+  warnings?: string[];
+}
+
 /** Summary returned by payroll_api.save_employee_profile. */
 export interface SavedEmployeeProfile {
   name: string;

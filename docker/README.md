@@ -71,12 +71,23 @@ Expected: each prints its per-step trace ending in `… SMOKE TEST PASSED` and e
 > support and which breaks the document-save lock path). It self-heals an existing
 > bench's env without touching the site/DB.
 
-## 4. (Optional) open the desk UI
+## 4. Start the Frappe web server (REQUIRED for the Next.js frontend)
+The container's `frappe` service runs `sleep infinity` — the **web server is not
+auto-started**. The Next.js frontend proxies `/api/*` to this server, so it MUST be
+running or every API call returns 500 and login fails. Start it (foreground):
 ```bash
 docker compose -f docker/docker-compose.yml exec frappe \
   bash -lc "cd ~/frappe-bench && bench --site payroll.localhost serve --port 8000 --host 0.0.0.0"
-# browse http://payroll.localhost:8000  (add '127.0.0.1 payroll.localhost' to /etc/hosts) — login Administrator / admin
 ```
+…or in the background so the terminal is free:
+```bash
+docker compose -f docker/docker-compose.yml exec -d frappe \
+  bash -lc "cd ~/frappe-bench && nohup bench serve --port 8000 >/tmp/benchserve.log 2>&1 &"
+```
+Then browse `http://payroll.localhost:8000` (add `127.0.0.1 payroll.localhost` to
+`/etc/hosts`) — login Administrator / admin. The Next frontend (`npm run dev` /
+`npm run build && npm start`) proxies to it via `FRAPPE_PROXY_TARGET` (default
+`http://payroll.localhost:8000`).
 
 ## 5. Tear down
 ```bash

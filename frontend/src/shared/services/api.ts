@@ -38,6 +38,7 @@ import type {
   GovernmentGradeOption,
   SalaryPreview,
   SavedEmployeeProfile,
+  PensionCalcResult,
 } from "../types";
 
 // Frappe dotted method paths. The app's Python package is `iraqi_government_payroll`
@@ -95,6 +96,25 @@ export const payrollApi = {
   increments: () => getList<AnnualIncrementRequest>("Annual Increment Request"),
   promotions: () => getList<PromotionRequest>("Promotion Request"),
   pensions: () => getList<PensionCalculation>("Pension Calculation"),
+
+  // Transaction create forms (Phase 5 M8). Increment/Promotion are created as
+  // DRAFTS (the engine computes grade/stage/salary on approval); the pension
+  // calculation runs the existing pension service and stores the result. The
+  // backend enforces permissions and all computation.
+  createIncrementRequest: (employee_profile: string, due_date?: string, remarks?: string) =>
+    callMethod<{ name: string; approval_status: string }>(
+      `${API}.create_increment_request`, { employee_profile, due_date, remarks }),
+  createPromotionRequest: (
+    employee_profile: string,
+    opts: { vacancy_available?: number; direct_manager_recommendation?: number; committee_decision?: string; remarks?: string },
+  ) =>
+    callMethod<{ name: string; approval_status: string }>(
+      `${API}.create_promotion_request`, { employee_profile, ...opts }),
+  createPensionCalculation: (payload: {
+    employee_profile: string; service_years: number; average_36_months: number;
+    last_functional_salary: number; last_full_salary?: number; extra_months?: number;
+    other_deductions?: number; calculation_date?: string; remarks?: string;
+  }) => callMethod<PensionCalcResult>(`${API}.create_pension_calculation`, payload),
 
   // Operational
   payrollPeriods: () => getList<PayrollPeriod>("Payroll Period"),
