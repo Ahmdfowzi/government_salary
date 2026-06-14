@@ -48,7 +48,8 @@
    "options": "Government Employee Payroll Profile",
    "reqd": 1,
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "search_index": 1
   },
   {
    "fieldname": "employee_name",
@@ -67,13 +68,15 @@
    "fieldtype": "Link",
    "label": "Payroll Period",
    "options": "Payroll Period",
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "search_index": 1
   },
   {
    "fieldname": "payroll_run",
    "fieldtype": "Link",
    "label": "Payroll Run",
-   "options": "Payroll Run"
+   "options": "Payroll Run",
+   "search_index": 1
   },
   {
    "fieldname": "rule_set",
@@ -198,17 +201,99 @@
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
-  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "submit": 1, "cancel": 1, "amend": 1, "report": 1, "export": 1, "share": 1, "print": 1},
-  {"role": "Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "submit": 1, "cancel": 1, "amend": 1, "report": 1, "export": 1, "print": 1},
-  {"role": "Payroll Manager", "read": 1, "write": 1, "create": 1, "submit": 1, "cancel": 1, "amend": 1, "report": 1, "print": 1},
-  {"role": "Payroll Officer", "read": 1, "write": 1, "create": 1, "report": 1},
-  {"role": "Finance User", "read": 1, "submit": 1, "report": 1},
-  {"role": "HR User", "read": 1},
-  {"role": "Auditor", "read": 1, "report": 1, "print": 1},
-  {"role": "Government Payroll Administrator", "read": 1, "write": 1, "create": 1, "delete": 1, "export": 1, "print": 1, "report": 1, "share": 1, "submit": 1, "cancel": 1},
-  {"role": "Read Only User", "read": 1, "report": 1, "print": 1},
-  {"role": "HR Officer", "read": 1, "report": 1, "print": 1},
-  {"role": "Finance Officer", "read": 1, "report": 1, "print": 1, "export": 1}
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1
+  },
+  {
+   "role": "Payroll Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "Payroll Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "print": 1
+  },
+  {
+   "role": "Payroll Officer",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1
+  },
+  {
+   "role": "Finance User",
+   "read": 1,
+   "submit": 1,
+   "report": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  },
+  {
+   "role": "Government Payroll Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Read Only User",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  },
+  {
+   "role": "HR Officer",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  },
+  {
+   "role": "Finance Officer",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1
+  }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",

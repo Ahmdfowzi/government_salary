@@ -95,6 +95,39 @@ docker compose -f docker/docker-compose.yml down          # stop (keep data volu
 docker compose -f docker/docker-compose.yml down -v       # stop + delete all data volumes
 ```
 
+## 6. Backup / Restore / Disaster Recovery
+The DB + uploaded files are the system of record (payroll snapshots are immutable).
+**Take a backup before every migrate and before every payroll lock.**
+```bash
+# Backup (DB + public & private files), then copy out of the container:
+docker compose -f docker/docker-compose.yml exec frappe \
+  bash -lc "cd ~/frappe-bench && bench --site payroll.localhost backup --with-files"
+docker compose -f docker/docker-compose.yml cp \
+  frappe:/home/frappe/frappe-bench/sites/payroll.localhost/private/backups ./backups
+
+# Restore into a fresh bench/site:
+docker compose -f docker/docker-compose.yml exec frappe \
+  bash -lc "cd ~/frappe-bench && bench --site payroll.localhost restore <path-to-sql.gz> \
+            --with-public-files <files.tar> --with-private-files <private-files.tar>"
+```
+- **Schedule:** nightly `bench backup --with-files` + offsite copy; retain ≥ 30 days.
+  (For a real deployment, automate via cron/systemd and verify restores monthly.)
+- **DR:** restoring a backup reproduces all immutable snapshots exactly, so locked
+  payroll history is recoverable bit-for-bit.
+
+## 7. Production hardening checklist (NOT done by this dev compose)
+This compose is a **disposable dev bench**, not a production deployment. Before going
+live, address (see `../PRODUCTION-READINESS-AUDIT.md`):
+- Change the DB root + Administrator passwords; move secrets to a secret store / env file.
+- Put Frappe behind nginx with **HTTPS/TLS**; run gunicorn (not `bench serve`) with a
+  worker count and an increased timeout (payroll runs are long).
+- Run **large payroll runs as background jobs** (`frappe.enqueue`) — a synchronous
+  `calculate_run` over 10k+ employees exceeds the HTTP timeout.
+- Add a `restart: unless-stopped` policy + a healthcheck to the `frappe` service, and
+  auto-start the web server + background workers + scheduler.
+- Add monitoring (request/error logs shipped out, Sentry-style error tracking) and
+  alerting on a `Failed` payroll run.
+
 ## Notes
 - DB root password (`123`) and admin password (`admin`) are for the disposable
   local container only — do not reuse in production.
