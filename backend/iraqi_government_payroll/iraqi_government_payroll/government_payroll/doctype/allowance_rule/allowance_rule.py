@@ -21,10 +21,25 @@ V3. effective_to (when set) must be after effective_from.
 V4. context == Pension components may only be referenced by Pension Calculation.
 """
 
+import frappe
 from frappe.model.document import Document
 
 
 class AllowanceRule(Document):
 	def validate(self):
-		# TODO(Phase 2): enforce V1-V4.
-		pass
+		# V1: component_code uniqueness is enforced by the DocType autoname — no extra check needed.
+
+		# V2: required rate fields based on calculation_type.
+		if self.calculation_type == "Percentage":
+			if not self.percentage:
+				frappe.throw(
+					"نسبة الاحتساب مطلوبة عند اختيار نوع الاحتساب «نسبة مئوية». "
+					"(percentage is required when calculation_type is 'Percentage'.)")
+		elif self.calculation_type == "Fixed":
+			if not self.fixed_amount:
+				frappe.throw(
+					"المبلغ الثابت مطلوب عند اختيار نوع الاحتساب «ثابت». "
+					"(fixed_amount is required when calculation_type is 'Fixed'.)")
+
+		# V3 and V4: no effective_from/effective_to fields on this DocType; context
+		# restriction (V4) is enforced by the allowance service at calculation time.

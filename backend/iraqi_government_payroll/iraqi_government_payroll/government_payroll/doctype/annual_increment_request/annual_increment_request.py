@@ -34,8 +34,44 @@ from iraqi_government_payroll.services.security import access
 
 class AnnualIncrementRequest(Document):
 	def validate(self):
-		# TODO(Phase 2): enforce V1-V3 via the increment service.
-		pass
+		from iraqi_government_payroll.services.increment.increment_service import (
+			compute_increment, MAX_STAGE)
+		from iraqi_government_payroll.services.payroll_engine.scale_resolver import resolve_grade_code
+
+		# V3: clear server-computed output fields — only apply_increment (on_submit) may set these.
+		self.new_stage = None
+		self.new_salary = None
+		self.increment_amount = None
+
+		if not self.employee_profile:
+			return
+
+		profile = frappe.get_doc("Government Employee Payroll Profile", self.employee_profile)
+
+		# V2: max-stage guard — increment requires promotion when at the ceiling.
+		if int(profile.current_stage or 0) >= MAX_STAGE:
+			frappe.throw(
+				f"الموظف في المرحلة القصوى ({MAX_STAGE}) ولا يمكن منحه علاوة سنوية — "
+				f"يُشترط الترقية أولاً. "
+				f"(Employee is at maximum stage {MAX_STAGE}: promotion required before increment.)")
+
+		# V1: eligibility check against the increment rule (only when due_date is provided).
+		if self.due_date:
+			gc = resolve_grade_code(
+				profile.get("grade") or profile.get("grade_code"), profile.get("current_grade"))
+			rule = (frappe.get_doc("Annual Increment Rule", profile.rule_set).as_dict()
+					if profile.rule_set
+					and frappe.db.exists("Annual Increment Rule", profile.rule_set)
+					else {})
+			res = compute_increment(
+				{"grade_code": gc, "current_stage": profile.current_stage,
+				 "current_stage_date": str(profile.current_stage_date or "")},
+				rule, str(self.due_date), rule_set=profile.rule_set)
+			if not res.eligible:
+				frappe.throw(
+					"; ".join(res.warnings)
+					or "الموظف غير مستحق للعلاوة السنوية في هذا التاريخ. "
+					   "(Employee is not eligible for an increment on the given date.)")
 
 	def on_submit(self):
 		# Phase 5 M1: increment approval (submit) is a restricted action.

@@ -14,26 +14,109 @@ from iraqi_government_payroll.services.payroll_engine import governance
 
 @frappe.whitelist()
 def calculate_active_salary(profile, period_date):
-	"""Trigger the payroll engine for one employee profile."""
-	raise NotImplementedError("Phase 2: wire to services.payroll_engine.engine")
+	"""Compute the active monthly salary for one employee profile (read-only preview).
+
+	Wired to the pure payroll engine via repository.calculate_for_profile. Returns
+	the full CalculationResult dict including grade, stage, basic_salary, gross_salary,
+	allowance_lines and any warnings.
+	"""
+	from iraqi_government_payroll.services.payroll_engine.repository import calculate_for_profile
+
+	result = calculate_for_profile(profile, period_date)
+	return result.to_dict()
 
 
 @frappe.whitelist()
 def evaluate_increment(profile):
-	"""Preview the annual increment for an employee profile."""
-	raise NotImplementedError("Phase 2: wire to services.increment.increment_service")
+	"""Preview the annual increment eligibility for an employee profile (read-only).
+
+	Loads the profile and its Annual Increment Rule, then delegates to the pure
+	increment service using today's date as the effective date. Returns an
+	IncrementResult dict — never modifies any data.
+	"""
+	from iraqi_government_payroll.services.increment.increment_service import compute_increment
+	from iraqi_government_payroll.services.payroll_engine.scale_resolver import resolve_grade_code
+
+	prof = frappe.get_doc("Government Employee Payroll Profile", profile)
+	gc = resolve_grade_code(
+		prof.get("grade") or prof.get("grade_code"), prof.get("current_grade"))
+	rule = (frappe.get_doc("Annual Increment Rule", prof.rule_set).as_dict()
+			if prof.rule_set and frappe.db.exists("Annual Increment Rule", prof.rule_set)
+			else {})
+	effective_date = frappe.utils.today()
+	result = compute_increment(
+		{"grade_code": gc, "current_stage": prof.current_stage,
+		 "current_stage_date": str(prof.current_stage_date or "")},
+		rule, effective_date, rule_set=prof.rule_set)
+	return result.to_dict()
 
 
 @frappe.whitelist()
 def evaluate_promotion(profile):
-	"""Preview a promotion for an employee profile."""
-	raise NotImplementedError("Phase 2: wire to services.promotion.promotion_service")
+	"""Preview the promotion eligibility for an employee profile (read-only).
+
+	Loads the profile, its Promotion Rule, and the active salary scale, then
+	delegates to the pure promotion service using today's date. Returns a
+	PromotionResult dict — never modifies any data.
+	"""
+	from iraqi_government_payroll.services.promotion.promotion_service import compute_promotion
+	from iraqi_government_payroll.services.payroll_engine.repository import load_context
+	from iraqi_government_payroll.services.payroll_engine.scale_resolver import (
+		resolve_grade_code, get_active_scale)
+
+	prof = frappe.get_doc("Government Employee Payroll Profile", profile)
+	gc = resolve_grade_code(
+		prof.get("grade") or prof.get("grade_code"), prof.get("current_grade"))
+	promotion_rule = (frappe.get_doc("Promotion Rule", prof.rule_set).as_dict()
+					  if prof.rule_set and frappe.db.exists("Promotion Rule", prof.rule_set)
+					  else {})
+	scale = get_active_scale(load_context().scales, prof.rule_set)
+	effective_date = frappe.utils.today()
+	result = compute_promotion(
+		{"grade_code": gc, "current_stage": prof.current_stage,
+		 "current_grade_date": str(prof.current_grade_date or "")},
+		promotion_rule, scale.get("details", []), effective_date, rule_set=prof.rule_set)
+	return result.to_dict()
 
 
 @frappe.whitelist()
-def compute_pension(profile, calculation_date):
-	"""Compute the pension for an employee profile."""
-	raise NotImplementedError("Phase 2: wire to services.pension.pension_service")
+def compute_pension(profile, calculation_date, service_years=0, average_36_months=0,
+					last_functional_salary=0, last_full_salary=0, extra_months=0,
+					other_deductions=0):
+	"""Compute the retirement pension for an employee profile (read-only preview).
+
+	Mirrors create_pension_calculation but does NOT save any record. Useful for
+	showing a live preview before the user commits the calculation to the database.
+	Accepts the same pension inputs as the create endpoint.
+	"""
+	from iraqi_government_payroll.services.pension.pension_service import (
+		compute_retirement_pension, RetirementPensionInput)
+	from iraqi_government_payroll.services.payroll_engine.repository import load_pension_rule_data
+
+	prof = frappe.get_doc("Government Employee Payroll Profile", profile)
+	if not prof.rule_set:
+		frappe.throw("لا توجد مجموعة قواعد للموظف. (Employee has no rule set.)")
+	try:
+		pension_rule, cert_rules, brackets = load_pension_rule_data(prof.rule_set)
+	except Exception:
+		frappe.throw(f"لا توجد قاعدة تقاعد لمجموعة القواعد «{prof.rule_set}». "
+					 f"(No Pension Rule for rule set '{prof.rule_set}'.)")
+
+	pin = RetirementPensionInput(
+		avg36=float(average_36_months or 0),
+		service_years=int(service_years or 0),
+		extra_months=int(extra_months or 0),
+		last_functional_salary=float(last_functional_salary or 0),
+		last_full_salary=float(last_full_salary or 0),
+		qualification=prof.qualification,
+		other_deductions=float(other_deductions or 0),
+		rule_set=prof.rule_set,
+		period_date=str(calculation_date or frappe.utils.today()),
+		cost_of_living_method=pension_rule.get("cost_of_living_method"),
+		cost_of_living_value=pension_rule.get("cost_of_living_value"),
+	)
+	result = compute_retirement_pension(pin, pension_rule, cert_rules, brackets)
+	return result.to_dict()
 
 
 # --- Payroll Run governance (Phase 3 M6) --- #
