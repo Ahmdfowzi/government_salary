@@ -66,10 +66,22 @@ class TestTaxEngine(unittest.TestCase):
 
 class TestPensionDeduction(unittest.TestCase):
 	def test_missing_pc6_skipped_with_warning(self):
-		d = compute_pension_deduction(296_000, DED_PENSION)   # confirmed=false, empty
+		# Test the "empty value → skip" code path with an explicit rule that has no percentage.
+		# (DED_PENSION fixture now has percentage=5 as a provisional placeholder; this test
+		# verifies the engine's skipping behaviour independently of fixture values.)
+		rule_no_rate = {"component_code": "DED_PENSION", "confirmed": 0}
+		d = compute_pension_deduction(296_000, rule_no_rate)
 		self.assertEqual(d["amount"], 0)
 		self.assertTrue(d["skipped"])
 		self.assertTrue(any("PC-6" in w for w in d["warnings"]))
+
+	def test_fixture_ded_pension_is_provisional_5pct(self):
+		# DED_PENSION fixture: confirmed=0, percentage=5 (Iraqi standard rate, pending PC-6).
+		# The engine should compute 5% provisionally (not skip).
+		d = compute_pension_deduction(296_000, DED_PENSION)
+		self.assertEqual(d["amount"], 14_800)    # 5% of 296,000
+		self.assertFalse(d["skipped"])
+		self.assertTrue(d["provisional"])
 
 	def test_provided_rate_computes(self):
 		rule = {"component_code": "DED_PENSION", "percentage": 10, "confirmed": 1}

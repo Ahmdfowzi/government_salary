@@ -150,12 +150,34 @@ class TestConfirmedFalseBehaviour(unittest.TestCase):
 		self.assertIn("FAM_CHILD", r.provisional_flags)
 
 	def test_empty_value_is_skipped_with_warning(self):
-		# RISK_DEFAULT: confirmed=false, no percentage -> skipped + warning
+		# Verify the engine skips a confirmed=false rule with no percentage and emits a warning.
+		# RISK_DEFAULT fixture now has percentage=25 (provisional placeholder after PC-3 fix);
+		# this test uses a custom ctx where the risk rule has no percentage to exercise the
+		# "empty value → skip" code path independently of fixture values.
+		rules_no_risk_pct = [
+			{**r, "percentage": None} if r["component_code"] == "RISK_DEFAULT" else r
+			for r in fx("allowance_rule.json")
+		]
+		custom_ctx = DataContext(
+			rule_sets=fx("government_rule_set.json"),
+			scales=fx("government_salary_scale.json"),
+			allowance_rules=rules_no_risk_pct,
+		)
+		emp = EmployeeInput(grade_code="7", stage=1, period_date="2020-06-01",
+							qualification="Bachelor", risk_applicable=True, risk_category="GENERAL")
+		r = calculate_active_salary(custom_ctx, emp)
+		self.assertEqual([l for l in r.allowance_lines if l.match_key == "Risk Category"], [])
+		self.assertTrue(any("RISK_DEFAULT" in w for w in r.warnings))
+
+	def test_risk_default_provisional_25pct(self):
+		# RISK_DEFAULT fixture: confirmed=0, percentage=25 (provisional midpoint of 20-30%).
+		# The engine should compute 25% of basic provisionally and mark it in provisional_flags.
 		emp = EmployeeInput(grade_code="7", stage=1, period_date="2020-06-01",
 							qualification="Bachelor", risk_applicable=True, risk_category="GENERAL")
 		r = calculate_active_salary(ctx(), emp)
-		self.assertEqual([l for l in r.allowance_lines if l.match_key == "Risk Category"], [])
-		self.assertTrue(any("RISK_DEFAULT" in w for w in r.warnings))
+		risk_lines = [l for l in r.allowance_lines if l.match_key == "Risk Category"]
+		self.assertEqual(len(risk_lines), 1)
+		self.assertIn("RISK_DEFAULT", r.provisional_flags)
 
 
 class TestDeductionsExcluded(unittest.TestCase):

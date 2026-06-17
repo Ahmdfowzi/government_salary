@@ -30,16 +30,18 @@ class AllowanceRule(Document):
 		# V1: component_code uniqueness is enforced by the DocType autoname — no extra check needed.
 
 		# V2: required rate fields based on calculation_type.
-		if self.calculation_type == "Percentage":
-			if not self.percentage:
+		# Use explicit None-check so that 0 (a valid "zero-rate" value) is accepted.
+		# Unconfirmed (confirmed=0) records may legitimately have no value while
+		# pending legal confirmation — only confirmed records are strictly enforced.
+		if self.confirmed:
+			if self.calculation_type == "Percentage" and self.percentage is None:
 				frappe.throw(
-					"نسبة الاحتساب مطلوبة عند اختيار نوع الاحتساب «نسبة مئوية». "
-					"(percentage is required when calculation_type is 'Percentage'.)")
-		elif self.calculation_type == "Fixed":
-			if not self.fixed_amount:
+					"نسبة الاحتساب مطلوبة عند اختيار نوع الاحتساب «نسبة مئوية» للقاعدة المعتمدة. "
+					"(percentage is required when calculation_type is 'Percentage' and confirmed=True.)")
+			elif self.calculation_type == "Fixed" and self.fixed_amount is None:
 				frappe.throw(
-					"المبلغ الثابت مطلوب عند اختيار نوع الاحتساب «ثابت». "
-					"(fixed_amount is required when calculation_type is 'Fixed'.)")
+					"المبلغ الثابت مطلوب عند اختيار نوع الاحتساب «ثابت» للقاعدة المعتمدة. "
+					"(fixed_amount is required when calculation_type is 'Fixed' and confirmed=True.)")
 
 		# V3 and V4: no effective_from/effective_to fields on this DocType; context
 		# restriction (V4) is enforced by the allowance service at calculation time.
