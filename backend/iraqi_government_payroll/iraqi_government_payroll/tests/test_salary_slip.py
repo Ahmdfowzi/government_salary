@@ -46,6 +46,22 @@ def ctx(pc6_rate=None):
 	)
 
 
+def ctx_no_pension():
+	"""Context with DED_PENSION percentage cleared — exercises the PC-6 skip-with-warning path."""
+	allow = copy.deepcopy(fx("allowance_rule.json"))
+	for r in allow:
+		if r["component_code"] == "DED_PENSION":
+			r["percentage"] = None
+			r["confirmed"] = 0
+	return DataContext(
+		rule_sets=fx("government_rule_set.json"),
+		scales=fx("government_salary_scale.json"),
+		allowance_rules=allow,
+		income_tax_brackets=fx("income_tax_bracket.json"),
+		tax_allowance_rules=fx("tax_allowance_rule.json"),
+	)
+
+
 def bachelor(**over):
 	base = dict(grade_code="7", stage=1, period_date="2020-06-01", qualification="Bachelor")
 	base.update(over)
@@ -64,18 +80,22 @@ class TestNetSalaryFlow(unittest.TestCase):
 		self.assertEqual(r.net_salary, 429200 - 29600 - 57713)   # 341887
 
 	def test_bachelor_grade7_stage1_full_slip(self):
-		# PC-6 pending (fixture) -> pension skipped
+		# DED_PENSION: confirmed=0, percentage=5 (provisional placeholder, PC-6)
 		r = compute_net_salary(ctx(), bachelor())
 		self.assertEqual(r.basic_salary, 296000)
 		self.assertEqual(r.gross_salary, 429200)
-		self.assertEqual(r.pension_deduction, 0)
+		self.assertEqual(r.pension_deduction, 14800)    # 5% of 296000, provisional
 		self.assertEqual(r.tax, 57713)
-		self.assertEqual(r.net_salary, 371487)          # 429200 - 0 - 57713
+		self.assertEqual(r.total_deductions, 72513)     # 14800 + 57713
+		self.assertEqual(r.net_salary, 356687)          # 429200 - 14800 - 57713
 
 
 class TestProvisionalAndMissingPC(unittest.TestCase):
 	def test_missing_pc6_skips_pension_with_warning(self):
-		r = compute_net_salary(ctx(), bachelor())
+		# When DED_PENSION.percentage is null (unset), the deduction is skipped and a
+		# PC-6 warning is emitted. Use ctx_no_pension() to exercise this code path
+		# independently of the fixture rate (which is now 5%, a provisional placeholder).
+		r = compute_net_salary(ctx_no_pension(), bachelor())
 		self.assertEqual(r.pension_deduction, 0)
 		self.assertTrue(any("PC-6" in w for w in r.warnings))
 

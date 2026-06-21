@@ -33,6 +33,7 @@ from frappe.model.document import Document
 
 from iraqi_government_payroll.services.payroll_engine.scale_resolver import (
 	scale_has_grade_stage,
+	resolve_basic_salary,
 )
 from iraqi_government_payroll.services.family import family_service
 
@@ -49,9 +50,17 @@ class GovernmentEmployeePayrollProfile(Document):
 		# mirror in sync, and validate that (grade, stage) exists in the active scale.
 		self._sync_grade_fields()
 		self._validate_scale_placement()
+		# Resolve basic_salary from the active salary scale so the profile always
+		# reflects the current scale value (read-only; engine recomputes at payroll time).
+		self._resolve_and_set_basic_salary()
 		# Phase 5 M7: recompute dependent ages / eligibility / summary counts so they
 		# are current whenever family data changes (and ready to snapshot at payroll).
 		self._recompute_family()
+
+	def before_save(self):
+		# Belt-and-suspenders: ensure basic_salary is current even on programmatic saves
+		# (e.g. apply_increment / apply_promotion call profile.save() directly).
+		self._resolve_and_set_basic_salary()
 
 	def _family_config(self):
 		"""Eligibility thresholds from Government Payroll Settings (configurable;
@@ -123,3 +132,24 @@ class GovernmentEmployeePayrollProfile(Document):
 			frappe.throw(
 				f"Invalid salary placement: grade '{grade}' stage '{self.current_stage}' "
 				f"does not exist in the active salary scale of rule set '{self.rule_set}'.")
+
+	def _resolve_and_set_basic_salary(self):
+		"""Resolve basic_salary from the active salary scale and store it on the profile.
+
+		Skipped during install/migrate and when required fields are missing, so it
+		never blocks seeding. Placement validity is guaranteed by _validate_scale_placement
+		which runs first; this method only looks up the matching salary value.
+		"""
+		if frappe.flags.in_install or frappe.flags.in_migrate:
+			return
+		grade = self.grade or self.grade_code
+		if not (grade and self.current_stage and self.rule_set):
+			return
+		salary = resolve_basic_salary(
+			rule_set=self.rule_set,
+			grade=grade,
+			current_stage=self.current_stage,
+			grade_ref=self.grade,           # profile.grade (Link) mirrors scale detail grade_ref
+			current_grade=self.current_grade,
+		)
+		self.basic_salary = salary

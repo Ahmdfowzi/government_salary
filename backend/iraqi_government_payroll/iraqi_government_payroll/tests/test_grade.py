@@ -22,7 +22,7 @@ FIX = os.path.join(HERE, "..", "fixtures")
 sys.path.insert(0, APP_ROOT)
 
 from iraqi_government_payroll.services.payroll_engine.scale_resolver import (  # noqa: E402
-	get_basic_salary, resolve_grade_code, scale_has_grade_stage,
+	get_basic_salary, resolve_grade_code, scale_has_grade_stage, get_active_scale,
 )
 from iraqi_government_payroll.services.payroll_engine.types import PayrollError  # noqa: E402
 
@@ -233,6 +233,71 @@ class TestGradeResolution(unittest.TestCase):
 	def test_raises_when_nothing_set(self):
 		with self.assertRaises(PayrollError):
 			resolve_grade_code(None, None)
+
+
+class TestResolveBasicSalaryLogic(unittest.TestCase):
+	"""Pure tests for resolve_basic_salary logic using fixture data.
+
+	The DB-backed resolve_basic_salary() in scale_resolver.py delegates to the
+	same primitives (get_active_scale + get_basic_salary) exercised here.
+	"""
+
+	def test_grade4_stage4_returns_533000(self):
+		# Canonical test case: grade 4 stage 4 → 533,000 IQD
+		self.assertEqual(get_basic_salary(SCALE_DETAILS, "4", 4), 533000)
+
+	def test_grade4_stage4_int_grade_normalised(self):
+		# Engine stringifies grade before comparison; int 4 must match string "4"
+		self.assertEqual(get_basic_salary(SCALE_DETAILS, 4, 4), 533000)
+
+	def test_missing_stage_raises_payroll_error(self):
+		# Stage 999 does not exist for grade 4 → PayrollError (no match)
+		with self.assertRaises(PayrollError):
+			get_basic_salary(SCALE_DETAILS, "4", 999)
+
+	def test_inactive_scale_not_preferred_over_active(self):
+		# When an active and an inactive scale both exist, get_active_scale returns the active one
+		inactive_details = [{"grade_code": "4", "grade_ref": "4", "stage": 4, "basic_salary": 1}]
+		scales = [
+			{"rule_set": "IRAQ-2015", "is_active": 0, "details": inactive_details},
+			{"rule_set": "IRAQ-2015", "is_active": 1, "details": SCALE_DETAILS},
+		]
+		scale = get_active_scale(scales, "IRAQ-2015")
+		self.assertIs(scale["details"], SCALE_DETAILS)
+		# salary from the active scale, not the inactive dummy
+		self.assertEqual(get_basic_salary(scale["details"], "4", 4), 533000)
+
+	def test_special_a_by_grade_code(self):
+		self.assertEqual(get_basic_salary(SCALE_DETAILS, "SPECIAL_A", 1), 2413000)
+
+	def test_special_b_by_grade_code(self):
+		val = get_basic_salary(SCALE_DETAILS, "SPECIAL_B", 1)
+		self.assertGreater(val, 0)
+
+	def test_special_c_by_grade_code(self):
+		val = get_basic_salary(SCALE_DETAILS, "SPECIAL_C", 1)
+		self.assertGreater(val, 0)
+
+	def test_grade_ref_equals_grade_code_for_all_details(self):
+		# grade_ref (Link mirror) must equal grade_code string for every row in the fixture
+		for d in SCALE_DETAILS:
+			if d.get("grade_ref"):
+				self.assertEqual(
+					str(d["grade_ref"]), str(d["grade_code"]),
+					f"grade_ref != grade_code at stage={d.get('stage')}",
+				)
+
+	def test_special_grades_resolve_via_grade_ref(self):
+		# Simulate how resolve_basic_salary matches: prefer grade_ref, fall back to grade_code
+		for code in ("SPECIAL_A", "SPECIAL_B", "SPECIAL_C"):
+			matched = next(
+				(d for d in SCALE_DETAILS
+				 if str(d.get("grade_ref") or d.get("grade_code") or "") == code
+				 and int(d.get("stage") or 0) == 1),
+				None,
+			)
+			self.assertIsNotNone(matched, f"{code} stage 1 not found via grade_ref/grade_code")
+			self.assertGreater(float(matched.get("basic_salary") or 0), 0)
 
 
 if __name__ == "__main__":

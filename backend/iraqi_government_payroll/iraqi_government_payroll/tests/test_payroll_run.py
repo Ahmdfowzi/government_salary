@@ -138,7 +138,10 @@ class TestPayrollRunBatch(unittest.TestCase):
 		slip = store.slips[(PERIOD, "EMP-1")]
 		self.assertEqual(slip["basic_salary"], 296000)
 		self.assertEqual(slip["total_earnings"], 429200)
-		self.assertEqual(slip["net_salary"], 371487)                # PC-6 pending: gross - tax
+		# net = gross(429200) - pension(5% of basic = 14800, provisional) - tax(57713) = 356687
+		# Pension deduction: DED_PENSION confirmed=0, percentage=5 (PC-6 provisional placeholder).
+		self.assertEqual(slip["total_deductions"], 72513)           # 14800 pension + 57713 tax
+		self.assertEqual(slip["net_salary"], 356687)
 		self.assertEqual(slip["status"], "Draft")
 
 	def test_no_snapshots_for_draft_slips(self):
